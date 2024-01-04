@@ -4,7 +4,7 @@
 import pytest
 
 from tempfile import TemporaryDirectory
-from eotools.sensor_srf import get_SRF, combine_with_srf, get_absorption
+from eotools.srf import get_SRF, combine_with_srf, get_absorption
 
 @pytest.mark.parametrize('sensor, platform',[
     ('OLI', 'Landsat8'),

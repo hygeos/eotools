@@ -1,7 +1,7 @@
 import pytest
 import tarfile
 
-from eotools.atmo_correction import Gaseous_correction
+from eotools.gaseous_correction import Gaseous_correction
 from lib.eoread.landsat8_oli import Level1_L8_OLI
 from tempfile import TemporaryDirectory
 from pathlib import Path

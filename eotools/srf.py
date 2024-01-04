@@ -6,7 +6,7 @@ import os
 import tarfile
 from glob import glob
 
-from .download import download_url
+from eoread.download import download_url
 
 
 def get_climate_data(dirname): 

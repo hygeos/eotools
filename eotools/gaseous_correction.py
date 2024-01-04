@@ -5,12 +5,10 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 
-from lib.eoread.eo import datetime, init_geometry
-from lib.eoread.download import FTP, get_auth_ftp, ftp_download
 from pyhdf.SD import SD
 from pathlib import Path
-from eotools.sensor_srf import get_climate_data, get_SRF, get_absorption, combine_with_srf
-from eotools.utils_odr import ODR
+from eoread.eo import datetime
+from eotools.srf import get_climate_data, get_SRF, get_absorption, combine_with_srf
 
 from lib.eoread.ancillary.era5 import ERA5
 
@@ -145,7 +143,7 @@ class Gaseous_correction:
 
     def add_ancillary(self, ds):
         dir_root = Path(__file__).parents[1]
-        makedirs(dir_root/'ancillary', exist_ok=True)
+        makedirs(dir_root/'auxdata/ERA5', exist_ok=True)
 
         var_to_get = ['total_column_ozone']
         varnames = ['total_ozone']
@@ -154,7 +152,7 @@ class Gaseous_correction:
         # varnames = ['horizontal_wind', 'sea_level_pressure', 'total_ozone']
 
         era5 = ERA5(model = ERA5.models.reanalysis_single_level,
-                    directory = dir_root/'ancillary')
+                    directory = dir_root/'auxdata/ERA5')
         date = dt.strptime(ds.datetime,'%Y-%m-%dT%H:%M:%S')
         anc = era5.get(variables=var_to_get, dt=date)
         for varname in zip(varnames, var_to_get):
@@ -251,122 +249,3 @@ class Gaseous_correction:
         )
 
         return ds['rho_gc']
-
-
-class Rayleigh_correction:
-    '''
-    Rayleigh correction module
-
-    Ex: Rayleigh_correction(l1).apply()
-    '''
-
-    requires_anc = []
-
-    def __init__(self, ds, odr=None, srf=None):
-        self.ds = ds
-        self.bands = list(ds.bands.data)
-
-        lut_path = Path('auxdata/luts/LUT_Rayleigh_PP.nc')
-        if not lut_path.exists():
-            ftp = FTP(**get_auth_ftp('GEO-OC'))
-            ftp_download(ftp, lut_path, lut_path.parent)
-        assert lut_path.exists()
-        lut = xr.open_dataset(lut_path, chunks=-1)
-        
-        # set standard convention, raa = saa - vaa
-        self.lut = lut.assign_coords(raa=180-lut.raa)    
-
-        if 'datetime' in ds.attrs:
-            # image mode: single date for the whole image
-            self.datetime = datetime(ds)
-        else:
-            # extraction mode: per-pixel date
-            self.datetime = None
-
-        # Compute odr for each channel
-        if odr is None:
-            # Load srf for each channel
-            if srf is None:
-                srf = get_SRF(ds.sensor, ds.platform)
-            else:
-                assert isinstance(srf,xr.Dataset)
-            odr = get_ODR_for_sensor(srf)
-        else:
-            assert isinstance(odr,xr.Dataset)
-        self.odr = odr
-
-        init_geometry(self.ds)
-
-        self.ds.reset_coords().chunk(bands=-1)
-    
-    def run(self, varname='Rtoa'):
-        wdspd = 5. # FIXME: use ancillary data
-        attrs = {'rod_source': 'Bodhaine99'}
-
-        coords = {
-            'raa': self.ds.raa,
-            'mu_s': self.ds.mus,
-            'mu_v': self.ds.muv,
-            'wdspd': wdspd,
-            'odr': self.odr,
-        }
-        
-        # switch to float64 because of issue with interp ;
-        # the dtype is always float64 after compute, even though
-        # it is float32 before compute
-        # => use map_blocks instead ?
-        self.ds['rho_mol_gli'] = self.lut.reflectance_toa.interp(
-            coords).reset_coords(drop=True).astype('float64')
-        self.ds['rho_mol_gli'].attrs.update({
-            'desc': 'Rayleigh + sun glint reflectance',
-            **attrs})
-
-        self.ds['rho_mol'] = (self.lut.reflectance_toa - self.lut.reflectance_glitter).interp(
-            coords).reset_coords(drop=True).astype('float64')
-        self.ds['rho_mol'].attrs.update({
-            'desc': 'Rayleigh reflectance (no sun glint)',
-            **attrs})
-
-        self.ds['rho_rc'] = self.ds[varname] - self.ds['rho_mol_gli']
-        self.ds['rho_rc'].attrs.update({'desc': 'Rayleigh corrected reflectance',
-                                **attrs})
-
-        # Total atmospheric diffuse transmittance
-        self.ds['t_d'] = (self.lut.trans_flux_down.interp(
-            mu_s=self.ds.mus, odr=self.odr, wdspd=wdspd
-        ) * self.lut.trans_flux_up.interp(
-            mu_v=self.ds.muv, odr=self.odr)).reset_coords(drop=True).astype('float64')
-        self.ds['t_d'].attrs.update(
-            {'desc': 'Total atmospheric diffuse transmittance',
-            **attrs})
-        return 
-    
-    def apply(self):
-        return self.run()
-
-    
-
-def get_ancillary(l1: xr.Dataset, list_correction:list, provider):
-    list_requires = [correc.requires_anc for correc in list_correction]
-    set_requires = set.union(*map,(set,list_requires))
-    if len(list_requires) == 0:
-        return l1
-    
-    date = dt.strptime(l1.datetime[:10],'%Y-%m-%d')
-    for req in set_requires:
-        provider.get('GACF',req, date)
-    return l1
-
-
-def get_ODR_for_sensor(srf:xr.Dataset):
-    out_ODR = {}
-    for band in srf:
-        srf_band = srf[band].rename({f'wav_{band}':'wav'})
-        wav = srf_band.coords['wav'].values
-        od = ODR(wav*1e-3, np.array(400), 45., 0., 1013.25)
-        od_xr = xr.DataArray(od.squeeze(), 
-                        coords={'wav':wav})
-        integrate = np.trapz(srf_band*od_xr, x=wav)
-        normalize = np.trapz(srf_band,x=wav)
-        out_ODR[band] = integrate / normalize
-    return xr.DataArray(list(out_ODR.values()), coords={'band':list(srf.keys())})

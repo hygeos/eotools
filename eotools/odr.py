@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 from scipy.constants import codata
 
 
@@ -28,6 +29,19 @@ def ODR(lam, co2=400., lat=45., z=0., P=1013.25, pressure='surface'):
         raise ValueError('Invalid pressure type ({pressure})')
 
     return raycrs(lam, co2) * Psurf * Avogadro/ma(co2)/G
+
+def get_ODR_for_sensor(srf:xr.Dataset):
+    out_ODR = {}
+    for band in srf:
+        srf_band = srf[band].rename({f'wav_{band}':'wav'})
+        wav = srf_band.coords['wav'].values
+        od = ODR(wav*1e-3, np.array(400), 45., 0., 1013.25)
+        od_xr = xr.DataArray(od.squeeze(), 
+                        coords={'wav':wav})
+        integrate = np.trapz(srf_band*od_xr, x=wav)
+        normalize = np.trapz(srf_band,x=wav)
+        out_ODR[band] = integrate / normalize
+    return xr.DataArray(list(out_ODR.values()), coords={'band':list(srf.keys())})
 
 
 
