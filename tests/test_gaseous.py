@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import pytest
 import tarfile
 
 from eotools.gaseous_correction import Gaseous_correction
-from lib.eoread.landsat8_oli import Level1_L8_OLI
+from eoread.landsat8_oli import Level1_L8_OLI
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
@@ -15,4 +18,4 @@ def test_gaseous_correction(level1):
         f.extractall(tmpdir) 
         f.close() 
         l1 = Level1_L8_OLI(tmpdir+'/'+level1.name.split('.')[0])
-        k = Gaseous_correction(l1).apply()
+        k = Gaseous_correction(l1).apply().compute()

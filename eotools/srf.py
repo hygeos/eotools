@@ -39,7 +39,10 @@ def get_absorption(gaz:str, dirname):
                         coords={'wav':abs_rate['Wavelength'].to_numpy()})
 
 
-def get_SRF(sensor:str, platform:str, dirpath:str = 'auxdata/srf/'):
+def get_SRF(sensor:str = None, 
+            platform:str = None, 
+            dirpath:str = 'auxdata/srf/', 
+            l1_ds: xr.Dataset = None):
     """
     Download and store SRF from EUMETSAT Website
         -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
@@ -48,9 +51,12 @@ def get_SRF(sensor:str, platform:str, dirpath:str = 'auxdata/srf/'):
         - sensor [str]   : name of the sensor in level1 reader
         - platform [str] : name of the platform in level1 reader
         - dirpath [str]  : directory path where to save SRF files
+        - l1_ds [Dataset]: xarray from eoread reader 
     
     Return a xr.DataArray with the different SRF 
     """
+    if l1_ds is not None:
+        sensor, platform = l1_ds.sensor, l1_ds.platform
     tar_gz_path = pd.read_csv('eotools/ancillary/srf_eumetsat.csv', header=0, index_col=0)
     urlpath = tar_gz_path[((tar_gz_path['id_sensor'] == sensor) & (tar_gz_path['id_platform'] == platform))]['url_tar']
     if len(urlpath) == 0:
@@ -74,7 +80,12 @@ def get_SRF(sensor:str, platform:str, dirpath:str = 'auxdata/srf/'):
                         delim_whitespace=True,
                         names=["Wavelength", "Response"])
         srf['Wavelength'] = srf['Wavelength'].apply(lambda x: 1./x*1e7).values # Convert wavelength in nm
-        central_wav = round(srf['Wavelength'].mean())
+        if l1_ds is None:
+            central_wav = round(srf['Wavelength'].mean())
+        else:
+            central_wav = int(l1_ds.bands[(np.abs(l1_ds.bands - srf['Wavelength'].mean())).argmin()])
+        if central_wav in list(ds.keys()):
+            continue
         ds[central_wav] = xr.DataArray(srf['Response'].values, 
                                         coords={f'wav_{central_wav}':srf['Wavelength'].values})
 

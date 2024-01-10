@@ -1,4 +1,5 @@
 import xarray as xr
+import numpy as np
 
 from eoread.eo import datetime, init_geometry
 from eoread.download import FTP, get_auth_ftp, ftp_download
@@ -18,8 +19,9 @@ class Rayleigh_correction:
 
     def __init__(self, ds, odr=None, srf=None):
         self.ds = ds
-        self.bands = list(ds.bands.data)
+        self.bands = np.array(ds.bands.data)
 
+        # Download and load Lookup Table
         lut_path = Path('auxdata/luts/LUT_Rayleigh_PP.nc')
         if not lut_path.exists():
             ftp = FTP(**get_auth_ftp('GEO-OC'))
@@ -39,16 +41,18 @@ class Rayleigh_correction:
 
         # Compute odr for each channel
         if odr is None:
-            # Load srf for each channel
             if srf is None:
-                srf = get_SRF(ds.sensor, ds.platform)
+                srf = get_SRF(l1_ds=ds)
             else:
                 assert isinstance(srf,xr.Dataset)
             odr = get_ODR_for_sensor(srf)
         else:
             assert isinstance(odr,xr.Dataset)
         self.odr = odr
+        bands = [self.bands[(np.abs(self.bands - b)).argmin()] for b in odr.bands.values]
+        self.odr = odr.assign_coords({'bands':bands})
 
+        # Initialize angles geometry
         init_geometry(self.ds)
 
         self.ds.reset_coords().chunk(bands=-1)
@@ -85,7 +89,7 @@ class Rayleigh_correction:
         self.ds['rho_rc'].attrs.update({'desc': 'Rayleigh corrected reflectance',
                                 **attrs})
 
-        # Total atmospheric diffuse transmittance
+        # Total atmospheric diffuse transmittance 
         self.ds['t_d'] = (self.lut.trans_flux_down.interp(
             mu_s=self.ds.mus, odr=self.odr, wdspd=wdspd
         ) * self.lut.trans_flux_up.interp(
@@ -93,7 +97,7 @@ class Rayleigh_correction:
         self.ds['t_d'].attrs.update(
             {'desc': 'Total atmospheric diffuse transmittance',
             **attrs})
-        return 
+        return self.ds['rho_rc']
     
     def apply(self):
         return self.run()

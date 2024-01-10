@@ -7,10 +7,10 @@ import numpy as np
 
 from pyhdf.SD import SD
 from pathlib import Path
-from eoread.eo import datetime
+from eoread.eo import datetime, init_geometry
 from eotools.srf import get_climate_data, get_SRF, get_absorption, combine_with_srf
 
-from lib.eoread.ancillary.era5 import ERA5
+from eoread.ancillary.era5 import ERA5
 
 
 class Gaseous_correction:
@@ -44,7 +44,7 @@ class Gaseous_correction:
             
         # Load srf for each channel
         if srf is None:
-            srf = get_SRF(ds.sensor, ds.platform)
+            srf = get_SRF(l1_ds=ds)
         else:
             assert isinstance(srf,xr.Dataset)
 
@@ -55,6 +55,8 @@ class Gaseous_correction:
         # calculates the correction coefficients for each gas
         for name_k,k in zip(['K_oz', 'K_no2'],[k_oz_data, k_no2_data]):
             dic_k = combine_with_srf(srf, k)
+            bands_idx = [(np.abs(np.array(self.bands) - k)).argmin() for k in dic_k.keys()]
+            dic_k = {self.bands[bands_idx[k]]: val for k,val in enumerate(dic_k.values())}
 
             # stores calculated variables in the dataset
             if name_k == 'K_oz' : 
@@ -64,6 +66,9 @@ class Gaseous_correction:
         
         # Collect ancillary data
         self.add_ancillary(self.ds)
+
+        # Initialize angles geometry
+        init_geometry(self.ds)
     
 
     def read_no2_data(self, month):
@@ -142,6 +147,12 @@ class Gaseous_correction:
     
 
     def add_ancillary(self, ds):
+        '''
+        download and read ancillary data to apply Gaseous
+        correction
+
+        add ERA5 variables in xarray Dataset
+        '''
         dir_root = Path(__file__).parents[1]
         makedirs(dir_root/'auxdata/ERA5', exist_ok=True)
 
@@ -156,7 +167,7 @@ class Gaseous_correction:
         date = dt.strptime(ds.datetime,'%Y-%m-%dT%H:%M:%S')
         anc = era5.get(variables=var_to_get, dt=date)
         for varname in zip(varnames, var_to_get):
-            ds[varname[0]] = anc[varname[1]].interp(
+            ds.attrs[varname[0]] = anc[varname[1]].interp(
                 latitude=ds.latitude,
                 longitude=ds.longitude,
                 ).drop(['latitude', 'longitude'])
@@ -179,14 +190,8 @@ class Gaseous_correction:
 
         air_mass = 1/muv + 1/mus
 
-        #
         # ozone correction
-        #
-        ozone_warn = (ozone[ok] < 50) | (ozone[ok] > 1000)
-        if ozone_warn.any():
-            warn('ozone is assumed in DU ({})'.format(ozone[ok][ozone_warn]))
-
-        for i, b in enumerate(self.bands):
+        for i, b in enumerate(self.K_OZ.keys()):
 
             if not Rtoa.size:
                 break 
@@ -198,14 +203,12 @@ class Gaseous_correction:
 
             Rtoa_gc[ok, i] = Rtoa[ok, i]/trans_O3
 
-        #
         # NO2 correction
-        #
         no2_frac, no2_tropo, no2_strat = self.get_no2(latitude, longitude, datetime, flags)
         no2_tr200 = no2_frac * no2_tropo
         no2_tr200[no2_tr200 < 0] = 0
 
-        for i, b in enumerate(self.bands):
+        for i, b in enumerate(self.K_OZ.keys()):
 
             if not Rtoa.size:
                 break 
@@ -230,11 +233,13 @@ class Gaseous_correction:
             total_ozone = ds.total_ozone / 2.1415e-5  # convert kg/m2 to DU
         else:
             total_ozone = ds.total_ozone
-            assert ds.total_ozone.units in ['DU']
+            assert ds.total_ozone.units in ['DU','Dobsons']
         
+        date = dt.strptime(ds.datetime, '%Y-%m-%dT%H:%M:%S')
+        Rtoa = ds.Rtoa.chunk(dict(bands=-1))
         ds['rho_gc'] = xr.apply_ufunc(
             self.run,
-            ds.rho_toa,
+            Rtoa,
             ds.mus,
             ds.muv,
             total_ozone,
@@ -242,7 +247,7 @@ class Gaseous_correction:
             ds.longitude,
             ds.flags,
             dask='parallelized',
-            kwargs={'datetime': ds.start_time + (ds.end_time - ds.start_time)/2},
+            kwargs={'datetime': date},
             input_core_dims=[['bands'], [], [], [], [], [], []],
             output_core_dims=[['bands']],
             output_dtypes=['float32'],

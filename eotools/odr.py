@@ -41,7 +41,7 @@ def get_ODR_for_sensor(srf:xr.Dataset):
         integrate = np.trapz(srf_band*od_xr, x=wav)
         normalize = np.trapz(srf_band,x=wav)
         out_ODR[band] = integrate / normalize
-    return xr.DataArray(list(out_ODR.values()), coords={'band':list(srf.keys())})
+    return xr.DataArray(list(out_ODR.values()), coords={'bands':list(srf.keys())})
 
 
 
