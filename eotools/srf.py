@@ -1,112 +1,108 @@
-import numpy as np
+import tarfile
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Optional, Union
+
 import pandas as pd
 import xarray as xr
-
-import os
-import tarfile
-from glob import glob
-
-from eoread.download import download_url
+from eoread.download_legacy import download_url
+from eoread.utils.config import load_config
+from eoread.utils.fileutils import filegen
 
 
-def get_climate_data(dirname): 
+def get_SRF(
+    id_sensor: Union[str, tuple, xr.Dataset],
+    directory: Optional[Path] = None,
+) -> xr.Dataset:
     """
-    Collect climate data from hygeos server 
-    """
-    download_url('https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',dirname)
-    download_url('https://docs.hygeos.com/s/4tzqH25SwK9iGMw/download/trop_f_no2_200m.hdf',dirname)
-
-
-def get_absorption(gaz:str, dirname): 
-    '''
-    read absorption data for a gaz provided by user
-
-    returns an array corresponding to the absorption rate of the gas as
-    a function of wavelength [unit: nm]
-    '''
-    k_path = pd.read_csv('eotools/ancillary/absorption_MTL.csv', header=0)
-    urlpath = k_path[k_path['gaz'] == gaz]['url_txt']
-    skiprows = k_path[k_path['gaz'] == gaz]['skiprows'].values[0]
-    if len(urlpath) == 0:
-        raise FileNotFoundError(f'No corresponding file for gaz ({gaz})')
-    
-    txt_path = download_url(urlpath.values[0], dirname)
-    abs_rate = pd.read_csv(txt_path, skiprows=skiprows, 
-                    engine='python', dtype=float,
-                    index_col=False, sep=' ',
-                    names=["Wavelength", "Value"])
-    return xr.DataArray(abs_rate['Value'].to_numpy(),
-                        coords={'wav':abs_rate['Wavelength'].to_numpy()})
-
-
-def get_SRF(sensor:str = None, 
-            platform:str = None, 
-            dirpath:str = 'auxdata/srf/', 
-            l1_ds: xr.Dataset = None):
-    """
-    Download and store SRF from EUMETSAT Website
+    Download and store Specrtral Response Function (SRF) from EUMETSAT Website
         -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
-    
+
     Arguments:
-        - sensor [str]   : name of the sensor in level1 reader
-        - platform [str] : name of the platform in level1 reader
-        - dirpath [str]  : directory path where to save SRF files
-        - l1_ds [Dataset]: xarray from eoread reader 
-    
-    Return a xr.DataArray with the different SRF 
+        - id_sensor: identifier of the sensor/platform. Can be one of:
+            * id_EUMETSAT (str), as in the srf_eumetsat.csv file
+            * a tuple (sensor, platform) used for lookup in the sensors.csv
+            * an xr.Dataset with sensor and platform attributes
+        - directory [Path] : directory path where to save SRF files
+
+    Return a xr.Dataset with the SRF for each band.
     """
-    if l1_ds is not None:
-        sensor, platform = l1_ds.sensor, l1_ds.platform
-    tar_gz_path = pd.read_csv('eotools/ancillary/srf_eumetsat.csv', header=0, index_col=0)
-    urlpath = tar_gz_path[((tar_gz_path['id_sensor'] == sensor) & (tar_gz_path['id_platform'] == platform))]['url_tar']
-    if len(urlpath) == 0:
-        raise FileNotFoundError(f'No corresponding file for sensor ({sensor}). \
-            If {sensor} is a new type of data read by eoread module, please update csv file')
+    # Default directory
+    if directory is None:
+        directory = load_config()['dir_static'] / "srf"
+    assert directory is not None
+
+    # Load srf_eumetsat.csv
+    file_srf_eum = Path(__file__).parent / "srf_eumetsat.csv"
+    tar_gz_path = pd.read_csv(file_srf_eum, header=0, index_col=0)
+
+    # Sensor selection
+    ds = xr.Dataset()
+    if isinstance(id_sensor, str):
+        sel = tar_gz_path["id_EUMETSAT"] == id_sensor
+        ds.attrs["desc"] = f'Spectral response functions for {id_sensor}'
+    else:
+        if isinstance(id_sensor, tuple):
+            sensor, platform = id_sensor
+
+        elif isinstance(id_sensor, xr.Dataset):
+            sensor = id_sensor.sensor
+            platform = id_sensor.platform
+
+        else:
+            raise TypeError(f"id_sensor has wrong type {id_sensor.__class__}")
+
+        sel = (tar_gz_path["id_sensor"] == sensor) & (
+            tar_gz_path["id_platform"] == platform
+        )
+        ds.attrs["desc"] = f'Spectral response functions for {sensor} {platform}'
+
+    urlpath = tar_gz_path[sel]["url_tar"]
+
+    if len(urlpath) != 1:
+        raise FileNotFoundError(
+            f"No unique corresponding file for {id_sensor}. \
+            If {id_sensor} is a new type of data read by eoread module, please update csv file"
+        )
+
     urlpath = urlpath.values[0]
 
-    ds = xr.Dataset()
-    basename = os.path.basename(urlpath).split('.')[0]
-    if not os.path.exists(dirpath+basename):
-        tar_gz_path = download_url(urlpath, dirpath)
-        f = tarfile.open(tar_gz_path)
-        f.extractall(dirpath+basename) 
-        f.close()
-        os.remove(dirpath+os.path.basename(urlpath))
+    basename = Path(urlpath).name.split(".")[0]
 
-    for filepath in glob(dirpath+basename+'/*.txt'):
-        srf = pd.read_csv(filepath, skiprows=4, 
-                        engine='python', dtype=float,
-                        index_col=False, 
-                        delim_whitespace=True,
-                        names=["Wavelength", "Response"])
-        srf['Wavelength'] = srf['Wavelength'].apply(lambda x: 1./x*1e7).values # Convert wavelength in nm
-        if l1_ds is None:
-            central_wav = round(srf['Wavelength'].mean())
-        else:
-            central_wav = int(l1_ds.bands[(np.abs(l1_ds.bands - srf['Wavelength'].mean())).argmin()])
-        if central_wav in list(ds.keys()):
-            continue
-        ds[central_wav] = xr.DataArray(srf['Response'].values, 
-                                        coords={f'wav_{central_wav}':srf['Wavelength'].values})
+    # Download and extract the SRF files
+    download_extract(directory / basename, urlpath)
+
+    for filepath in (directory / basename).glob("*.txt"):
+        srf = pd.read_csv(
+            filepath,
+            skiprows=4,
+            engine="python",
+            dtype=float,
+            index_col=False,
+            delim_whitespace=True,
+            names=["Wavelength", "Response"],
+        )
+        # Convert wavelength from cm-1 to nm
+        srf["Wavelength"] = srf["Wavelength"].apply(lambda x: 1.0 / x * 1e7).values
+        with open(filepath) as fp:
+            binfo = fp.readline()
+            bid = int(binfo.split(",")[0].strip())
+        ds[bid] = xr.DataArray(
+            srf["Response"].values,
+            coords={f"wav_{bid}": srf["Wavelength"].values},
+            attrs={"band_info": binfo.strip()},
+        )
+        ds[f"wav_{bid}"].attrs["units"] = "nm"
 
     return ds
 
 
-def combine_with_srf(srf:xr.Dataset, lut:xr.DataArray):
+@filegen()
+def download_extract(directory: Path, url: str):
     """
-    Compute the SRF-weighted integration of the variable lut
-    
-    Arguments:
-        - srf : an xr.Dataset of the srf returned by get_SRF
-        - lut : an xr.DataArray of a specific variable
-    
-    Return a dictionary containing the integration value for each wavelength
+    Download a tar.gz file, and extract it to `directory`
     """
-    output_dic = {}
-    for band in srf:
-        srf_band = srf[band].rename({f'wav_{band}':'wav'})
-        lut_interp = lut.interp(wav=srf_band.coords['wav'].values)
-        integrate = np.trapz(lut_interp*srf_band, x=lut_interp.coords['wav'])
-        normalize = np.trapz(srf_band, x=lut_interp.coords['wav'])
-        output_dic[band] = integrate/normalize
-    return output_dic
+    with TemporaryDirectory() as tmpdir:
+        tar_gz_path = download_url(url, tmpdir)
+        with tarfile.open(tar_gz_path) as f:
+            f.extractall(directory)

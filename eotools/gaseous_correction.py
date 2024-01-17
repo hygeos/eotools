@@ -1,4 +1,3 @@
-from warnings import warn
 from datetime import datetime as dt
 from os import makedirs
 import pandas as pd
@@ -8,7 +7,8 @@ import numpy as np
 from pyhdf.SD import SD
 from pathlib import Path
 from eoread.eo import datetime, init_geometry
-from eotools.srf import get_climate_data, get_SRF, get_absorption, combine_with_srf
+from eotools.gaseous_absorption import get_climate_data, get_absorption, combine_with_srf
+from eotools.srf import get_SRF
 
 from eoread.ancillary.era5 import ERA5
 
