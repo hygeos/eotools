@@ -1,9 +1,10 @@
 from pathlib import Path
-import numpy as np
+from typing import Optional, Union
+
 import pandas as pd
 import xarray as xr
-
-from eoread.download import download_url
+from eoread.download_legacy import download_url
+from eoread.utils.config import load_config
 
 
 def get_climate_data(dirname): 
@@ -14,7 +15,7 @@ def get_climate_data(dirname):
     download_url('https://docs.hygeos.com/s/4tzqH25SwK9iGMw/download/trop_f_no2_200m.hdf',dirname)
 
 
-def get_absorption(gaz:str, dirname): 
+def get_absorption(gaz: str, dirname: Optional[Union[str, Path]]=None): 
     '''
     read absorption data for a gaz provided by user
 
@@ -22,6 +23,9 @@ def get_absorption(gaz:str, dirname):
     a function of wavelength [unit: nm]
     '''
     file_absorption_MTL = Path(__file__).parent/'absorption_MTL.csv'
+    if dirname is None:
+        dirname = load_config()["dir_static"]/"common"
+
     k_path = pd.read_csv(file_absorption_MTL, header=0)
     urlpath = k_path[k_path['gaz'] == gaz]['url_txt']
     skiprows = k_path[k_path['gaz'] == gaz]['skiprows'].values[0]
@@ -33,25 +37,9 @@ def get_absorption(gaz:str, dirname):
                     engine='python', dtype=float,
                     index_col=False, sep=' ',
                     names=["Wavelength", "Value"])
-    return xr.DataArray(abs_rate['Value'].to_numpy(),
-                        coords={'wav':abs_rate['Wavelength'].to_numpy()})
+    k = xr.DataArray(abs_rate['Value'].to_numpy(), dims=["wav"])
+    k = k.assign_coords(wav=abs_rate['Wavelength'].to_numpy())
+    k['wav'].attrs.update({"units": "nm"})
 
+    return k
 
-def combine_with_srf(srf: xr.Dataset, lut:xr.DataArray):
-    """
-    Compute the SRF-weighted integration of the variable lut
-    
-    Arguments:
-        - srf : an xr.Dataset of the srf returned by get_SRF
-        - lut : an xr.DataArray of a specific variable
-    
-    Return a dictionary containing the integration value for each wavelength
-    """
-    output_dic = {}
-    for band in srf:
-        srf_band = srf[band].rename({f'wav_{band}':'wav'})
-        lut_interp = lut.interp(wav=srf_band.coords['wav'].values)
-        integrate = np.trapz(lut_interp*srf_band, x=lut_interp.coords['wav'])
-        normalize = np.trapz(srf_band, x=lut_interp.coords['wav'])
-        output_dic[band] = integrate/normalize
-    return output_dic
