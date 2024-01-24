@@ -146,33 +146,6 @@ class Gaseous_correction:
         return no2_frac, no2_tropo, no2_strat
     
 
-    def add_ancillary(self, ds):
-        '''
-        download and read ancillary data to apply Gaseous
-        correction
-
-        add ERA5 variables in xarray Dataset
-        '''
-        dir_root = Path(__file__).parents[1]
-        makedirs(dir_root/'auxdata/ERA5', exist_ok=True)
-
-        var_to_get = ['total_column_ozone']
-        varnames = ['total_ozone']
-
-        # var_to_get = ['u_wind_at_10m', 'sea_level_pressure', 'total_column_ozone']
-        # varnames = ['horizontal_wind', 'sea_level_pressure', 'total_ozone']
-
-        era5 = ERA5(model = ERA5.models.reanalysis_single_level,
-                    directory = dir_root/'auxdata/ERA5')
-        date = dt.strptime(ds.datetime,'%Y-%m-%dT%H:%M:%S')
-        anc = era5.get(variables=var_to_get, dt=date)
-        for varname in zip(varnames, var_to_get):
-            ds.attrs[varname[0]] = anc[varname[1]].interp(
-                latitude=ds.latitude,
-                longitude=ds.longitude,
-                ).drop(['latitude', 'longitude'])
-    
-    
     def run(self, Rtoa, mus, muv,
             ozone, latitude, longitude,
             flags, 
