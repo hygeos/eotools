@@ -1,23 +1,55 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pytest
-import tarfile
-
-from eotools.rayleigh_correction import Rayleigh_correction
-from eoread.landsat8_oli import Level1_L8_OLI
-from tempfile import TemporaryDirectory
 from pathlib import Path
 
-@pytest.mark.parametrize('level1',[
-    Path('lib/SAMPLE_DATA/LC80140282017275LGN00.tar.gz'),
-])
-def test_rayleigh_correction(level1):
-    with TemporaryDirectory() as tmpdir:
-        f = tarfile.open(level1)
-        f.extractall(tmpdir) 
-        f.close() 
-        l1 = Level1_L8_OLI(tmpdir+'/'+level1.name.split('.')[0])
-        rc = Rayleigh_correction(l1).apply()
-        
-        assert 'rho_rc' in list(l1.keys())
+import pytest
+import xarray as xr
+from eoread.ancillary_nasa import Ancillary_NASA
+from eoread.eo import init_geometry
+from eoread.reader import msi
+from eoread.utils.tools import datetime
+from luts import Idx
+
+from eotools.apply_ancillary import apply_ancillary
+from eotools.bodhaine import rod
+from eotools.rayleigh_legacy import Rayleigh_correction
+from eotools.srf import get_SRF, integrate_srf
+
+from . import conftest
+
+level1 = pytest.fixture(msi.get_sample)
+
+
+def test_calc_odr(level1: Path):
+    ds = msi.Level1_MSI(level1)
+    srf = get_SRF(ds)
+    tau_r = integrate_srf(srf, lambda wav_nm: rod(wav_nm * 1e-3))
+    print(tau_r)
+
+
+def test_plot_rho_ray(level1, request):
+    ds = msi.Level1_MSI(level1)
+    rc = Rayleigh_correction(ds)
+    rc.mlut.describe()
+    # [0] Rmolgli (float32 in [0, 6.5e+04]), axes=('dim_mu', 'dim_phi', 'dim_mu', 'dim_tauray', 'dim_wind')
+    # [1] Rmol (float32 in [0, 6.53]), axes=('dim_mu', 'dim_phi', 'dim_mu', 'dim_tauray')
+    # [2] Tmolgli (float32 in [0.366, 1]), axes=('dim_mu', 'dim_tauray', 'dim_wind')
+    sub = rc.mlut["Rmolgli"].sub()[:, :, Idx(0.5), Idx(0.2), Idx(5.0)]
+    sub.to_xarray().plot()  # type: ignore
+    conftest.savefig(request)
+
+    # Check glint position
+    assert sub[Idx(0.5), Idx(180)] > sub[Idx(0.3), Idx(0)]  # type: ignore
+
+
+def test_rayleigh_correction(level1: Path):
+    ds = msi.Level1_MSI(level1)
+    ds = ds.chunk(bands=-1)
+    init_geometry(ds)
+    anc = Ancillary_NASA().get(datetime(ds))
+    anc["altitude"] = xr.zeros_like(anc["total_column_ozone"])
+    apply_ancillary(ds, anc)
+
+    ds["Rtoa_gc"] = ds.Rtoa
+    Rayleigh_correction(ds).apply()
