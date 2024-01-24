@@ -1,16 +1,16 @@
 from datetime import datetime as dt
-from os import makedirs
 import pandas as pd
 import xarray as xr
 import numpy as np
 
 from pyhdf.SD import SD
-from pathlib import Path
-from eoread.eo import datetime, init_geometry
-from eotools.gaseous_absorption import get_climate_data, get_absorption, combine_with_srf
-from eotools.srf import get_SRF
+from eoread.utils.tools import datetime
+from eoread.utils.fileutils import mdir
+from eoread.utils.config import load_config
+from eoread.download_legacy import download_url
+from eotools.gaseous_absorption import get_absorption
+from eotools.srf import integrate_srf
 
-from eoread.ancillary.era5 import ERA5
 
 
 class Gaseous_correction:
@@ -20,9 +20,9 @@ class Gaseous_correction:
     Ex: Gaseous_correction(l1).apply()
     '''
 
-    requires_anc = ['u_wind_at_10m', 'sea_level_pressure', 'total_column_ozone']
+    requires_anc = ['horizontal_wind', 'sea_level_pressure', 'total_column_ozone']
 
-    def __init__(self, ds, srf=None):
+    def __init__(self, ds: xr.Dataset, srf: xr.Dataset):
         self.ds = ds
         self.bands = list(ds.bands.data)
 
@@ -32,43 +32,31 @@ class Gaseous_correction:
         else:
             # extraction mode: per-pixel date
             self.datetime = None
-
+        
         # Collect auxilary data
-        dir_base = Path(__file__).parent.parent
-        dir_common = dir_base/'auxdata'/'common'
-        get_climate_data(dir_common)
-        self.no2_climatology = dir_common/'no2_climatology.hdf'
-        self.no2_frac200m = dir_common/'trop_f_no2_200m.hdf'
-        assert self.no2_climatology.exists()
-        assert self.no2_frac200m.exists()
+        dir_common = mdir(load_config()["dir_static"] / "common")
+        self.no2_climatology = download_url(
+            'https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',
+            dir_common
+        )
+        self.no2_frac200m = download_url(
+            'https://docs.hygeos.com/s/4tzqH25SwK9iGMw/download/trop_f_no2_200m.hdf',
+            dir_common,
+        )
             
-        # Load srf for each channel
-        if srf is None:
-            srf = get_SRF(l1_ds=ds)
-        else:
-            assert isinstance(srf,xr.Dataset)
-
         # load absorption rate for each gas
-        k_oz_data  = get_absorption('o3', dir_common)
-        k_no2_data = get_absorption('no2', dir_common)
+        k_oz_data  = get_absorption('o3')
+        k_no2_data = get_absorption('no2')
         
-        # calculates the correction coefficients for each gas
-        for name_k,k in zip(['K_oz', 'K_no2'],[k_oz_data, k_no2_data]):
-            dic_k = combine_with_srf(srf, k)
-            bands_idx = [(np.abs(np.array(self.bands) - k)).argmin() for k in dic_k.keys()]
-            dic_k = {self.bands[bands_idx[k]]: val for k,val in enumerate(dic_k.values())}
+        self.K_OZ = dict(zip(ds.bands.values,
+                             integrate_srf(srf, k_oz_data).values()))
+        self.K_NO2 = dict(zip(ds.bands.values,
+                              integrate_srf(srf, k_no2_data).values()))
 
-            # stores calculated variables in the dataset
-            if name_k == 'K_oz' : 
-                self.K_OZ  = dic_k
-            if name_k == 'K_no2': 
-                self.K_NO2 = dic_k
-        
-        # Collect ancillary data
-        self.add_ancillary(self.ds)
-
-        # Initialize angles geometry
-        init_geometry(self.ds)
+        # consistency checking: check that both wavc and ds.bands are sorted
+        wavc = integrate_srf(srf, lambda x: x)
+        assert (np.diff(ds.bands) > 0).all()
+        assert (np.diff(list(wavc.values())) > 0).all()
     
 
     def read_no2_data(self, month):
@@ -158,8 +146,7 @@ class Gaseous_correction:
         Rtoa_gc = np.zeros_like(Rtoa)+np.NaN
         ok = ~np.isnan(latitude)   # FIXME:
 
-        # TODO: nightpixels
-        # TODO: invalid pixelshttps://docs.hygeos.com/s/M7iK4eX4CbpYKj8/download/LUT.hdf
+        # TODO: nightpixels & invalid pixels
 
         air_mass = 1/muv + 1/mus
 
@@ -202,13 +189,13 @@ class Gaseous_correction:
     def apply(self):
         ds = self.ds
 
-        if ds.total_ozone.units in ['Kg.m-2', 'kg m**-2']:
-            total_ozone = ds.total_ozone / 2.1415e-5  # convert kg/m2 to DU
+        if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2']:
+            total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
         else:
-            total_ozone = ds.total_ozone
-            assert ds.total_ozone.units in ['DU','Dobsons']
+            total_ozone = ds.total_column_ozone
+            assert ds.total_column_ozone.units in ['DU','Dobsons']
         
-        date = dt.strptime(ds.datetime, '%Y-%m-%dT%H:%M:%S')
+        date = datetime(ds)
         Rtoa = ds.Rtoa.chunk(dict(bands=-1))
         ds['rho_gc'] = xr.apply_ufunc(
             self.run,
