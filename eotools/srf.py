@@ -1,13 +1,15 @@
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Union
+from typing import Callable, Dict, Optional, Union
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 from eoread.download_legacy import download_url
 from eoread.utils.config import load_config
 from eoread.utils.fileutils import filegen
+from eoread.utils.tools import only
 
 
 def get_SRF(
@@ -106,3 +108,39 @@ def download_extract(directory: Path, url: str):
         tar_gz_path = download_url(url, tmpdir)
         with tarfile.open(tar_gz_path) as f:
             f.extractall(directory)
+
+
+def integrate_srf(
+    srf: xr.Dataset, x: Union[Callable, xr.DataArray],
+) -> Dict:
+    """
+    Integrate the quantity x over each spectral band in srf
+
+    If x is a Callable, it is assumed that it takes inputs as a unit of nm
+    If x is a DataArray, it should have a dimension "wav" and an associated unit
+
+    Returns a dict of integrated values, sorted by key
+    """
+    integrated = {}
+    for band in srf:
+        srf_band = srf[band]
+        srf_wav = srf_band[only(srf_band.dims)]
+        wav = srf_wav.values
+
+        # Calculate quantity x over values `wav`
+        # either by interpolation or by calling x
+        if callable(x):
+            # Check that the input unit is consistent
+            assert srf_wav.units == 'nm'
+            xx = x(wav)
+        elif isinstance(x, xr.DataArray):
+            assert x.wav.units == srf_wav.units
+            xx = x.interp(wav=srf_wav.values).values
+        else:
+            raise TypeError(f"Error, x is of type {x.__class__}")
+
+        integrate = np.trapz(srf_band.values * xx, x=wav)
+        normalize = np.trapz(srf_band.values, x=wav)
+        integrated[band] = integrate / normalize
+
+    return dict(sorted(integrated.items()))
