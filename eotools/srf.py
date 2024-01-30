@@ -123,6 +123,10 @@ def integrate_srf(
     """
     integrated = {}
     for band in srf:
+        # check that band identifier can be
+        # converted to int (thus sorted upon return)
+        int(band) # type: ignore
+
         srf_band = srf[band]
         srf_wav = srf_band[only(srf_band.dims)]
         wav = srf_wav.values
