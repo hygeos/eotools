@@ -3,5 +3,5 @@ name = "eotools"
 version = "0.1-dev"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
