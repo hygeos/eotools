@@ -1,7 +1,9 @@
-[project]
+[tool.poetry]
 name = "eotools"
 version = "0.1-dev"
+description = "A collection of tools and modules for building processing chains."
+authors = ["HYGEOS team"]
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
