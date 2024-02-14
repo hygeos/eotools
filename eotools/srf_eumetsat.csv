@@ -34,7 +34,7 @@
 32,CO2M-A CLIM,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_co2m_1_clim_srf/rtcoef_co2m_1_clim_srf.tar.gz
 33,ISS ECOSTRESS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_iss_1_ecostres_srf/rtcoef_iss_1_ecostres_srf.tar.gz
 34,DSCOVR EPIC,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dscovr_1_epic_srf/rtcoef_dscovr_1_epic_srf.tar.gz
-35,MTG 1 FCI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtg_1_fci_srf/rtcoef_mtg_1_fci_srf.tar.gz
+35,MTG 1 FCI,FCI,MTG-I1,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtg_1_fci_srf/rtcoef_mtg_1_fci_srf.tar.gz
 36,GMS 1 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_1_imager_srf/rtcoef_gms_1_imager_srf.tar.gz
 37,GMS 2 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_2_imager_srf/rtcoef_gms_2_imager_srf.tar.gz
 38,GMS 3 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_3_imager_srf/rtcoef_gms_3_imager_srf.tar.gz
@@ -142,10 +142,10 @@
 142,LANDSAT 8 OLI,OLI,Landsat8,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_8_oli_srf/rtcoef_landsat_8_oli_srf.tar.gz
 143,LANDSAT 9 OLI,OLI,Landsat9,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_9_oli_srf/rtcoef_landsat_9_oli_srf.tar.gz
 144,NASA SBG,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sbg_1_sbg_srf/rtcoef_sbg_1_sbg_srf.tar.gz
-145,MSG 1 SEVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_1_seviri_srf/rtcoef_msg_1_seviri_srf.tar.gz
-146,MSG 2 SEVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_2_seviri_srf/rtcoef_msg_2_seviri_srf.tar.gz
-147,MSG 3 SEVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_3_seviri_srf/rtcoef_msg_3_seviri_srf.tar.gz
-148,MSG 4 SEVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_4_seviri_srf/rtcoef_msg_4_seviri_srf.tar.gz
+145,MSG 1 SEVIRI,SEVIRI,MSG1,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_1_seviri_srf/rtcoef_msg_1_seviri_srf.tar.gz
+146,MSG 2 SEVIRI,SEVIRI,MSG2,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_2_seviri_srf/rtcoef_msg_2_seviri_srf.tar.gz
+147,MSG 3 SEVIRI,SEVIRI,MSG3,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_3_seviri_srf/rtcoef_msg_3_seviri_srf.tar.gz
+148,MSG 4 SEVIRI,SEVIRI,MSG4,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_4_seviri_srf/rtcoef_msg_4_seviri_srf.tar.gz
 149,GCOM-C-1 SGLI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gcom-c_1_sgli_srf/rtcoef_gcom-c_1_sgli_srf.tar.gz
 150,NIMBUS 3 SIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_sirs_srf/rtcoef_nimbus_3_sirs_srf.tar.gz
 151,NIMBUS 3 SIRS-BLUR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_sirs-blur_srf/rtcoef_nimbus_3_sirs-blur_srf.tar.gz
