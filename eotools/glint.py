@@ -112,7 +112,8 @@ def glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None):
 
 
     # Compute glitter's normalized radiance
-    return (pentevague * reflectspecu / (4.0 * cosbeta * cosbeta * cosbeta * cosbeta * mu_v))
+    Rgli = (pentevague*reflectspecu / (4.0*cosbeta*cosbeta*cosbeta*cosbeta*mu_v))
+    return Rgli.astype('float32')
 
 
 
