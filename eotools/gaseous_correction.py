@@ -1,4 +1,5 @@
-from datetime import datetime as dt
+from pathlib import Path
+from typing import Optional
 from typing import List, Optional
 import pandas as pd
 import xarray as xr
@@ -19,7 +20,8 @@ class Gaseous_correction:
 
     def __init__(self,
                  ds: xr.Dataset,
-                 srf: xr.Dataset):
+                 srf: xr.Dataset,
+                 dir_common: Optional[Path]):
         '''
         Gaseous correction module
 
@@ -27,20 +29,22 @@ class Gaseous_correction:
 
         The bands of ds shall be contained in srf.
         '''
+
         self.ds = ds
         self.bands = list(ds.bands.data)
         for b in self.bands:
             assert b in srf
 
-        if 'datetime' in ds.attrs:
+        try:
             # image mode: single date for the whole image
             self.datetime = datetime(ds)
-        else:
+        except AttributeError:
             # extraction mode: per-pixel date
             self.datetime = None
 
         # Collect auxilary data
-        dir_common = mdir(load_config()["dir_static"] / "common")
+        if dir_common is None:
+            dir_common = mdir(load_config()["dir_static"] / "common")
         self.no2_climatology = download_url(
             'https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',
             dir_common
@@ -51,8 +55,8 @@ class Gaseous_correction:
         )
 
         # load absorption rate for each gas
-        k_oz_data  = get_absorption('o3')
-        k_no2_data = get_absorption('no2')
+        k_oz_data  = get_absorption('o3', dirname=dir_common)
+        k_no2_data = get_absorption('no2', dirname=dir_common)
 
         self.K_OZ = integrate_srf(srf, k_oz_data)
         self.K_NO2 = integrate_srf(srf, k_no2_data)
@@ -190,18 +194,25 @@ class Gaseous_correction:
 
     def apply(self):
         ds = self.ds
-
-        assert ds.total_column_ozone.units == 'Dobson'
-
         date = datetime(ds)
-        Rtoa = ds.Rtoa.chunk(dict(bands=-1))   # FIXME: remove ?
-        ds["rho_gc"] = xr.apply_ufunc(
+
+        if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2']:
+            total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
+        else:
+            total_ozone = ds.total_column_ozone
+            assert ds.total_column_ozone.units in ['DU','Dobsons']
+        
+        if 'Rtoa' in ds:
+            Rtoa = ds.Rtoa.chunk(dict(bands=-1))
+        else:
+            Rtoa = ds.rho_toa.chunk(dict(bands=-1))
+        ds['rho_gc'] = xr.apply_ufunc(
             self.run,
             ds.bands,
             Rtoa,
             ds.mus,
             ds.muv,
-            ds.total_column_ozone,
+            total_ozone,
             ds.latitude,
             ds.longitude,
             ds.flags,
