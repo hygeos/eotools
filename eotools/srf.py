@@ -60,8 +60,8 @@ def get_SRF(
         else:
             raise TypeError(f"id_sensor has wrong type {id_sensor.__class__}")
 
-        sel = (tar_gz_path["id_sensor"] == sensor) & (
-            tar_gz_path["id_platform"] == platform
+        sel = (tar_gz_path["id_sensor"] == sensor.upper()) & (
+            tar_gz_path["id_platform"] == platform.upper()
         )
         ds.attrs["desc"] = f'Spectral response functions for {sensor} {platform}'
 
@@ -82,18 +82,18 @@ def get_SRF(
 
     list_files = sorted((directory / basename).glob("*.txt"))
 
-    if (
-        (band_ids is None)
+    if ((band_ids is None)
         and isinstance(id_sensor, xr.Dataset)
         and "bands" in id_sensor
-    ):
+        ):
         band_ids = list(id_sensor.bands.values)
 
     if band_ids is not None:
         # check that the number of read bands matches `band_ids`
         assert len(list_files) == len(band_ids)
 
-    for filepath in list_files:
+    for i, filepath in enumerate(list_files):
+        bid = i+1
         srf = pd.read_csv(
             filepath,
             skiprows=4,
@@ -107,7 +107,6 @@ def get_SRF(
         srf["Wavelength"] = srf["Wavelength"].apply(lambda x: 1.0 / x * 1e7).values
         with open(filepath) as fp:
             binfo = fp.readline()
-            bid = int(binfo.split(",")[0].strip())
         if band_ids is not None:
             bid = band_ids[bid-1]
         ds[bid] = xr.DataArray(
