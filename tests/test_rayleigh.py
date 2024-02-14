@@ -47,9 +47,16 @@ def test_rayleigh_correction(level1: Path):
     ds = msi.Level1_MSI(level1)
     ds = ds.chunk(bands=-1)
     init_geometry(ds)
-    anc = Ancillary_NASA().get(datetime(ds))
-    anc["altitude"] = xr.zeros_like(anc["total_column_ozone"])
-    apply_ancillary(ds, anc)
+    apply_ancillary(
+        ds,
+        Ancillary_NASA(),
+        variables={
+            "horizontal_wind": "m/s",
+            "sea_level_pressure": "hectopascals",
+            "total_column_ozone": "Dobson",
+        },
+    )
+    ds["altitude"] = xr.zeros_like(ds["total_column_ozone"])
 
-    ds["Rtoa_gc"] = ds.Rtoa
+    ds["rho_gc"] = ds.Rtoa
     Rayleigh_correction(ds).apply()

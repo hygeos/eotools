@@ -22,6 +22,7 @@ class Rayleigh_correction:
             load_config()['dir_static']/'rayleigh'
         )
         self.mlut = read_mlut_hdf(str(lut_file))
+        self.bitmask_invalid = -1  # FIXME:
 
 
     def run(self, wav, mus, muv, raa, altitude, surf_press, wind_speed, flags):
@@ -30,11 +31,12 @@ class Rayleigh_correction:
         + transmission interpolation
         '''
         nbands = wav.shape[-1]
-        Rmol = np.zeros_like(wav) + np.NaN
-        Rmolgli = np.zeros_like(wav) + np.NaN
-        Tmol = np.zeros_like(wav) + np.NaN
+        dim3 = mus.shape + (nbands,)
+        Rmol = np.zeros(dim3, dtype='float32') + np.NaN
+        Rmolgli = np.zeros(dim3, dtype='float32') + np.NaN
+        Tmol = np.zeros(dim3, dtype='float32') + np.NaN
 
-        ok = (((flags & self.ds.BITMASK_INVALID) == 0)
+        ok = (((flags & self.bitmask_invalid) == 0)
               & (mus > 0.17)   # avoid cases where sun is too low
               & (muv > 0.17)   # ...or sensor
               )
@@ -50,7 +52,9 @@ class Rayleigh_correction:
         for i in range(nbands):
 
             # calculate Rayleigh optical thickness on the fly
-            tau_ray = rod(wav[ok, i]/1000., 400., 45.,
+            tau_ray = rod((wav[i] if wav.ndim == 1 else wav[ok, i])/1000.,
+                          400.,
+                          45.,
                           altitude[ok],
                           surf_press[ok])
 
@@ -96,9 +100,9 @@ class Rayleigh_correction:
             output_dtypes=['float32', 'float32', 'float32'],
         )
 
-        ds['Rmol'] = Rmol
-        ds['Rmolgli'] = Rmolgli
+        ds['rho_r'] = Rmol
+        ds['rho_r_gli'] = Rmolgli
         ds['Tmol'] = Tmol
-        ds['Rprime'] = ds.Rtoa_gc - ds.Rmolgli
-        ds['Rprime_noglint'] = ds.Rtoa_gc - ds.Rmol
+        ds['Rprime'] = ds.rho_gc - ds.rho_r_gli
+        ds['Rprime_noglint'] = ds.rho_gc - ds.rho_r
 
