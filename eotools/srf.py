@@ -16,6 +16,7 @@ def get_SRF(
     id_sensor: Union[str, tuple, xr.Dataset],
     directory: Optional[Path] = None,
     band_ids: Optional[List[int]] = None,
+    check_nbands: bool = True
 ) -> xr.Dataset:
     """
     Download and store Specrtral Response Function (SRF) from EUMETSAT Website
@@ -29,6 +30,8 @@ def get_SRF(
         - directory [Path] : directory path where to save SRF files
         - band_ids [List]: list of sensor band identifiers. If not provided and
           id_sensor is a xr.Dataset, id_sensor.bands is used.
+        - check_nbands: whether the number of bands passed as band_ids should match
+          the number of files.
 
     Return a xr.Dataset with the SRF for each band.
     The variable name for each SRF is either a default band identifier
@@ -88,12 +91,15 @@ def get_SRF(
         ):
         band_ids = list(id_sensor.bands.values)
 
-    if band_ids is not None:
-        # check that the number of read bands matches `band_ids`
-        assert len(list_files) == len(band_ids)
+    nbands = len(list_files)
+    if (band_ids is not None):
+        if check_nbands:
+            # check that the number of read bands matches `band_ids`
+            assert nbands == len(band_ids)
+        else:
+            nbands = len(band_ids)
 
-    for i, filepath in enumerate(list_files):
-        bid = i+1
+    for i, filepath in enumerate(list_files[:nbands]):
         srf = pd.read_csv(
             filepath,
             skiprows=4,
@@ -108,7 +114,9 @@ def get_SRF(
         with open(filepath) as fp:
             binfo = fp.readline()
         if band_ids is not None:
-            bid = band_ids[bid-1]
+            bid = band_ids[i]
+        else:
+            bid = i+1
         ds[bid] = xr.DataArray(
             srf["Response"].values,
             coords={f"wav_{bid}": srf["Wavelength"].values},
