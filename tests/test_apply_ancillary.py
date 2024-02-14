@@ -24,9 +24,16 @@ level1 = pytest.fixture(msi.get_sample)
 )
 def test_apply_ancillary(level1: Path, ancillary, request):
     ds = msi.Level1_MSI(level1).thin(x=10, y=10)
-    anc = ancillary().get(datetime(ds))
-    apply_ancillary(ds, anc)
-    
+    apply_ancillary(
+        ds,
+        ancillary(),
+        variables={
+            "horizontal_wind": "m/s",
+            "sea_level_pressure": "hectopascals",
+            "total_column_ozone": "Dobson",
+        },
+    )
+
     for x in tag_filter(ds, "ancillary"):
         plt.figure()
         ds[x].plot() # type: ignore
