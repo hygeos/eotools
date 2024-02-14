@@ -1,7 +1,7 @@
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from eoread.utils.tools import only
 def get_SRF(
     id_sensor: Union[str, tuple, xr.Dataset],
     directory: Optional[Path] = None,
+    band_ids: Optional[List[int]] = None,
 ) -> xr.Dataset:
     """
     Download and store Specrtral Response Function (SRF) from EUMETSAT Website
@@ -26,8 +27,13 @@ def get_SRF(
             * a tuple (sensor, platform) used for lookup in the sensors.csv
             * an xr.Dataset with sensor and platform attributes
         - directory [Path] : directory path where to save SRF files
+        - band_ids [List]: list of sensor band identifiers. If not provided and
+          id_sensor is a xr.Dataset, id_sensor.bands is used.
 
     Return a xr.Dataset with the SRF for each band.
+    The variable name for each SRF is either a default band identifier
+    (integer starting from 1 - if band_ids is None), or corresponds to the
+    list `band_ids`.
     """
     # Default directory
     if directory is None:
@@ -74,7 +80,20 @@ def get_SRF(
     # Download and extract the SRF files
     download_extract(directory / basename, urlpath)
 
-    for filepath in (directory / basename).glob("*.txt"):
+    list_files = sorted((directory / basename).glob("*.txt"))
+
+    if (
+        (band_ids is None)
+        and isinstance(id_sensor, xr.Dataset)
+        and "bands" in id_sensor
+    ):
+        band_ids = list(id_sensor.bands.values)
+
+    if band_ids is not None:
+        # check that the number of read bands matches `band_ids`
+        assert len(list_files) == len(band_ids)
+
+    for filepath in list_files:
         srf = pd.read_csv(
             filepath,
             skiprows=4,
@@ -89,6 +108,8 @@ def get_SRF(
         with open(filepath) as fp:
             binfo = fp.readline()
             bid = int(binfo.split(",")[0].strip())
+        if band_ids is not None:
+            bid = band_ids[bid-1]
         ds[bid] = xr.DataArray(
             srf["Response"].values,
             coords={f"wav_{bid}": srf["Wavelength"].values},
@@ -119,15 +140,10 @@ def integrate_srf(
     If x is a Callable, it is assumed that it takes inputs as a unit of nm
     If x is a DataArray, it should have a dimension "wav" and an associated unit
 
-    Returns a dict of integrated values, sorted by key
+    Returns a dict of integrated values
     """
     integrated = {}
-    for band in srf:
-        # check that band identifier can be
-        # converted to int (thus sorted upon return)
-        int(band) # type: ignore
-
-        srf_band = srf[band]
+    for band, srf_band in srf.items():
         srf_wav = srf_band[only(srf_band.dims)]
         wav = srf_wav.values
 
@@ -147,4 +163,4 @@ def integrate_srf(
         normalize = np.trapz(srf_band.values, x=wav)
         integrated[band] = integrate / normalize
 
-    return dict(sorted(integrated.items()))
+    return integrated
