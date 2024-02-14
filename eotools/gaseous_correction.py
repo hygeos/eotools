@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+from typing import List, Optional
 import pandas as pd
 import xarray as xr
 import numpy as np
@@ -12,19 +13,24 @@ from eotools.gaseous_absorption import get_absorption
 from eotools.srf import integrate_srf
 
 
-
 class Gaseous_correction:
-    '''
-    Gaseous correction module
-
-    Ex: Gaseous_correction(l1).apply()
-    '''
 
     requires_anc = ['horizontal_wind', 'sea_level_pressure', 'total_column_ozone']
 
-    def __init__(self, ds: xr.Dataset, srf: xr.Dataset):
+    def __init__(self,
+                 ds: xr.Dataset,
+                 srf: xr.Dataset):
+        '''
+        Gaseous correction module
+
+        Ex: Gaseous_correction(l1).apply()
+
+        The bands of ds shall be contained in srf.
+        '''
         self.ds = ds
         self.bands = list(ds.bands.data)
+        for b in self.bands:
+            assert b in srf
 
         if 'datetime' in ds.attrs:
             # image mode: single date for the whole image
@@ -32,7 +38,7 @@ class Gaseous_correction:
         else:
             # extraction mode: per-pixel date
             self.datetime = None
-        
+
         # Collect auxilary data
         dir_common = mdir(load_config()["dir_static"] / "common")
         self.no2_climatology = download_url(
@@ -43,21 +49,18 @@ class Gaseous_correction:
             'https://docs.hygeos.com/s/4tzqH25SwK9iGMw/download/trop_f_no2_200m.hdf',
             dir_common,
         )
-            
+
         # load absorption rate for each gas
         k_oz_data  = get_absorption('o3')
         k_no2_data = get_absorption('no2')
-        
-        self.K_OZ = dict(zip(ds.bands.values,
-                             integrate_srf(srf, k_oz_data).values()))
-        self.K_NO2 = dict(zip(ds.bands.values,
-                              integrate_srf(srf, k_no2_data).values()))
+
+        self.K_OZ = integrate_srf(srf, k_oz_data)
+        self.K_NO2 = integrate_srf(srf, k_no2_data)
 
         # consistency checking: check that both wavc and ds.bands are sorted
-        wavc = integrate_srf(srf, lambda x: x)
-        assert (np.diff(ds.bands) > 0).all()
-        assert (np.diff(list(wavc.values())) > 0).all()
-    
+        # wavc = integrate_srf(srf, lambda x: x)
+        # assert (np.diff(ds.bands) > 0).all()
+        # assert (np.diff(list(wavc.values())) > 0).all()
 
     def read_no2_data(self, month):
         '''
@@ -91,7 +94,6 @@ class Gaseous_correction:
         hdf1.end()
         hdf2.end()
 
-        
     def get_no2(self, latitude, longitude, datetime, flags):
         """
         returns no2_frac, no2_tropo, no2_strat at the pixels coordinates
@@ -134,7 +136,7 @@ class Gaseous_correction:
         return no2_frac, no2_tropo, no2_strat
     
 
-    def run(self, Rtoa, mus, muv,
+    def run(self, bands, Rtoa, mus, muv,
             ozone, latitude, longitude,
             flags, 
             datetime):
@@ -151,7 +153,7 @@ class Gaseous_correction:
         air_mass = 1/muv + 1/mus
 
         # ozone correction
-        for i, b in enumerate(self.K_OZ.keys()):
+        for i, b in enumerate(bands):
 
             if not Rtoa.size:
                 break 
@@ -168,7 +170,7 @@ class Gaseous_correction:
         no2_tr200 = no2_frac * no2_tropo
         no2_tr200[no2_tr200 < 0] = 0
 
-        for i, b in enumerate(self.K_OZ.keys()):
+        for i, b in enumerate(bands):
 
             if not Rtoa.size:
                 break 
@@ -189,28 +191,23 @@ class Gaseous_correction:
     def apply(self):
         ds = self.ds
 
-        if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2']:
-            total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
-        else:
-            total_ozone = ds.total_column_ozone
-            assert ds.total_column_ozone.units in ['DU','Dobsons']
-        
+        assert ds.total_column_ozone.units == 'Dobson'
+
         date = datetime(ds)
-        Rtoa = ds.Rtoa.chunk(dict(bands=-1))
-        ds['rho_gc'] = xr.apply_ufunc(
+        Rtoa = ds.Rtoa.chunk(dict(bands=-1))   # FIXME: remove ?
+        ds["rho_gc"] = xr.apply_ufunc(
             self.run,
+            ds.bands,
             Rtoa,
             ds.mus,
             ds.muv,
-            total_ozone,
+            ds.total_column_ozone,
             ds.latitude,
             ds.longitude,
             ds.flags,
             dask='parallelized',
             kwargs={'datetime': date},
-            input_core_dims=[['bands'], [], [], [], [], [], []],
+            input_core_dims=[['bands'], ['bands'], [], [], [], [], [], []],
             output_core_dims=[['bands']],
             output_dtypes=['float32'],
         )
-
-        return ds['rho_gc']

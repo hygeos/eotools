@@ -18,8 +18,6 @@ from eotools.srf import get_SRF
 level1 = pytest.fixture(msi.get_sample)
 
 
-
-
 @pytest.mark.parametrize('sensor, platform',[
     ('OLI', 'Landsat8'),
     ('OLI', 'Landsat9'),
@@ -32,12 +30,19 @@ def test_integrate_srf(sensor, platform, gas):
     integrated = integrate_srf(srf, k)
 
     print(integrated)
-    
+
 
 def test_gaseous_correction(level1: Path):
     ds = msi.Level1_MSI(level1)
     init_geometry(ds)
-    anc = Ancillary_NASA().get(datetime(ds))
-    apply_ancillary(ds, anc)
+    apply_ancillary(
+        ds,
+        Ancillary_NASA(),
+        variables={
+            "horizontal_wind": "m/s",
+            "sea_level_pressure": "hectopascals",
+            "total_column_ozone": "Dobson",
+        },
+    )
     srf = get_SRF(ds)
     Gaseous_correction(ds, srf).apply()
