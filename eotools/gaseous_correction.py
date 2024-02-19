@@ -15,6 +15,24 @@ from eotools.srf import integrate_srf
 
 
 class Gaseous_correction:
+    """Gaseous correction module
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset to which the gaseous correction is applied.
+        The bands of `ds` shall be contained in `srf`.
+    srf : xr.Dataset
+        The sensor spectral response function (SRF).
+    dir_common : Optional[Path]
+        Path to the `common` directory.
+
+    Example
+    -------
+    Apply gaseous correction to `l1`
+
+    >>> Gaseous_correction(l1).apply()
+    """                 
 
     requires_anc = ['horizontal_wind', 'sea_level_pressure', 'total_column_ozone']
 
@@ -22,13 +40,6 @@ class Gaseous_correction:
                  ds: xr.Dataset,
                  srf: xr.Dataset,
                  dir_common: Optional[Path]):
-        '''
-        Gaseous correction module
-
-        Ex: Gaseous_correction(l1).apply()
-
-        The bands of ds shall be contained in srf.
-        '''
 
         self.ds = ds
         self.bands = list(ds.bands.data)
@@ -138,7 +149,6 @@ class Gaseous_correction:
         no2_frac = self.no2_frac200m_data[ilat,ilon]
 
         return no2_frac, no2_tropo, no2_strat
-    
 
     def run(self, bands, Rtoa, mus, muv,
             ozone, latitude, longitude,
@@ -193,6 +203,10 @@ class Gaseous_correction:
         return Rtoa_gc.astype('float32')
 
     def apply(self):
+        """Apply gaseous to current dataset `ds`
+
+        This creates the variable `rho_gc` in the current dataset
+        """        
         ds = self.ds
         date = datetime(ds)
 
@@ -201,7 +215,7 @@ class Gaseous_correction:
         else:
             total_ozone = ds.total_column_ozone
             assert ds.total_column_ozone.units in ['DU','Dobsons']
-        
+
         if 'Rtoa' in ds:
             Rtoa = ds.Rtoa.chunk(dict(bands=-1))
         else:
