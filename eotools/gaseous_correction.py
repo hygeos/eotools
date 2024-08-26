@@ -39,7 +39,7 @@ class Gaseous_correction:
     def __init__(self,
                  ds: xr.Dataset,
                  srf: xr.Dataset,
-                 dir_common: Optional[Path]):
+                 dir_common: Optional[Path]=None):
 
         self.ds = ds
         self.bands = list(ds.bands.data)
@@ -114,7 +114,8 @@ class Gaseous_correction:
         returns no2_frac, no2_tropo, no2_strat at the pixels coordinates
         (latitude, longitude)
         """
-        ok = (flags) == 0
+        ok = ((flags) == 0)
+        ok &= ~np.isnan(latitude) & ~np.isnan(longitude)
 
         # get month
         if not hasattr(datetime, "month"):
@@ -214,7 +215,7 @@ class Gaseous_correction:
             total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
         else:
             total_ozone = ds.total_column_ozone
-            assert ds.total_column_ozone.units in ['DU','Dobsons']
+            assert ds.total_column_ozone.units in ['DU','Dobsons', 'Dobson']
 
         if 'Rtoa' in ds:
             Rtoa = ds.Rtoa.chunk(dict(bands=-1))
