@@ -62,8 +62,9 @@ def apply_ancillary(
 
         ds[varname] = interp(
             anc[varname].compute(scheduler="sync"),
-            ds,
-            interp_dims,
+            interp={
+                k: ds[v] for (k, v) in interp_dims.items()
+            },
         )
         if tag is not None:
             tag_add(ds[varname], tag)
