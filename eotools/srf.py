@@ -16,7 +16,8 @@ def get_SRF(
     id_sensor: Union[str, tuple, xr.Dataset],
     directory: Optional[Path] = None,
     band_ids: Optional[List[int]] = None,
-    check_nbands: bool = True
+    check_nbands: bool = True,
+    thres_check: Optional[float] = 10,
 ) -> xr.Dataset:
     """
     Download and store Specrtral Response Function (SRF) from EUMETSAT Website
@@ -32,6 +33,8 @@ def get_SRF(
           id_sensor is a xr.Dataset, id_sensor.bands is used.
         - check_nbands: whether the number of bands passed as band_ids should match
           the number of files.
+        - thres_check: if band id is provided, check that the integrated srf is within
+          a distance of `thres_check` of this band_id
 
     Return a xr.Dataset with the SRF for each band.
     The variable name for each SRF is either a default band identifier
@@ -124,10 +127,18 @@ def get_SRF(
         )
         ds[f"wav_{bid}"].attrs["units"] = "nm"
 
+    if (band_ids is not None) and (thres_check is not None):
+        # check that the band id matches the srf
+        cwav = integrate_srf(ds, lambda x: x)
+        for bid in band_ids:
+            diff = abs(float(bid) - cwav[bid])
+            assert diff < thres_check, ("There might be an error when providing the "
+                f"SRFs. A central wavelength of {cwav[bid]} was found for band {bid}")
+
     return ds
 
 
-@filegen()
+@filegen(if_exists='skip')
 def download_extract(directory: Path, url: str):
     """
     Download a tar.gz file, and extract it to `directory`
