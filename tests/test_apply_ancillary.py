@@ -4,7 +4,6 @@ import pytest
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.reader import msi
 from eoread.utils.pytest_utils import parametrize_dict
-from eoread.utils.tools import datetime
 from eoread.utils.xrtags import tag_filter
 from matplotlib import pyplot as plt
 

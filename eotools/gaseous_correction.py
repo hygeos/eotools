@@ -1,17 +1,16 @@
 from pathlib import Path
 from typing import Optional
-from typing import List, Optional
 import pandas as pd
 import xarray as xr
 import numpy as np
 
 from pyhdf.SD import SD
-from eoread.utils.tools import datetime
-from eoread.utils.fileutils import mdir
-from eoread.utils.config import load_config
+from core.tools import datetime
+from core.fileutils import mdir
 from eoread.download_legacy import download_url
 from eotools.gaseous_absorption import get_absorption
 from eotools.srf import integrate_srf
+from core import config
 
 
 class Gaseous_correction:
@@ -55,7 +54,7 @@ class Gaseous_correction:
 
         # Collect auxilary data
         if dir_common is None:
-            dir_common = mdir(load_config()["dir_static"] / "common")
+            dir_common = mdir(config.get("dir_static") / "common")
         self.no2_climatology = download_url(
             'https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',
             dir_common

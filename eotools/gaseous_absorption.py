@@ -4,7 +4,7 @@ from typing import Optional, Union
 import pandas as pd
 import xarray as xr
 from eoread.download_legacy import download_url
-from eoread.utils.config import load_config
+from core import config
 
 
 def get_climate_data(dirname): 
@@ -24,7 +24,7 @@ def get_absorption(gaz: str, dirname: Optional[Union[str, Path]]=None):
     '''
     file_absorption_MTL = Path(__file__).parent/'absorption_MTL.csv'
     if dirname is None:
-        dirname = load_config()["dir_static"]/"common"
+        dirname = config.get("dir_static")/"common"
 
     k_path = pd.read_csv(file_absorption_MTL, header=0)
     urlpath = k_path[k_path['gaz'] == gaz]['url_txt']

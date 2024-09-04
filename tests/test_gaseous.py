@@ -7,7 +7,6 @@ import pytest
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.eo import init_geometry
 from eoread.reader import msi
-from eoread.utils.tools import datetime
 
 from eotools.apply_ancillary import apply_ancillary
 from eotools.gaseous_absorption import get_absorption
