@@ -8,7 +8,7 @@ Rayleigh Optical Depth calculation from Bodhaine, 99
 rod(lam, co2, lat, z, P)
 '''
 
-from scipy.constants import codata
+from scipy.constants import value
 import numpy as np
 
 
@@ -70,7 +70,7 @@ def raycrs(lam, co2):
         lam : um
         co2 : ppm
     """
-    Avogadro = codata.value('Avogadro constant')
+    Avogadro = value('Avogadro constant')
     Ns = Avogadro/22.4141 * 273.15/288.15 * 1e-3
     nn2 = n_air(lam, co2)**2
     return (24*np.pi**3 * (nn2-1)**2/(lam*1e-4)**4/Ns**2/(nn2+2)**2 * Fair(lam, co2))
@@ -106,7 +106,7 @@ def rod(lam, co2=400., lat=45., z=0., P=1013.25, pressure='surface'):
 
     Example: rod(0.4, 400., 45., 0., 1013.25)
     """
-    Avogadro = codata.value('Avogadro constant')
+    Avogadro = value('Avogadro constant')
     zs = 0.73737 * z + 5517.56  # effective mass-weighted altitude
     G = g(lat, zs)
     # air pressure at the pixel (i.e. at altitude) in hPa
