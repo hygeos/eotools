@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from eoread.download_legacy import download_url
-from eoread.utils.fileutils import filegen
-from eoread.utils.tools import only
+from core.fileutils import filegen
+from core.tools import only
 from core import config
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 import xarray as xr
-from eoread.utils.tools import raiseflag
+from core.tools import raiseflag
 
 from eotools.utils.stats import stdNxN
 

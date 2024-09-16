@@ -1,10 +1,10 @@
 from typing import Dict, Optional
 import xarray as xr
-from eoread.utils.interpolate import interp
+from core.interpolate import interp
 from eoread.utils.xrtags import tag_add
 import pint_xarray     # noqa: F401
 from cf_xarray.units import units
-from eoread.utils.tools import datetime
+from core.tools import datetime
 
 units.define('Dobson = 2.1415E-05 kg/m**2')
 
