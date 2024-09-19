@@ -15,18 +15,20 @@ def brovey(level1, weights: list = None, srfs = None):
     panchromatic = level1['panchromatic']
     
     # Collect interesting bands
-    if names.rtoa in level1: multi = level1[names.rtoa]
-    elif names.bt in level1: multi = level1[names.bt]
+    if names.rtoa in level1: bands = names.rtoa
+    elif names.bt in level1: bands = names.bt
     else: raise ValueError
     
-    # Upscale multi spectral bands spatial resolution and transpose dimensions
-    
+    # Transpose dimensions and upscale multi spectral bands spatial resolution
+    multi = level1[bands].transpose(..., bands, names.rows, names.columns)
+    multi = np.repeat(multi, 2, axis=-1)
+    multi = np.repeat(multi, 2, axis=-2)
     
     # Compute pseudo-panchromatic
     if weights: 
         pseudopan = (multi*weights).sum(axis=2)
         pseudopan = np.true_divide(pseudopan, weights.sum())
-    else: pseudopan = multi.sum(axis=2)
+    else: pseudopan = multi.sum(axis=2)/3
     
     # Apply Brovey transformation
     ratio = panchromatic/pseudopan
