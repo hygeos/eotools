@@ -4,6 +4,13 @@ version = "0.1-dev"
 description = "A collection of tools and modules for building processing chains."
 authors = ["HYGEOS team"]
 
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+eoread = {git = "ssh://git@github.com/hygeos/eoread.git", develop = true}
+
+[tool.poetry.extras]
+dev = ["eoread"]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
