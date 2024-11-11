@@ -10,7 +10,7 @@ from core.fileutils import mdir
 from eoread.download_legacy import download_url
 from eotools.gaseous_absorption import get_absorption
 from eotools.srf import integrate_srf
-from core import config
+from core import env
 
 
 class Gaseous_correction:
@@ -54,7 +54,7 @@ class Gaseous_correction:
 
         # Collect auxilary data
         if dir_common is None:
-            dir_common = mdir(config.get("dir_static") / "common")
+            dir_common = mdir(env.getdir("DIR_STATIC") / "common")
         self.no2_climatology = download_url(
             'https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',
             dir_common

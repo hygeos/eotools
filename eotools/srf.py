@@ -9,7 +9,7 @@ import xarray as xr
 from eoread.download_legacy import download_url
 from core.fileutils import filegen
 from core.tools import only
-from core import config
+from core import env
 
 
 def get_SRF(
@@ -43,7 +43,7 @@ def get_SRF(
     """
     # Default directory
     if directory is None:
-        directory = config.get("dir_static") / "srf"
+        directory = env.getdir("DIR_STATIC") / "srf"
     assert directory is not None
 
     # Load srf_eumetsat.csv

@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 from eoread.download_legacy import download_url
-from core import config
+from core import env
 from luts import Idx, read_mlut_hdf
 
 from eotools.bodhaine import rod
@@ -19,7 +19,7 @@ class Rayleigh_correction:
         
         lut_file = download_url(
             "https://docs.hygeos.com/s/M7iK4eX4CbpYKj8/download/LUT.hdf",
-            config.get('dir_static')/'rayleigh'
+            env.getdir('DIR_STATIC')/'rayleigh'
         )
         self.mlut = read_mlut_hdf(str(lut_file))
         self.bitmask_invalid = -1  # FIXME:
