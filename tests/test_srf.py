@@ -27,7 +27,7 @@ msi_bands = [
     ],
 )
 def test_get_srf(request, sensor, bands):
-    srf = get_SRF(sensor, band_ids=bands)
+    srf = get_SRF(sensor, band_ids=bands, thres_check=100)
     plot_srf(srf)
 
     conftest.savefig(request, bbox_inches="tight")
@@ -35,5 +35,5 @@ def test_get_srf(request, sensor, bands):
 
 def test_srf_from_l1(level1: Path):
     l1 = msi.Level1_MSI(level1)
-    srf = get_SRF(l1)
+    srf = get_SRF(l1, thres_check=100)
     assert len(srf) == len(l1.bands)

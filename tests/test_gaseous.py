@@ -43,5 +43,5 @@ def test_gaseous_correction(level1: Path):
             "total_column_ozone": "Dobson",
         },
     )
-    srf = get_SRF(ds)
+    srf = get_SRF(ds, thres_check=100)
     Gaseous_correction(ds, srf).apply()
