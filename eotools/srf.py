@@ -66,8 +66,8 @@ def get_SRF(
         else:
             raise TypeError(f"id_sensor has wrong type {id_sensor.__class__}")
 
-        sel = (tar_gz_path["id_sensor"] == sensor.upper()) & (
-            tar_gz_path["id_platform"] == platform.upper()
+        sel = (tar_gz_path["id_sensor"] == sensor) & (
+            tar_gz_path["id_platform"] == platform
         )
         ds.attrs["desc"] = f'Spectral response functions for {sensor} {platform}'
 
@@ -138,13 +138,13 @@ def get_SRF(
     return ds
 
 
-@filegen(if_exists='skip')
-def download_extract(directory: Path, url: str):
+@filegen(if_exists="skip")
+def download_extract(directory: Path, url: str, verbose: bool = False):
     """
     Download a tar.gz file, and extract it to `directory`
     """
     with TemporaryDirectory() as tmpdir:
-        tar_gz_path = download_url(url, tmpdir)
+        tar_gz_path = download_url(url, tmpdir, verbose=verbose)
         with tarfile.open(tar_gz_path) as f:
             f.extractall(directory)
 
