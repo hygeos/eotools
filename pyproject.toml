@@ -5,7 +5,7 @@ description = "A collection of tools and modules for building processing chains.
 authors = ["HYGEOS team"]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = "*"
 eoread = {git = "ssh://git@github.com/hygeos/eoread.git", develop = true}
 
 [tool.poetry.extras]
