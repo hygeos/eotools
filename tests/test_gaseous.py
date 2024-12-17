@@ -44,4 +44,4 @@ def test_gaseous_correction(level1: Path):
         },
     )
     srf = get_SRF(ds, thres_check=100)
-    Gaseous_correction(ds, srf).apply()
+    Gaseous_correction(ds, srf, input_var='Rtoa').apply()

@@ -23,6 +23,12 @@ class Gaseous_correction:
         The bands of `ds` shall be contained in `srf`.
     srf : xr.Dataset
         The sensor spectral response function (SRF).
+    input_var: str
+        Name of the input variable in `ds` (Top of atmosphere reflectance)
+    ouput_var: str
+        Name of the output variable in `ds`
+    spectral_dim: str
+        Name of the spectral dimension in input_var and output_var
     dir_common : Optional[Path]
         Path to the `common` directory.
 
@@ -38,10 +44,15 @@ class Gaseous_correction:
     def __init__(self,
                  ds: xr.Dataset,
                  srf: xr.Dataset,
+                 input_var: str='rho_toa',
+                 ouput_var: str='rho_gc',
+                 spectral_dim: str='bands',
                  dir_common: Optional[Path]=None):
 
         self.ds = ds
-        self.bands = list(ds.bands.data)
+        self.bands = list(ds[spectral_dim].data)
+        self.input_var = input_var
+        self.output_var = ouput_var
         for b in self.bands:
             assert b in srf
 
@@ -216,14 +227,11 @@ class Gaseous_correction:
             total_ozone = ds.total_column_ozone
             assert ds.total_column_ozone.units in ['DU','Dobsons', 'Dobson']
 
-        if 'Rtoa' in ds:
-            Rtoa = ds.Rtoa.chunk(dict(bands=-1))
-        else:
-            Rtoa = ds.rho_toa.chunk(dict(bands=-1))
-        ds['rho_gc'] = xr.apply_ufunc(
+        rho_toa = ds[self.input_var].chunk(dict(bands=-1))
+        ds[self.output_var] = xr.apply_ufunc(
             self.run,
             ds.bands,
-            Rtoa,
+            rho_toa,
             ds.mus,
             ds.muv,
             total_ozone,
