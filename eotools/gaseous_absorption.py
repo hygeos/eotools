@@ -32,7 +32,7 @@ def get_absorption(gaz: str, dirname: Optional[Union[str, Path]]=None):
     if len(urlpath) == 0:
         raise FileNotFoundError(f'No corresponding file for gaz ({gaz})')
     
-    txt_path = download_url(urlpath.values[0], dirname)
+    txt_path = download_url(urlpath.values[0], dirname, verbose=False)
     abs_rate = pd.read_csv(txt_path, skiprows=skiprows, 
                     engine='python', dtype=float,
                     index_col=False, sep=' ',

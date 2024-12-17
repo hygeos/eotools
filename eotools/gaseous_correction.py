@@ -68,11 +68,11 @@ class Gaseous_correction:
             dir_common = mdir(env.getdir("DIR_STATIC") / "common")
         self.no2_climatology = download_url(
             'https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',
-            dir_common
+            dir_common, verbose=False,
         )
         self.no2_frac200m = download_url(
             'https://docs.hygeos.com/s/4tzqH25SwK9iGMw/download/trop_f_no2_200m.hdf',
-            dir_common,
+            dir_common, verbose=False,
         )
 
         # load absorption rate for each gas
@@ -221,7 +221,7 @@ class Gaseous_correction:
         ds = self.ds
         date = datetime(ds)
 
-        if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2']:
+        if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2', 'kg.m-2']:
             total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
         else:
             total_ozone = ds.total_column_ozone
