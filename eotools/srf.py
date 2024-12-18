@@ -55,6 +55,7 @@ def get_SRF(
     if isinstance(id_sensor, str):
         sel = tar_gz_path["id_EUMETSAT"] == id_sensor
         ds.attrs["desc"] = f'Spectral response functions for {id_sensor}'
+        ds.attrs["sensor"] = id_sensor
     else:
         if isinstance(id_sensor, tuple):
             sensor, platform = id_sensor
@@ -70,6 +71,7 @@ def get_SRF(
             tar_gz_path["id_platform"] == platform
         )
         ds.attrs["desc"] = f'Spectral response functions for {sensor} {platform}'
+        ds.attrs["sensor"] = sensor
 
     urlpath = tar_gz_path[sel]["url_tar"]
 
@@ -135,6 +137,21 @@ def get_SRF(
             assert diff < thres_check, ("There might be an error when providing the "
                 f"SRFs. A central wavelength of {cwav[bid]} was found for band {bid}")
 
+    if 'olci' in ds.sensor.lower():
+        # Special case OLCI: provide a mapping of (band, camera, ccd_col) to the
+        # corresponding variable name
+        # https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html
+        assert (315 in ds) and (316 not in ds)
+        ds["id"] = xr.DataArray(
+            np.arange(1, 316).reshape((21, 5, 3)),
+            dims=("band_id", "camera", "ccd_col"),
+            coords={
+                "band_id": np.arange(1, 22),
+                "camera": ["FM5R", "FM9", "FM7", "FM10", "FM8"],
+                "ccd_col": [10, 374, 730],
+            },
+        )
+
     return ds
 
 
@@ -162,6 +179,11 @@ def integrate_srf(
     """
     integrated = {}
     for band, srf_band in srf.items():
+        if band == "id":
+            # "id" is a special variable mapping various parameters to a variable name
+            # thus it should not be considered in integrate_srf
+            continue
+
         srf_wav = srf_band[only(srf_band.dims)]
         wav = srf_wav.values
 

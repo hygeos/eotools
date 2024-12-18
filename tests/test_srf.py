@@ -22,8 +22,8 @@ msi_bands = [
     "sensor,bands",
     [
         ("LANDSAT 8 OLI", None),
-        ("GOES 16 ABI", None),
         ("SENTINEL2-A MSI", msi_bands),
+        ("SENTINEL-3A OLCI", None),
     ],
 )
 def test_get_srf(request, sensor, bands):
