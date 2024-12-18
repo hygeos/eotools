@@ -50,6 +50,7 @@ class Gaseous_correction:
                  dir_common: Optional[Path]=None):
 
         self.ds = ds
+        self.spectral_dim = spectral_dim
         self.bands = list(ds[spectral_dim].data)
         self.input_var = input_var
         self.output_var = ouput_var
@@ -227,10 +228,10 @@ class Gaseous_correction:
             total_ozone = ds.total_column_ozone
             assert ds.total_column_ozone.units in ['DU','Dobsons', 'Dobson']
 
-        rho_toa = ds[self.input_var].chunk(dict(bands=-1))
+        rho_toa = ds[self.input_var].chunk({self.spectral_dim: -1})
         ds[self.output_var] = xr.apply_ufunc(
             self.run,
-            ds.bands,
+            ds[self.spectral_dim],
             rho_toa,
             ds.mus,
             ds.muv,
@@ -240,7 +241,7 @@ class Gaseous_correction:
             ds.flags,
             dask='parallelized',
             kwargs={'datetime': date},
-            input_core_dims=[['bands'], ['bands'], [], [], [], [], [], []],
-            output_core_dims=[['bands']],
+            input_core_dims=[[self.spectral_dim], [self.spectral_dim], [], [], [], [], [], []],
+            output_core_dims=[[self.spectral_dim]],
             output_dtypes=['float32'],
         )
