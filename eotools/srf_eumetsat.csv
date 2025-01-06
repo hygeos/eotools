@@ -1,182 +1,182 @@
-,id_EUMETSAT,id_sensor,id_platform,url_tar
-0,ERS 1 ATSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_ers_1_atsr_srf/rtcoef_ers_1_atsr_srf.tar.gz
-1,ERS 2 ATSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_ers_2_atsr_srf/rtcoef_ers_2_atsr_srf.tar.gz
-2,ENVISAT 1 AATSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_envisat_1_atsr_srf/rtcoef_envisat_1_atsr_srf.tar.gz
-3,ENVISAT 1 AATSR-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_envisat_1_atsr-shifted_srf/rtcoef_envisat_1_atsr-shifted_srf.tar.gz
-4,GOES 16 ABI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_16_abi_srf/rtcoef_goes_16_abi_srf.tar.gz
-5,GOES 17 ABI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_17_abi_srf/rtcoef_goes_17_abi_srf.tar.gz
-6,GOES 18 ABI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_18_abi_srf/rtcoef_goes_18_abi_srf.tar.gz
-7,GOES 19 ABI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_19_abi_srf/rtcoef_goes_19_abi_srf.tar.gz
-8,FY4-1 AGRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy4_1_agri_srf/rtcoef_fy4_1_agri_srf.tar.gz
-9,FY4-2 AGRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy4_2_agri_srf/rtcoef_fy4_2_agri_srf.tar.gz
-10,HIMAWARI 8 AHI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_himawari_8_ahi_srf/rtcoef_himawari_8_ahi_srf.tar.gz
-11,HIMAWARI 9 AHI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_himawari_9_ahi_srf/rtcoef_himawari_9_ahi_srf.tar.gz
-12,GEO-KOMPSAT-2A AMI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gkompsat2_1_ami_srf/rtcoef_gkompsat2_1_ami_srf.tar.gz
-13,EOS 1 ASTER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_1_aster_srf/rtcoef_eos_1_aster_srf.tar.gz
-14,METOP 1 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_1_avhrr_srf/rtcoef_metop_1_avhrr_srf.tar.gz
-15,METOP 2 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_2_avhrr_srf/rtcoef_metop_2_avhrr_srf.tar.gz
-16,METOP 3 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_3_avhrr_srf/rtcoef_metop_3_avhrr_srf.tar.gz
-17,NOAA 5 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_5_avhrr_srf/rtcoef_noaa_5_avhrr_srf.tar.gz
-18,NOAA 6 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_6_avhrr_srf/rtcoef_noaa_6_avhrr_srf.tar.gz
-19,NOAA 7 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_7_avhrr_srf/rtcoef_noaa_7_avhrr_srf.tar.gz
-20,NOAA 8 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_8_avhrr_srf/rtcoef_noaa_8_avhrr_srf.tar.gz
-21,NOAA 9 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_9_avhrr_srf/rtcoef_noaa_9_avhrr_srf.tar.gz
-22,NOAA 10 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_10_avhrr_srf/rtcoef_noaa_10_avhrr_srf.tar.gz
-23,NOAA 11 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_11_avhrr_srf/rtcoef_noaa_11_avhrr_srf.tar.gz
-24,NOAA 12 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_12_avhrr_srf/rtcoef_noaa_12_avhrr_srf.tar.gz
-25,NOAA 13 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_13_avhrr_srf/rtcoef_noaa_13_avhrr_srf.tar.gz
-26,NOAA 14 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_14_avhrr_srf/rtcoef_noaa_14_avhrr_srf.tar.gz
-27,NOAA 15 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_15_avhrr_srf/rtcoef_noaa_15_avhrr_srf.tar.gz
-28,NOAA 16 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_16_avhrr_srf/rtcoef_noaa_16_avhrr_srf.tar.gz
-29,NOAA 17 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_17_avhrr_srf/rtcoef_noaa_17_avhrr_srf.tar.gz
-30,NOAA 18 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_18_avhrr_srf/rtcoef_noaa_18_avhrr_srf.tar.gz
-31,NOAA 19 AVHRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_19_avhrr_srf/rtcoef_noaa_19_avhrr_srf.tar.gz
-32,CO2M-A CLIM,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_co2m_1_clim_srf/rtcoef_co2m_1_clim_srf.tar.gz
-33,ISS ECOSTRESS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_iss_1_ecostres_srf/rtcoef_iss_1_ecostres_srf.tar.gz
-34,DSCOVR EPIC,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dscovr_1_epic_srf/rtcoef_dscovr_1_epic_srf.tar.gz
-35,MTG 1 FCI,FCI,MTG-I1,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtg_1_fci_srf/rtcoef_mtg_1_fci_srf.tar.gz
-36,GMS 1 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_1_imager_srf/rtcoef_gms_1_imager_srf.tar.gz
-37,GMS 2 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_2_imager_srf/rtcoef_gms_2_imager_srf.tar.gz
-38,GMS 3 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_3_imager_srf/rtcoef_gms_3_imager_srf.tar.gz
-39,GMS 4 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_4_imager_srf/rtcoef_gms_4_imager_srf.tar.gz
-40,GMS 5 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_5_imager_srf/rtcoef_gms_5_imager_srf.tar.gz
-41,GOES 8 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_8_imager_srf/rtcoef_goes_8_imager_srf.tar.gz
-42,GOES 9 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_9_imager_srf/rtcoef_goes_9_imager_srf.tar.gz
-43,GOES 10 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_10_imager_srf/rtcoef_goes_10_imager_srf.tar.gz
-44,GOES 11 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_11_imager_srf/rtcoef_goes_11_imager_srf.tar.gz
-45,GOES 12 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_12_imager_srf/rtcoef_goes_12_imager_srf.tar.gz
-46,GOES 13 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_13_imager_srf/rtcoef_goes_13_imager_srf.tar.gz
-47,GOES 14 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_14_imager_srf/rtcoef_goes_14_imager_srf.tar.gz
-48,GOES 15 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_15_imager_srf/rtcoef_goes_15_imager_srf.tar.gz
-49,GOES 4 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_4_sounder_srf/rtcoef_goes_4_sounder_srf.tar.gz
-50,GOES 5 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_5_sounder_srf/rtcoef_goes_5_sounder_srf.tar.gz
-51,GOES 6 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_6_sounder_srf/rtcoef_goes_6_sounder_srf.tar.gz
-52,GOES 7 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_7_sounder_srf/rtcoef_goes_7_sounder_srf.tar.gz
-53,GOES 8 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_8_sounder_srf/rtcoef_goes_8_sounder_srf.tar.gz
-54,GOES 9 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_9_sounder_srf/rtcoef_goes_9_sounder_srf.tar.gz
-55,GOES 10 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_10_sounder_srf/rtcoef_goes_10_sounder_srf.tar.gz
-56,GOES 11 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_11_sounder_srf/rtcoef_goes_11_sounder_srf.tar.gz
-57,GOES 12 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_12_sounder_srf/rtcoef_goes_12_sounder_srf.tar.gz
-58,GOES 13 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_13_sounder_srf/rtcoef_goes_13_sounder_srf.tar.gz
-59,GOES 14 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_14_sounder_srf/rtcoef_goes_14_sounder_srf.tar.gz
-60,GOES 15 SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_15_sounder_srf/rtcoef_goes_15_sounder_srf.tar.gz
-61,NIMBUS 6 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_6_hirs_srf/rtcoef_nimbus_6_hirs_srf.tar.gz
-62,METOP 1 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_1_hirs_srf/rtcoef_metop_1_hirs_srf.tar.gz
-63,METOP 2 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_2_hirs_srf/rtcoef_metop_2_hirs_srf.tar.gz
-64,NOAA 5 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_5_hirs_srf/rtcoef_noaa_5_hirs_srf.tar.gz
-65,NOAA 6 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_6_hirs_srf/rtcoef_noaa_6_hirs_srf.tar.gz
-66,NOAA 7 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_7_hirs_srf/rtcoef_noaa_7_hirs_srf.tar.gz
-67,NOAA 8 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_8_hirs_srf/rtcoef_noaa_8_hirs_srf.tar.gz
-68,NOAA 9 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_9_hirs_srf/rtcoef_noaa_9_hirs_srf.tar.gz
-69,NOAA 10 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_10_hirs_srf/rtcoef_noaa_10_hirs_srf.tar.gz
-70,NOAA 11 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_11_hirs_srf/rtcoef_noaa_11_hirs_srf.tar.gz
-71,NOAA 12 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_12_hirs_srf/rtcoef_noaa_12_hirs_srf.tar.gz
-73,NOAA 14 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_14_hirs_srf/rtcoef_noaa_14_hirs_srf.tar.gz
-74,NOAA 15 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_15_hirs_srf/rtcoef_noaa_15_hirs_srf.tar.gz
-75,NOAA 16 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_16_hirs_srf/rtcoef_noaa_16_hirs_srf.tar.gz
-76,NOAA 17 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_17_hirs_srf/rtcoef_noaa_17_hirs_srf.tar.gz
-77,NOAA 18 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_18_hirs_srf/rtcoef_noaa_18_hirs_srf.tar.gz
-78,NOAA 19 HIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_19_hirs_srf/rtcoef_noaa_19_hirs_srf.tar.gz
-79,METOP 1 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_1_hirs-shifted_srf/rtcoef_metop_1_hirs-shifted_srf.tar.gz
-80,METOP 2 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_2_hirs-shifted_srf/rtcoef_metop_2_hirs-shifted_srf.tar.gz
-81,NOAA 6 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_6_hirs-shifted_srf/rtcoef_noaa_6_hirs-shifted_srf.tar.gz
-82,NOAA 7 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_7_hirs-shifted_srf/rtcoef_noaa_7_hirs-shifted_srf.tar.gz
-83,NOAA 8 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_8_hirs-shifted_srf/rtcoef_noaa_8_hirs-shifted_srf.tar.gz
-84,NOAA 9 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_9_hirs-shifted_srf/rtcoef_noaa_9_hirs-shifted_srf.tar.gz
-85,NOAA 10 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_10_hirs-shifted_srf/rtcoef_noaa_10_hirs-shifted_srf.tar.gz
-86,NOAA 11 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_11_hirs-shifted_srf/rtcoef_noaa_11_hirs-shifted_srf.tar.gz
-87,NOAA 12 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_12_hirs-shifted_srf/rtcoef_noaa_12_hirs-shifted_srf.tar.gz
-89,NOAA 14 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_14_hirs-shifted_srf/rtcoef_noaa_14_hirs-shifted_srf.tar.gz
-90,NOAA 15 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_15_hirs-shifted_srf/rtcoef_noaa_15_hirs-shifted_srf.tar.gz
-91,NOAA 16 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_16_hirs-shifted_srf/rtcoef_noaa_16_hirs-shifted_srf.tar.gz
-92,NOAA 17 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_17_hirs-shifted_srf/rtcoef_noaa_17_hirs-shifted_srf.tar.gz
-93,NOAA 18 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_18_hirs-shifted_srf/rtcoef_noaa_18_hirs-shifted_srf.tar.gz
-94,NOAA 19 HIRS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_19_hirs-shifted_srf/rtcoef_noaa_19_hirs-shifted_srf.tar.gz
-95,NIMBUS 1 HRIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_1_hrir_srf/rtcoef_nimbus_1_hrir_srf.tar.gz
-96,NIMBUS 2 HRIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_2_hrir_srf/rtcoef_nimbus_2_hrir_srf.tar.gz
-97,NIMBUS 3 HRIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_hrir_srf/rtcoef_nimbus_3_hrir_srf.tar.gz
-98,CALIPSO 1 IIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_calipso_1_iir_srf/rtcoef_calipso_1_iir_srf.tar.gz
-99,INSAT-3D IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_4_imager_srf/rtcoef_insat3_4_imager_srf.tar.gz
-100,INSAT-3DR IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_5_imager_srf/rtcoef_insat3_5_imager_srf.tar.gz
-101,INSAT-3DS IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_6_imager_srf/rtcoef_insat3_6_imager_srf.tar.gz
-102,INSAT-3D SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_4_sounder_srf/rtcoef_insat3_4_sounder_srf.tar.gz
-103,INSAT-3DR SOUNDER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_5_sounder_srf/rtcoef_insat3_5_sounder_srf.tar.gz
-104,FY3-1 IRAS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_1_iras_srf/rtcoef_fy3_1_iras_srf.tar.gz
-105,HJ1-2 IRMSS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_hj1_2_irmss_srf/rtcoef_hj1_2_irmss_srf.tar.gz
-106,TICFIRE 1 MBFIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_ticfire_1_mbfiri_srf/rtcoef_ticfire_1_mbfiri_srf.tar.gz
-107,FY3-3 MERSI-1,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_3_mersi1_srf/rtcoef_fy3_3_mersi1_srf.tar.gz
-108,FY3-4 MERSI-2,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_4_mersi2_srf/rtcoef_fy3_4_mersi2_srf.tar.gz
-109,METOPSG 1 METIMAGE,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metopsg_1_metimage_srf/rtcoef_metopsg_1_metimage_srf.tar.gz
-110,COMS 1 MI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_coms_1_mi_srf/rtcoef_coms_1_mi_srf.tar.gz
-111,EOS 1 MODIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_1_modis_srf/rtcoef_eos_1_modis_srf.tar.gz
-112,EOS 2 MODIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_2_modis_srf/rtcoef_eos_2_modis_srf.tar.gz
-113,EOS 1 MODIS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_1_modis-shifted_srf/rtcoef_eos_1_modis-shifted_srf.tar.gz
-114,EOS 2 MODIS-shifted,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_2_modis-shifted_srf/rtcoef_eos_2_modis-shifted_srf.tar.gz
-115,NIMBUS 2 MRIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_2_mrir_srf/rtcoef_nimbus_2_mrir_srf.tar.gz
-116,NIMBUS 3 MRIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_mrir_srf/rtcoef_nimbus_3_mrir_srf.tar.gz
-117,Earth-CARE 1 MSI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_earthcare_1_msi_srf/rtcoef_earthcare_1_msi_srf.tar.gz
-118,SENTINEL2-A MSI,MSI,S2A,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel2_1_msi_srf/rtcoef_sentinel2_1_msi_srf.tar.gz
-119,SENTINEL2-B MSI,MSI,S2B,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel2_2_msi_srf/rtcoef_sentinel2_2_msi_srf.tar.gz
-120,ELECTRO-L 2 MSUGS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_electro-l_2_msugs_srf/rtcoef_electro-l_2_msugs_srf.tar.gz
-121,METEOR-M 1 MSUMR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteor-m_1_msumr_srf/rtcoef_meteor-m_1_msumr_srf.tar.gz
-122,METEOR-M 2 MSUMR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteor-m_2_msumr_srf/rtcoef_meteor-m_2_msumr_srf.tar.gz
-123,MTSAT 1 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtsat_1_imager_srf/rtcoef_mtsat_1_imager_srf.tar.gz
-124,MTSAT 2 IMAGER,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtsat_2_imager_srf/rtcoef_mtsat_2_imager_srf.tar.gz
-125,METEOSAT 1 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_1_mviri_srf/rtcoef_meteosat_1_mviri_srf.tar.gz
-126,METEOSAT 2 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_2_mviri_srf/rtcoef_meteosat_2_mviri_srf.tar.gz
-127,METEOSAT 3 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_3_mviri_srf/rtcoef_meteosat_3_mviri_srf.tar.gz
-128,METEOSAT 4 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_4_mviri_srf/rtcoef_meteosat_4_mviri_srf.tar.gz
-129,METEOSAT 5 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_5_mviri_srf/rtcoef_meteosat_5_mviri_srf.tar.gz
-130,METEOSAT 6 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_6_mviri_srf/rtcoef_meteosat_6_mviri_srf.tar.gz
-131,METEOSAT 7 MVIRI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_7_mviri_srf/rtcoef_meteosat_7_mviri_srf.tar.gz
-132,METEOSAT 2 MVIRI-VIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_2_mviri-vis_srf/rtcoef_meteosat_2_mviri-vis_srf.tar.gz
-133,METEOSAT 3 MVIRI-VIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_3_mviri-vis_srf/rtcoef_meteosat_3_mviri-vis_srf.tar.gz
-134,METEOSAT 4 MVIRI-VIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_4_mviri-vis_srf/rtcoef_meteosat_4_mviri-vis_srf.tar.gz
-135,METEOSAT 5 MVIRI-VIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_5_mviri-vis_srf/rtcoef_meteosat_5_mviri-vis_srf.tar.gz
-136,METEOSAT 6 MVIRI-VIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_6_mviri-vis_srf/rtcoef_meteosat_6_mviri-vis_srf.tar.gz
-137,METEOSAT 7 MVIRI-VIS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_7_mviri-vis_srf/rtcoef_meteosat_7_mviri-vis_srf.tar.gz
-138,FY1-3 MVISR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy1_3_mvisr_srf/rtcoef_fy1_3_mvisr_srf.tar.gz
-139,FY1-4 MVISR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy1_4_mvisr_srf/rtcoef_fy1_4_mvisr_srf.tar.gz
-140,SENTINEL-3A OLCI,OLCI,S3A,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf/rtcoef_sentinel3_1_olci_srf.tar.gz
-141,SENTINEL-3B OLCI,OLCI,S3B,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_2_olci_srf/rtcoef_sentinel3_2_olci_srf.tar.gz
-142,LANDSAT 8 OLI,OLI,Landsat8,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_8_oli_srf/rtcoef_landsat_8_oli_srf.tar.gz
-143,LANDSAT 9 OLI,OLI,Landsat9,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_9_oli_srf/rtcoef_landsat_9_oli_srf.tar.gz
-144,NASA SBG,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sbg_1_sbg_srf/rtcoef_sbg_1_sbg_srf.tar.gz
-145,MSG 1 SEVIRI,SEVIRI,MSG1,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_1_seviri_srf/rtcoef_msg_1_seviri_srf.tar.gz
-146,MSG 2 SEVIRI,SEVIRI,MSG2,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_2_seviri_srf/rtcoef_msg_2_seviri_srf.tar.gz
-147,MSG 3 SEVIRI,SEVIRI,MSG3,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_3_seviri_srf/rtcoef_msg_3_seviri_srf.tar.gz
-148,MSG 4 SEVIRI,SEVIRI,MSG4,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_4_seviri_srf/rtcoef_msg_4_seviri_srf.tar.gz
-149,GCOM-C-1 SGLI,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gcom-c_1_sgli_srf/rtcoef_gcom-c_1_sgli_srf.tar.gz
-150,NIMBUS 3 SIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_sirs_srf/rtcoef_nimbus_3_sirs_srf.tar.gz
-151,NIMBUS 3 SIRS-BLUR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_sirs-blur_srf/rtcoef_nimbus_3_sirs-blur_srf.tar.gz
-152,NIMBUS 4 SIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_4_sirs_srf/rtcoef_nimbus_4_sirs_srf.tar.gz
-153,NIMBUS 4 SIRS-BLUR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_4_sirs-blur_srf/rtcoef_nimbus_4_sirs-blur_srf.tar.gz
-154,SENTINEL-3A SLSTR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_slstr_srf/rtcoef_sentinel3_1_slstr_srf.tar.gz
-155,SENTINEL-3B SLSTR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_2_slstr_srf/rtcoef_sentinel3_2_slstr_srf.tar.gz
-156,DMSP 1 SSH,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_1_ssh_srf/rtcoef_dmsp_1_ssh_srf.tar.gz
-157,DMSP 2 SSH,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_2_ssh_srf/rtcoef_dmsp_2_ssh_srf.tar.gz
-158,DMSP 3 SSH,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_3_ssh_srf/rtcoef_dmsp_3_ssh_srf.tar.gz
-159,DMSP 4 SSH,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_4_ssh_srf/rtcoef_dmsp_4_ssh_srf.tar.gz
-160,OCEANSAT 3 SSTM,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_oceansat_3_sstm_srf/rtcoef_oceansat_3_sstm_srf.tar.gz
-161,NIMBUS 4 THIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_4_thir_srf/rtcoef_nimbus_4_thir_srf.tar.gz
-162,NIMBUS 5 THIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_5_thir_srf/rtcoef_nimbus_5_thir_srf.tar.gz
-163,NIMBUS 6 THIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_6_thir_srf/rtcoef_nimbus_6_thir_srf.tar.gz
-164,NIMBUS 7 THIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_7_thir_srf/rtcoef_nimbus_7_thir_srf.tar.gz
-165,LANDSAT 8 TIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_8_tirs_srf/rtcoef_landsat_8_tirs_srf.tar.gz
-166,LANDSAT 9 TIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_9_tirs_srf/rtcoef_landsat_9_tirs_srf.tar.gz
-167,LANDSAT 4 TM,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_4_tm_srf/rtcoef_landsat_4_tm_srf.tar.gz
-168,LANDSAT 5 TM,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_5_tm_srf/rtcoef_landsat_5_tm_srf.tar.gz
-169,LANDSAT 7 TM,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_7_tm_srf/rtcoef_landsat_7_tm_srf.tar.gz
-170,TRISHNA-TIR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_trishna_1_tir_srf/rtcoef_trishna_1_tir_srf.tar.gz
-171,SNPP VIIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_jpss_0_viirs_srf/rtcoef_jpss_0_viirs_srf.tar.gz
-172,NOAA-20 VIIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_20_viirs_srf/rtcoef_noaa_20_viirs_srf.tar.gz
-173,NOAA-21 VIIRS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_21_viirs_srf/rtcoef_noaa_21_viirs_srf.tar.gz
-174,GF5 VIMS,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gf5_1_vims_srf/rtcoef_gf5_1_vims_srf.tar.gz
-175,FY3-3 VIRR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_3_virr_srf/rtcoef_fy3_3_virr_srf.tar.gz
-176,FY2-2(B) VISSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_2_vissr_srf/rtcoef_fy2_2_vissr_srf.tar.gz
-177,FY2-3(C) VISSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_3_vissr_srf/rtcoef_fy2_3_vissr_srf.tar.gz
-178,FY2-4(D) VISSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_4_vissr_srf/rtcoef_fy2_4_vissr_srf.tar.gz
-179,FY2-5(E) VISSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_5_vissr_srf/rtcoef_fy2_5_vissr_srf.tar.gz
-180,FY2-7(G) VISSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_7_vissr_srf/rtcoef_fy2_7_vissr_srf.tar.gz
-181,FY2-8(H) VISSR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_8_vissr_srf/rtcoef_fy2_8_vissr_srf.tar.gz
-182,NOAA 2 VTPR,,,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_2_vtpr1_srf/rtcoef_noaa_2_vtpr1_srf.tar.gz
+,id_EUMETSAT,url_tar
+0,ers_1_atsr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_ers_1_atsr_srf/rtcoef_ers_1_atsr_srf.tar.gz
+1,ers_2_atsr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_ers_2_atsr_srf/rtcoef_ers_2_atsr_srf.tar.gz
+2,envisat_1_atsr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_envisat_1_atsr_srf/rtcoef_envisat_1_atsr_srf.tar.gz
+3,envisat_1_atsr-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_envisat_1_atsr-shifted_srf/rtcoef_envisat_1_atsr-shifted_srf.tar.gz
+4,goes_16_abi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_16_abi_srf/rtcoef_goes_16_abi_srf.tar.gz
+5,goes_17_abi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_17_abi_srf/rtcoef_goes_17_abi_srf.tar.gz
+6,goes_18_abi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_18_abi_srf/rtcoef_goes_18_abi_srf.tar.gz
+7,goes_19_abi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_19_abi_srf/rtcoef_goes_19_abi_srf.tar.gz
+8,fy4_1_agri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy4_1_agri_srf/rtcoef_fy4_1_agri_srf.tar.gz
+9,fy4_2_agri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy4_2_agri_srf/rtcoef_fy4_2_agri_srf.tar.gz
+10,himawari_8_ahi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_himawari_8_ahi_srf/rtcoef_himawari_8_ahi_srf.tar.gz
+11,himawari_9_ahi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_himawari_9_ahi_srf/rtcoef_himawari_9_ahi_srf.tar.gz
+12,gkompsat2_1_ami,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gkompsat2_1_ami_srf/rtcoef_gkompsat2_1_ami_srf.tar.gz
+13,eos_1_aster,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_1_aster_srf/rtcoef_eos_1_aster_srf.tar.gz
+14,metop_1_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_1_avhrr_srf/rtcoef_metop_1_avhrr_srf.tar.gz
+15,metop_2_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_2_avhrr_srf/rtcoef_metop_2_avhrr_srf.tar.gz
+16,metop_3_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_3_avhrr_srf/rtcoef_metop_3_avhrr_srf.tar.gz
+17,noaa_5_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_5_avhrr_srf/rtcoef_noaa_5_avhrr_srf.tar.gz
+18,noaa_6_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_6_avhrr_srf/rtcoef_noaa_6_avhrr_srf.tar.gz
+19,noaa_7_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_7_avhrr_srf/rtcoef_noaa_7_avhrr_srf.tar.gz
+20,noaa_8_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_8_avhrr_srf/rtcoef_noaa_8_avhrr_srf.tar.gz
+21,noaa_9_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_9_avhrr_srf/rtcoef_noaa_9_avhrr_srf.tar.gz
+22,noaa_10_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_10_avhrr_srf/rtcoef_noaa_10_avhrr_srf.tar.gz
+23,noaa_11_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_11_avhrr_srf/rtcoef_noaa_11_avhrr_srf.tar.gz
+24,noaa_12_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_12_avhrr_srf/rtcoef_noaa_12_avhrr_srf.tar.gz
+25,noaa_13_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_13_avhrr_srf/rtcoef_noaa_13_avhrr_srf.tar.gz
+26,noaa_14_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_14_avhrr_srf/rtcoef_noaa_14_avhrr_srf.tar.gz
+27,noaa_15_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_15_avhrr_srf/rtcoef_noaa_15_avhrr_srf.tar.gz
+28,noaa_16_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_16_avhrr_srf/rtcoef_noaa_16_avhrr_srf.tar.gz
+29,noaa_17_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_17_avhrr_srf/rtcoef_noaa_17_avhrr_srf.tar.gz
+30,noaa_18_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_18_avhrr_srf/rtcoef_noaa_18_avhrr_srf.tar.gz
+31,noaa_19_avhrr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_19_avhrr_srf/rtcoef_noaa_19_avhrr_srf.tar.gz
+32,co2m_1_clim,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_co2m_1_clim_srf/rtcoef_co2m_1_clim_srf.tar.gz
+33,iss_1_ecostres,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_iss_1_ecostres_srf/rtcoef_iss_1_ecostres_srf.tar.gz
+34,dscovr_1_epic,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dscovr_1_epic_srf/rtcoef_dscovr_1_epic_srf.tar.gz
+35,mtg_1_fci,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtg_1_fci_srf/rtcoef_mtg_1_fci_srf.tar.gz
+36,gms_1_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_1_imager_srf/rtcoef_gms_1_imager_srf.tar.gz
+37,gms_2_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_2_imager_srf/rtcoef_gms_2_imager_srf.tar.gz
+38,gms_3_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_3_imager_srf/rtcoef_gms_3_imager_srf.tar.gz
+39,gms_4_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_4_imager_srf/rtcoef_gms_4_imager_srf.tar.gz
+40,gms_5_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gms_5_imager_srf/rtcoef_gms_5_imager_srf.tar.gz
+41,goes_8_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_8_imager_srf/rtcoef_goes_8_imager_srf.tar.gz
+42,goes_9_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_9_imager_srf/rtcoef_goes_9_imager_srf.tar.gz
+43,goes_10_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_10_imager_srf/rtcoef_goes_10_imager_srf.tar.gz
+44,goes_11_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_11_imager_srf/rtcoef_goes_11_imager_srf.tar.gz
+45,goes_12_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_12_imager_srf/rtcoef_goes_12_imager_srf.tar.gz
+46,goes_13_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_13_imager_srf/rtcoef_goes_13_imager_srf.tar.gz
+47,goes_14_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_14_imager_srf/rtcoef_goes_14_imager_srf.tar.gz
+48,goes_15_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_15_imager_srf/rtcoef_goes_15_imager_srf.tar.gz
+49,goes_4_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_4_sounder_srf/rtcoef_goes_4_sounder_srf.tar.gz
+50,goes_5_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_5_sounder_srf/rtcoef_goes_5_sounder_srf.tar.gz
+51,goes_6_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_6_sounder_srf/rtcoef_goes_6_sounder_srf.tar.gz
+52,goes_7_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_7_sounder_srf/rtcoef_goes_7_sounder_srf.tar.gz
+53,goes_8_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_8_sounder_srf/rtcoef_goes_8_sounder_srf.tar.gz
+54,goes_9_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_9_sounder_srf/rtcoef_goes_9_sounder_srf.tar.gz
+55,goes_10_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_10_sounder_srf/rtcoef_goes_10_sounder_srf.tar.gz
+56,goes_11_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_11_sounder_srf/rtcoef_goes_11_sounder_srf.tar.gz
+57,goes_12_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_12_sounder_srf/rtcoef_goes_12_sounder_srf.tar.gz
+58,goes_13_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_13_sounder_srf/rtcoef_goes_13_sounder_srf.tar.gz
+59,goes_14_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_14_sounder_srf/rtcoef_goes_14_sounder_srf.tar.gz
+60,goes_15_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_goes_15_sounder_srf/rtcoef_goes_15_sounder_srf.tar.gz
+61,nimbus_6_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_6_hirs_srf/rtcoef_nimbus_6_hirs_srf.tar.gz
+62,metop_1_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_1_hirs_srf/rtcoef_metop_1_hirs_srf.tar.gz
+63,metop_2_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_2_hirs_srf/rtcoef_metop_2_hirs_srf.tar.gz
+64,noaa_5_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_5_hirs_srf/rtcoef_noaa_5_hirs_srf.tar.gz
+65,noaa_6_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_6_hirs_srf/rtcoef_noaa_6_hirs_srf.tar.gz
+66,noaa_7_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_7_hirs_srf/rtcoef_noaa_7_hirs_srf.tar.gz
+67,noaa_8_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_8_hirs_srf/rtcoef_noaa_8_hirs_srf.tar.gz
+68,noaa_9_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_9_hirs_srf/rtcoef_noaa_9_hirs_srf.tar.gz
+69,noaa_10_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_10_hirs_srf/rtcoef_noaa_10_hirs_srf.tar.gz
+70,noaa_11_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_11_hirs_srf/rtcoef_noaa_11_hirs_srf.tar.gz
+71,noaa_12_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_12_hirs_srf/rtcoef_noaa_12_hirs_srf.tar.gz
+73,noaa_14_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_14_hirs_srf/rtcoef_noaa_14_hirs_srf.tar.gz
+74,noaa_15_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_15_hirs_srf/rtcoef_noaa_15_hirs_srf.tar.gz
+75,noaa_16_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_16_hirs_srf/rtcoef_noaa_16_hirs_srf.tar.gz
+76,noaa_17_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_17_hirs_srf/rtcoef_noaa_17_hirs_srf.tar.gz
+77,noaa_18_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_18_hirs_srf/rtcoef_noaa_18_hirs_srf.tar.gz
+78,noaa_19_hirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_19_hirs_srf/rtcoef_noaa_19_hirs_srf.tar.gz
+79,metop_1_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_1_hirs-shifted_srf/rtcoef_metop_1_hirs-shifted_srf.tar.gz
+80,metop_2_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metop_2_hirs-shifted_srf/rtcoef_metop_2_hirs-shifted_srf.tar.gz
+81,noaa_6_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_6_hirs-shifted_srf/rtcoef_noaa_6_hirs-shifted_srf.tar.gz
+82,noaa_7_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_7_hirs-shifted_srf/rtcoef_noaa_7_hirs-shifted_srf.tar.gz
+83,noaa_8_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_8_hirs-shifted_srf/rtcoef_noaa_8_hirs-shifted_srf.tar.gz
+84,noaa_9_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_9_hirs-shifted_srf/rtcoef_noaa_9_hirs-shifted_srf.tar.gz
+85,noaa_10_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_10_hirs-shifted_srf/rtcoef_noaa_10_hirs-shifted_srf.tar.gz
+86,noaa_11_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_11_hirs-shifted_srf/rtcoef_noaa_11_hirs-shifted_srf.tar.gz
+87,noaa_12_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_12_hirs-shifted_srf/rtcoef_noaa_12_hirs-shifted_srf.tar.gz
+89,noaa_14_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_14_hirs-shifted_srf/rtcoef_noaa_14_hirs-shifted_srf.tar.gz
+90,noaa_15_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_15_hirs-shifted_srf/rtcoef_noaa_15_hirs-shifted_srf.tar.gz
+91,noaa_16_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_16_hirs-shifted_srf/rtcoef_noaa_16_hirs-shifted_srf.tar.gz
+92,noaa_17_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_17_hirs-shifted_srf/rtcoef_noaa_17_hirs-shifted_srf.tar.gz
+93,noaa_18_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_18_hirs-shifted_srf/rtcoef_noaa_18_hirs-shifted_srf.tar.gz
+94,noaa_19_hirs-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_19_hirs-shifted_srf/rtcoef_noaa_19_hirs-shifted_srf.tar.gz
+95,nimbus_1_hrir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_1_hrir_srf/rtcoef_nimbus_1_hrir_srf.tar.gz
+96,nimbus_2_hrir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_2_hrir_srf/rtcoef_nimbus_2_hrir_srf.tar.gz
+97,nimbus_3_hrir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_hrir_srf/rtcoef_nimbus_3_hrir_srf.tar.gz
+98,calipso_1_iir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_calipso_1_iir_srf/rtcoef_calipso_1_iir_srf.tar.gz
+99,insat3_4_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_4_imager_srf/rtcoef_insat3_4_imager_srf.tar.gz
+100,insat3_5_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_5_imager_srf/rtcoef_insat3_5_imager_srf.tar.gz
+101,insat3_6_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_6_imager_srf/rtcoef_insat3_6_imager_srf.tar.gz
+102,insat3_4_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_4_sounder_srf/rtcoef_insat3_4_sounder_srf.tar.gz
+103,insat3_5_sounder,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_insat3_5_sounder_srf/rtcoef_insat3_5_sounder_srf.tar.gz
+104,fy3_1_iras,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_1_iras_srf/rtcoef_fy3_1_iras_srf.tar.gz
+105,hj1_2_irmss,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_hj1_2_irmss_srf/rtcoef_hj1_2_irmss_srf.tar.gz
+106,ticfire_1_mbfiri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_ticfire_1_mbfiri_srf/rtcoef_ticfire_1_mbfiri_srf.tar.gz
+107,fy3_3_mersi1,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_3_mersi1_srf/rtcoef_fy3_3_mersi1_srf.tar.gz
+108,fy3_4_mersi2,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_4_mersi2_srf/rtcoef_fy3_4_mersi2_srf.tar.gz
+109,metopsg_1_metimage,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_metopsg_1_metimage_srf/rtcoef_metopsg_1_metimage_srf.tar.gz
+110,coms_1_mi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_coms_1_mi_srf/rtcoef_coms_1_mi_srf.tar.gz
+111,eos_1_modis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_1_modis_srf/rtcoef_eos_1_modis_srf.tar.gz
+112,eos_2_modis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_2_modis_srf/rtcoef_eos_2_modis_srf.tar.gz
+113,eos_1_modis-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_1_modis-shifted_srf/rtcoef_eos_1_modis-shifted_srf.tar.gz
+114,eos_2_modis-shifted,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_eos_2_modis-shifted_srf/rtcoef_eos_2_modis-shifted_srf.tar.gz
+115,nimbus_2_mrir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_2_mrir_srf/rtcoef_nimbus_2_mrir_srf.tar.gz
+116,nimbus_3_mrir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_mrir_srf/rtcoef_nimbus_3_mrir_srf.tar.gz
+117,earthcare_1_msi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_earthcare_1_msi_srf/rtcoef_earthcare_1_msi_srf.tar.gz
+118,sentinel2_1_msi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel2_1_msi_srf/rtcoef_sentinel2_1_msi_srf.tar.gz
+119,sentinel2_2_msi,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel2_2_msi_srf/rtcoef_sentinel2_2_msi_srf.tar.gz
+120,electro-l_2_msugs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_electro-l_2_msugs_srf/rtcoef_electro-l_2_msugs_srf.tar.gz
+121,meteor-m_1_msumr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteor-m_1_msumr_srf/rtcoef_meteor-m_1_msumr_srf.tar.gz
+122,meteor-m_2_msumr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteor-m_2_msumr_srf/rtcoef_meteor-m_2_msumr_srf.tar.gz
+123,mtsat_1_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtsat_1_imager_srf/rtcoef_mtsat_1_imager_srf.tar.gz
+124,mtsat_2_imager,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_mtsat_2_imager_srf/rtcoef_mtsat_2_imager_srf.tar.gz
+125,meteosat_1_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_1_mviri_srf/rtcoef_meteosat_1_mviri_srf.tar.gz
+126,meteosat_2_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_2_mviri_srf/rtcoef_meteosat_2_mviri_srf.tar.gz
+127,meteosat_3_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_3_mviri_srf/rtcoef_meteosat_3_mviri_srf.tar.gz
+128,meteosat_4_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_4_mviri_srf/rtcoef_meteosat_4_mviri_srf.tar.gz
+129,meteosat_5_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_5_mviri_srf/rtcoef_meteosat_5_mviri_srf.tar.gz
+130,meteosat_6_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_6_mviri_srf/rtcoef_meteosat_6_mviri_srf.tar.gz
+131,meteosat_7_mviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_7_mviri_srf/rtcoef_meteosat_7_mviri_srf.tar.gz
+132,meteosat_2_mviri-vis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_2_mviri-vis_srf/rtcoef_meteosat_2_mviri-vis_srf.tar.gz
+133,meteosat_3_mviri-vis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_3_mviri-vis_srf/rtcoef_meteosat_3_mviri-vis_srf.tar.gz
+134,meteosat_4_mviri-vis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_4_mviri-vis_srf/rtcoef_meteosat_4_mviri-vis_srf.tar.gz
+135,meteosat_5_mviri-vis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_5_mviri-vis_srf/rtcoef_meteosat_5_mviri-vis_srf.tar.gz
+136,meteosat_6_mviri-vis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_6_mviri-vis_srf/rtcoef_meteosat_6_mviri-vis_srf.tar.gz
+137,meteosat_7_mviri-vis,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_meteosat_7_mviri-vis_srf/rtcoef_meteosat_7_mviri-vis_srf.tar.gz
+138,fy1_3_mvisr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy1_3_mvisr_srf/rtcoef_fy1_3_mvisr_srf.tar.gz
+139,fy1_4_mvisr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy1_4_mvisr_srf/rtcoef_fy1_4_mvisr_srf.tar.gz
+140,sentinel3_1_olci,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf/rtcoef_sentinel3_1_olci_srf.tar.gz
+141,sentinel3_2_olci,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_2_olci_srf/rtcoef_sentinel3_2_olci_srf.tar.gz
+142,landsat_8_oli,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_8_oli_srf/rtcoef_landsat_8_oli_srf.tar.gz
+143,landsat_9_oli,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_9_oli_srf/rtcoef_landsat_9_oli_srf.tar.gz
+144,sbg_1_sbg,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sbg_1_sbg_srf/rtcoef_sbg_1_sbg_srf.tar.gz
+145,msg_1_seviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_1_seviri_srf/rtcoef_msg_1_seviri_srf.tar.gz
+146,msg_2_seviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_2_seviri_srf/rtcoef_msg_2_seviri_srf.tar.gz
+147,msg_3_seviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_3_seviri_srf/rtcoef_msg_3_seviri_srf.tar.gz
+148,msg_4_seviri,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_msg_4_seviri_srf/rtcoef_msg_4_seviri_srf.tar.gz
+149,gcom-c_1_sgli,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gcom-c_1_sgli_srf/rtcoef_gcom-c_1_sgli_srf.tar.gz
+150,nimbus_3_sirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_sirs_srf/rtcoef_nimbus_3_sirs_srf.tar.gz
+151,nimbus_3_sirs-blur,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_3_sirs-blur_srf/rtcoef_nimbus_3_sirs-blur_srf.tar.gz
+152,nimbus_4_sirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_4_sirs_srf/rtcoef_nimbus_4_sirs_srf.tar.gz
+153,nimbus_4_sirs-blur,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_4_sirs-blur_srf/rtcoef_nimbus_4_sirs-blur_srf.tar.gz
+154,sentinel3_1_slstr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_slstr_srf/rtcoef_sentinel3_1_slstr_srf.tar.gz
+155,sentinel3_2_slstr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_2_slstr_srf/rtcoef_sentinel3_2_slstr_srf.tar.gz
+156,dmsp_1_ssh,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_1_ssh_srf/rtcoef_dmsp_1_ssh_srf.tar.gz
+157,dmsp_2_ssh,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_2_ssh_srf/rtcoef_dmsp_2_ssh_srf.tar.gz
+158,dmsp_3_ssh,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_3_ssh_srf/rtcoef_dmsp_3_ssh_srf.tar.gz
+159,dmsp_4_ssh,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_dmsp_4_ssh_srf/rtcoef_dmsp_4_ssh_srf.tar.gz
+160,oceansat_3_sstm,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_oceansat_3_sstm_srf/rtcoef_oceansat_3_sstm_srf.tar.gz
+161,nimbus_4_thir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_4_thir_srf/rtcoef_nimbus_4_thir_srf.tar.gz
+162,nimbus_5_thir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_5_thir_srf/rtcoef_nimbus_5_thir_srf.tar.gz
+163,nimbus_6_thir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_6_thir_srf/rtcoef_nimbus_6_thir_srf.tar.gz
+164,nimbus_7_thir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_nimbus_7_thir_srf/rtcoef_nimbus_7_thir_srf.tar.gz
+165,landsat_8_tirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_8_tirs_srf/rtcoef_landsat_8_tirs_srf.tar.gz
+166,landsat_9_tirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_9_tirs_srf/rtcoef_landsat_9_tirs_srf.tar.gz
+167,landsat_4_tm,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_4_tm_srf/rtcoef_landsat_4_tm_srf.tar.gz
+168,landsat_5_tm,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_5_tm_srf/rtcoef_landsat_5_tm_srf.tar.gz
+169,landsat_7_tm,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_landsat_7_tm_srf/rtcoef_landsat_7_tm_srf.tar.gz
+170,trishna_1_tir,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_trishna_1_tir_srf/rtcoef_trishna_1_tir_srf.tar.gz
+171,jpss_0_viirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_jpss_0_viirs_srf/rtcoef_jpss_0_viirs_srf.tar.gz
+172,noaa_20_viirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_20_viirs_srf/rtcoef_noaa_20_viirs_srf.tar.gz
+173,noaa_21_viirs,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_21_viirs_srf/rtcoef_noaa_21_viirs_srf.tar.gz
+174,gf5_1_vims,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_gf5_1_vims_srf/rtcoef_gf5_1_vims_srf.tar.gz
+175,fy3_3_virr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy3_3_virr_srf/rtcoef_fy3_3_virr_srf.tar.gz
+176,fy2_2_vissr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_2_vissr_srf/rtcoef_fy2_2_vissr_srf.tar.gz
+177,fy2_3_vissr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_3_vissr_srf/rtcoef_fy2_3_vissr_srf.tar.gz
+178,fy2_4_vissr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_4_vissr_srf/rtcoef_fy2_4_vissr_srf.tar.gz
+179,fy2_5_vissr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_5_vissr_srf/rtcoef_fy2_5_vissr_srf.tar.gz
+180,fy2_7_vissr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_7_vissr_srf/rtcoef_fy2_7_vissr_srf.tar.gz
+181,fy2_8_vissr,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_fy2_8_vissr_srf/rtcoef_fy2_8_vissr_srf.tar.gz
+182,noaa_2_vtpr1,https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_noaa_2_vtpr1_srf/rtcoef_noaa_2_vtpr1_srf.tar.gz
