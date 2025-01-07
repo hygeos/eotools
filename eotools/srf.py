@@ -224,19 +224,26 @@ def to_tuple(ds, minT=0.005, func_odr: Callable = _Func_ODR.simpson):
     
     for i in range(len(keys_val)):
         coord = ds[keys_val[i]].coords.dims[0]
+        is_crois = None
+        if ds[coord][0] < ds[coord][1] :
+            is_crois = True
+        else :
+            is_crois = False
+        
         
         # SRF compute
-        srf_ = np.array(ds[keys_val[i]][::-1])  # croiss
-        srf_ = srf_ / srf_.max()
+        srf_ = np.array(ds[keys_val[i]] if is_crois else ds[keys_val[i]][::-1])  # croiss
+        srf_ = srf_ / np.nanmax(srf_)
         ok = srf_ > minT  # subset only minimum transmission
         srf_ = srf_[ok]
-    
         # SRF_WVL compute
-        srf_wvl_ = np.array(ds[coord][::-1])  # croiss
+        srf_wvl_ = np.array(ds[coord] if is_crois else ds[coord][::-1])  # croiss
+        print("avant ok\n", srf_wvl_)
         srf_wvl_ = srf_wvl_[ok]
+        print("après ok\n", srf_wvl_)
 
         # XLIMITS
-        xLimits.append([1e7 / max(srf_wvl_) + 1.0, 1e7 / min(srf_wvl_) - 1.0])
+        xLimits.append([1e7 / np.nanmax(srf_wvl_) + 1.0, 1e7 / np.nanmin(srf_wvl_) - 1.0]) #1e7 pour passer de nm à cm-1
 
         # fwhm and central_wvl computes
         mask05 = srf_ > 0.5
@@ -261,7 +268,7 @@ def to_tuple(ds, minT=0.005, func_odr: Callable = _Func_ODR.simpson):
         ODR.append(integrate / normalize)
 
     return (
-        np.array(xLimits),
+        np.array(xLimits), #cm-1
         1e7 / np.array(xLimits)[:, ::-1],
         fwhm,
         central_wvl,
