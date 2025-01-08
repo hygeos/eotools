@@ -1,7 +1,8 @@
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List, Optional, Union, Literal
+from typing import Callable, Dict, List, Optional, Union
+from warnings import warn
 import h5py
 import numpy as np
 import pandas as pd
@@ -15,43 +16,68 @@ from scipy.integrate import simpson
 from eotools.bodhaine import rod
 
 def get_SRF(
-    id_sensor: str,
-    band_ids: Optional[List[int]] = None,
-    check_nbands: bool = True,
-    thres_check: Optional[float] = 10,
-):
-    file_srf_eum = "./eotools/srf_eumetsat.csv"
-    path = pd.read_csv(file_srf_eum, header=0, index_col=0)
-    
-    if type(id_sensor) is not str:
-        raise NotImplementedError
-    if (path["id_EUMETSAT"] == id_sensor).any():
-        print("eumetsat")
-        return get_SRF_eumetsat(id_sensor, band_ids, check_nbands, thres_check)
-    else:
-        if "landsat" in id_sensor:
-            return get_SRF_landsat()
-        elif "misr" in id_sensor:
-            return get_SRF_misr()
-        elif "VGT" in id_sensor:
-            return get_SRF_vgt(id_sensor)
-        elif "Proba" in id_sensor:
-            return get_SRF_proba()
-        elif "olci" in id_sensor:
-            id_sensor = id_sensor[5::]
-            return get_SRF_olci(id_sensor)
-        elif "meris" in id_sensor:
-            return get_SRF_meris()
-        elif "msi" in id_sensor:
-            id_sensor = id_sensor[4::]
-            return get_SRF_msi(id_sensor)
-        else:
-            NotImplementedError(f"id_sensor ({id_sensor}) isn't implemented yet !\nPlease check in srf_eumetsat.csv or use one of these :\nlandsat\nmisr\nVGT1\nVGT2\nProba-V\nolci_SENTINEL3_1\nolci_SENTINEL3_2\nmeris\nmsi_S2A\nmsi_S2B\nmsi_S2C")
+    id_sensor: str | tuple | xr.Dataset,
+    **kwargs
+) -> xr.Dataset:
+    """
+    Get a SRF from multiple sources
 
+    Args:
+        id_sensor: can be one of:
+            - str: identifies the sensor/platform as in the EUMETSAT database
+              ex: "msg_1_seviri"
+            - tuple of (platform, sensor) or simply a str
+              identifies platform/sensors case by case 
+              ex: ("Sentinel3-A", "OLCI")
+            - a dataset, which contains platform and sensor attributes
+
+        Other **kwargs are passed to get_SRF_eumetsat, check its doc for more
+        information.
+
+    Return a xr.Dataset with the SRF for each band.
+    The variable name for each SRF is either a default band identifier
+    (integer starting from 1 - if band_ids is None), or corresponds to the
+    list `band_ids`.
+    """
+    if isinstance(id_sensor, xr.Dataset):
+        id_sensor = (id_sensor.platform, id_sensor.sensor)
+
+    if id_sensor == ("LANDSAT8", "OLI"):
+        srf = get_SRF_landsat8_oli()
+    elif id_sensor in ["VGT1", "VGT2"]:
+        srf = get_SRF_vgt(id_sensor)
+    elif id_sensor == "MISR":
+        srf = get_SRF_misr()
+    elif id_sensor == "Proba-V":
+        srf = get_SRF_probav()
+    elif id_sensor[1] == "OLCI": # ("S3X", "OLCI")
+        srf = get_SRF_olci(id_sensor[0])
+    elif id_sensor == ("ENVISAT", "MERIS"):
+        srf = get_SRF_meris()
+    elif id_sensor[1] == "MSI":  # ("S2X", "MSI")
+        srf = get_SRF_msi(id_sensor[0])
+    else:
+        # map other platform/sensor to EUMETSAT identifier
+        id_sensor = {
+            ("MSG1", "seviri"): "msg_1_seviri",
+            ("MSG2", "seviri"): "msg_2_seviri",
+            ("MSG3", "seviri"): "msg_3_seviri",
+            ("MSG4", "seviri"): "msg_4_seviri",
+        }.get(id_sensor, id_sensor) # type: ignore
+
+        assert isinstance(id_sensor, str)
+        srf = get_SRF_eumetsat(id_sensor, **kwargs)
+
+    if "desc" not in srf.attrs:
+        srf.attrs["desc"] = f'Spectral response functions for {id_sensor}'
+    if "sensor" not in srf.attrs:
+        srf.attrs["sensor"] = id_sensor
+
+    return srf
 
 
 def get_SRF_eumetsat(
-    id_sensor: Union[str, tuple, xr.Dataset],
+    id_sensor: str,
     band_ids: Optional[List[int]] = None,
     check_nbands: bool = True,
     thres_check: Optional[float] = 10,
@@ -61,8 +87,7 @@ def get_SRF_eumetsat(
         -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
 
     Arguments:
-        - id_sensor: identifier of the sensor/platform. Can be one of:
-            * id_EUMETSAT (str), as in the srf_eumetsat.csv file
+        - id_sensor: identifier of the sensor/platform (as in the srf_eumetsat.csv file)
         - band_ids [List]: list of sensor band identifiers. If not provided and
           id_sensor is a xr.Dataset, id_sensor.bands is used.
         - check_nbands: whether the number of bands passed as band_ids should match
@@ -77,12 +102,23 @@ def get_SRF_eumetsat(
     """
     
     empty_link = "https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_{}_srf/rtcoef_{}_srf.tar.gz"
+
     # Default directory
     directory = env.getdir("DIR_STATIC") / "srf"
-    assert directory is not None
 
+    # Load srf_eumetsat.csv to check the list of available sensors
+    # and raise a warning if needed
+    file_srf_eum = Path(__file__).parent / "srf_eumetsat.csv"
+    csv_data = pd.read_csv(file_srf_eum, header=0, index_col=0)
+    
+    if not (csv_data["id_EUMETSAT"] == id_sensor).any():
+        warn(f"Sensor {id_sensor} is not present in srf_eumetsat.csv, "
+             "and may be unavailable in EUMETSAT database.")
+
+    # Sensor selection
     ds = xr.Dataset()
     ds.attrs["desc"] = f'Spectral response functions for {id_sensor}'
+    ds.attrs["sensor"] = id_sensor
 
     urlpath = empty_link.format(id_sensor, id_sensor)
 
@@ -140,16 +176,31 @@ def get_SRF_eumetsat(
             assert diff < thres_check, ("There might be an error when providing the "
                 f"SRFs. A central wavelength of {cwav[bid]} was found for band {bid}")
 
+    if 'olci' in ds.sensor.lower():
+        # Special case OLCI: provide a mapping of (band, camera, ccd_col) to the
+        # corresponding variable name
+        # https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html
+        assert (315 in ds) and (316 not in ds)
+        ds["id"] = xr.DataArray(
+            np.arange(1, 316).reshape((21, 5, 3)),
+            dims=("band_id", "camera", "ccd_col"),
+            coords={
+                "band_id": np.arange(1, 22),
+                "camera": ["FM5R", "FM9", "FM7", "FM10", "FM8"],
+                "ccd_col": [10, 374, 730],
+            },
+        )
+
     return ds
 
 
 @filegen(if_exists='skip')
-def download_extract(directory: Path, url: str):
+def download_extract(directory: Path, url: str, verbose: bool = False):
     """
     Download a tar.gz file, and extract it to `directory`
     """
     with TemporaryDirectory() as tmpdir:
-        tar_gz_path = download_url(url, tmpdir)
+        tar_gz_path = download_url(url, tmpdir, verbose=verbose)
         with tarfile.open(tar_gz_path) as f:
             f.extractall(directory)
 
@@ -167,6 +218,11 @@ def integrate_srf(
     """
     integrated = {}
     for band, srf_band in srf.items():
+        if band == "id":
+            # "id" is a special variable mapping various parameters to a variable name
+            # thus it should not be considered in integrate_srf
+            continue
+
         srf_wav = srf_band[only(srf_band.dims)]
         wav = srf_wav.values
 
@@ -188,6 +244,7 @@ def integrate_srf(
 
     return integrated
 
+
 class _Func_ODR:
     def simpson(y, x=None):
         return simpson(y, x=x)
@@ -196,48 +253,55 @@ class _Func_ODR:
         return np.trapz(y, x=x)
 
 
-def to_tuple(ds, minT=0.005, func_odr: Callable = _Func_ODR.simpson):
+def to_tuple(
+    srf: xr.Dataset, minT: float = 0.005, func_odr: Callable = _Func_ODR.simpson
+) -> tuple:
     """
+    Convert an srf to a tuple for compatibility with codes that use such srf
+    representation (from smaclib)
+
     Arguments:
-        ds : a dataset coming from get_SRF
-        minT : 0.005 by default (legacy)
-        func_odr : the function used to compute ODR, can either be _Func_ODR.simpson (legacy) or _Func_ODR.trapz, _Func_ODR.simpson by default (legacy)
+        srf: a dataset coming from get_SRF
+        minT: threshold for minimum transmission subsetting.
+            0.005 by default (legacy)
+        func_odr: the function used for ODR integration, can either be _Func_ODR.simpson
+            or _Func_ODR.trapz, _Func_ODR.simpson by default (legacy)
 
     returns:
         (wvn_limits, wvl_limits, fwhm, wvl_central, rod_effective, srf_wvl, rsrf)
         with wvn in cm-1, wvl in nm, fwhm in nm, wvl_central in nm,
         SRF weighted Rayleigh optical depth, reference wavelegnth of the rsrf in nm, rsrf, name (string)
     """
-    name = list(ds.coords)
-    srf = []
+    name = list(srf.coords)
+    srf_data = []
     srf_wvl = []
     fwhm = []
     central_wvl = []
     xLimits = []
     ODR = []
     
-    keys_val = list(ds.keys())
+    keys_val = list(srf.keys())
     
     for var_name in keys_val:
-        if len(ds[var_name].dims) != 1:
-            print(f"Variable '{var_name}' has more than one coord: {ds[var_name].dims}")
+        if len(srf[var_name].dims) != 1:
+            print(f"Variable '{var_name}' has more than one coord: {srf[var_name].dims}")
     
     for i in range(len(keys_val)):
-        coord = ds[keys_val[i]].coords.dims[0]
+        coord = srf[keys_val[i]].coords.dims[0]
         is_crois = None
-        if ds[coord][0] < ds[coord][1] :
+        if srf[coord][0] < srf[coord][1] :
             is_crois = True
         else :
             is_crois = False
         
         
         # SRF compute
-        srf_ = np.array(ds[keys_val[i]] if is_crois else ds[keys_val[i]][::-1])  # croiss
+        srf_ = np.array(srf[keys_val[i]] if is_crois else srf[keys_val[i]][::-1])  # croiss
         srf_ = srf_ / np.nanmax(srf_)
         ok = srf_ > minT  # subset only minimum transmission
         srf_ = srf_[ok]
         # SRF_WVL compute
-        srf_wvl_ = np.array(ds[coord] if is_crois else ds[coord][::-1])  # croiss
+        srf_wvl_ = np.array(srf[coord] if is_crois else srf[coord][::-1])  # croiss
         print("avant ok\n", srf_wvl_)
         srf_wvl_ = srf_wvl_[ok]
         print("après ok\n", srf_wvl_)
@@ -257,11 +321,11 @@ def to_tuple(ds, minT=0.005, func_odr: Callable = _Func_ODR.simpson):
         central_wvl.append((high_end + low_end) * 0.5)
 
         # SRF & SRF_WVL attr
-        srf.append(srf_)
+        srf_data.append(srf_)
         srf_wvl.append(srf_wvl_)
 
     # ODR
-    for w, s in zip(srf_wvl, srf):
+    for w, s in zip(srf_wvl, srf_data):
         od = np.squeeze(rod(w * 1e-3, np.array(400), 45.0, 0.0, 1013.25))
         integrate = func_odr(s * od, x=w)
         normalize = func_odr(s, x=w)
@@ -274,16 +338,18 @@ def to_tuple(ds, minT=0.005, func_odr: Callable = _Func_ODR.simpson):
         central_wvl,
         np.array(ODR),
         srf_wvl,
-        srf,
+        srf_data,
         np.array(name),
     )
 
 
 
-def get_SRF_landsat():
+def get_SRF_landsat8_oli() -> xr.Dataset:
+    """
+    Get SRF for LANDSAT8 OLI
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
     
     fsrf = download_url(
         "https://docs.hygeos.com/s/i4wxHyoErgc8ZXX/download/Ball_BA_RSR.v1.2.xlsx",
@@ -315,10 +381,12 @@ def get_SRF_landsat():
     return ds
 
 
-def get_SRF_misr():
+def get_SRF_misr() -> xr.Dataset:
+    """
+    Get SRF for MISR
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
     
     fsrfs = download_url(
         "https://docs.hygeos.com/s/z3TQoB7dEx9PzMq/download/MISR_SRF.txt", dir_SRFs
@@ -348,10 +416,12 @@ def get_SRF_misr():
     return ds
 
 
-def get_SRF_proba():
+def get_SRF_probav() -> xr.Dataset:
+    """
+    Get SRF for Proba-V
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
     
     fsrfs = download_url(
         "https://docs.hygeos.com/s/YyH4gc5HR5F9iKo/download/VGT_SRF.XLSX", dir_SRFs
@@ -382,34 +452,38 @@ def get_SRF_proba():
         ds = ds.merge(dsb)
     return ds
 
-#VGT1 ou VGT2
-def get_SRF_vgt(platform : Literal["VGT1", "VGT2"] ):
+
+def get_SRF_vgt(sensor: str) -> xr.Dataset:
+    """
+    Get SRF for VGT
+
+    sensor: VGT1 or VGT2
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
     
     fsrfs = download_url(
         "https://docs.hygeos.com/s/YyH4gc5HR5F9iKo/download/VGT_SRF.XLSX", dir_SRFs
     )
-    data = pd.read_excel(fsrfs, sheet_name=platform)
+    data = pd.read_excel(fsrfs, sheet_name=sensor)
 
     ds = xr.Dataset()
     index = 1
 
     for band in ["BLUE", "RED", "NIR", "SWIR"]:
-        name_srf = "{} {}".format(band, platform)
-        if platform == "VGT1":
+        name_srf = "{} {}".format(band, sensor)
+        if sensor == "VGT1":
             srf_wvl_ = np.array(data["wavelength"].values * 1e3).astype(np.float64)
             srf_ = np.array(data[name_srf].values).astype(
                 np.float64
             )
-        elif platform == "VGT2":
+        elif sensor == "VGT2":
             srf_wvl_ = np.array(data["wavelength"].values).astype(np.float64)
             srf_ = np.array(data[name_srf].values).astype(
                 np.float64
             )
         else:
-            ValueError
+            raise ValueError
 
         dsb = xr.Dataset(
             {
@@ -425,12 +499,18 @@ def get_SRF_vgt(platform : Literal["VGT1", "VGT2"] ):
     ds["wavelength"].attrs["units"] = "nm"
     return ds
 
-#SENTINEL3_1 ou SENTINEL3_2
-def get_SRF_olci(platform : Literal["SENTINEL3_1", "SENTINEL3_2"]):
+
+def get_SRF_olci(platform: str) -> xr.Dataset:
+    """
+    Get SRF for OLCI
+
+    platform: one of:
+        "SENTINEL3_1", "SENTINEL3-A", 
+        "SENTINEL3_2"  "SENTINEL3-B"
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
-    
+
     if platform == "SENTINEL3_1":
         fsrf = h5py.File(
             download_url(
@@ -473,10 +553,12 @@ def get_SRF_olci(platform : Literal["SENTINEL3_1", "SENTINEL3_2"]):
     return ds
 
 
-def get_SRF_meris():
+def get_SRF_meris() -> xr.Dataset:
+    """
+    Get SRF for MERIS
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
     
     fsrfs = pd.read_excel(
         download_url(
@@ -512,10 +594,14 @@ def get_SRF_meris():
     return ds
 
 
-def get_SRF_msi(platform : Literal["S2A", "S2B", "S2C"]):
+def get_SRF_msi(platform : str) -> xr.Dataset:
+    """
+    Get SRF for Sentinel-2 MSI
+
+    platform: "S2A", "S2B", "S2C"
+    """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
-    assert dir_SRFs is not None
     
     fsrfs = download_url(
         "https://docs.hygeos.com/s/Q66yAcaseLaJXzj/download/COPE-GSEG-EOPG-TN-15-0007%20-%20Sentinel-2%20Spectral%20Response%20Functions%202024%20-%204.0.xlsx",

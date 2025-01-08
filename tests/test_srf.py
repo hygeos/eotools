@@ -21,9 +21,9 @@ msi_bands = [
 @pytest.mark.parametrize(
     "sensor,bands",
     [
-        ("LANDSAT 8 OLI", None),
-        ("SENTINEL2-A MSI", msi_bands),
-        ("SENTINEL-3A OLCI", None),
+        ("landsat_8_oli", None),
+        ("sentinel2_1_msi", msi_bands),
+        ("sentinel3_1_olci", None),
     ],
 )
 def test_get_srf(request, sensor, bands):
