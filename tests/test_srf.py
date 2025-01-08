@@ -7,7 +7,7 @@ import pytest
 from eoread.reader import msi
 from eoread.utils.graphics import plot_srf
 
-from eotools.srf import get_SRF
+from eotools.srf import get_SRF, select
 
 from . import conftest
 
@@ -19,15 +19,22 @@ msi_bands = [
     2190]
 
 @pytest.mark.parametrize(
-    "sensor,bands",
+    "sensor,bands,sel",
     [
-        ("landsat_8_oli", None),
-        ("sentinel2_1_msi", msi_bands),
-        ("sentinel3_1_olci", None),
+        ("landsat_8_oli", None, None),
+        ("sentinel2_1_msi", msi_bands, None),
+        ("sentinel3_1_olci", None, {"camera": "FM7", "ccd_col": 374}),
+        (("MSG2", "seviri"), None, None),
+        (("ENVISAT", "MERIS"), None, None),
+        ("Proba-V", None, {"camera": "CENTER"}),
+        ("VGT1", None, None),
     ],
 )
-def test_get_srf(request, sensor, bands):
+def test_get_srf(request, sensor, bands, sel):
     srf = get_SRF(sensor, band_ids=bands, thres_check=100)
+    if sel is not None:
+        srf = select(srf, **sel)
+
     plot_srf(srf)
 
     conftest.savefig(request, bbox_inches="tight")

@@ -458,17 +458,14 @@ def get_SRF_probav() -> xr.Dataset:
         for dir in list_camera:
             name_srf = "{} {}".format(band, dir)
             srf_.append(np.array(data[name_srf].values).astype(np.float64))
-        dsb = xr.Dataset(
-            {
-                band: (
-                    ("camera", name_wvl),
-                    srf_,
-                ),
-            },
-            coords={"camera": list_camera ,name_wvl: srf_wvl_},
+
+        ds[band] = xr.DataArray(
+            srf_,
+            dims=("camera", name_wvl),
+            coords={"camera": list_camera, name_wvl: srf_wvl_},
         )
-        dsb[name_wvl].attrs["units"] = "nm"
-        ds = ds.merge(dsb)
+        ds[name_wvl].attrs["units"] = "nm"
+
     return ds
 
 
