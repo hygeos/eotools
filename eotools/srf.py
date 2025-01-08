@@ -245,6 +245,25 @@ def integrate_srf(
     return integrated
 
 
+def select(srf: xr.Dataset, **kwargs) -> xr.Dataset:
+    """
+    Apply an index selection on the srf object.
+
+    If srf contains an "id" variable, it is used to trim down the variables.
+
+    The kwargs are used for the selection based on the dimensions present in srf.
+
+    Example: select(srf, camera=1)
+        returns a subset of the srf for camera 1.
+    """
+    if "id" in srf:
+        ids = srf.id.sel(**kwargs)
+        list_vars = list(ids.values)
+        return srf[list_vars]
+    else:
+        return srf.sel(**kwargs)
+
+
 class _Func_ODR:
     def simpson(y, x=None):
         return simpson(y, x=x)
