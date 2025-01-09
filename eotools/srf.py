@@ -226,12 +226,17 @@ def download_extract(directory: Path, url: str, verbose: bool = False):
 
 def integrate_srf(
     srf: xr.Dataset, x: Union[Callable, xr.DataArray],
+    integration_function: Callable = simpson
 ) -> Dict:
     """
     Integrate the quantity x over each spectral band in srf
 
     If x is a Callable, it is assumed that it takes inputs as a unit of nm
     If x is a DataArray, it should have a dimension "wav" and an associated unit
+
+    integration_function: can be one of:
+        - np.trapz
+        - scipy.integrate.simpson
 
     Returns a dict of integrated values
     """
@@ -257,8 +262,8 @@ def integrate_srf(
         else:
             raise TypeError(f"Error, x is of type {x.__class__}")
 
-        integrate = np.trapz(srf_band.values * xx, x=wav)
-        normalize = np.trapz(srf_band.values, x=wav)
+        integrate = integration_function(srf_band.values * xx, x=wav)
+        normalize = integration_function(srf_band.values, x=wav)
         integrated[band] = integrate / normalize
 
     return integrated
@@ -302,6 +307,9 @@ def plot_srf(srf: xr.Dataset):
             continue
         srf[iband].plot(label=iband)
         for coord in srf[iband].coords:
+            if srf[iband].coords[coord].ndim == 0:
+                # ignore scalar coords
+                continue
             assert "units" in srf[coord].attrs
     plt.title(srf.desc)
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
