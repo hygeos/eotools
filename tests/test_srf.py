@@ -19,19 +19,19 @@ msi_bands = [
     2190]
 
 @pytest.mark.parametrize(
-    "sensor,bands,sel",
+    "sensor,kw,sel",
     [
-        ("landsat_8_oli", None, None),
-        ("sentinel2_1_msi", msi_bands, None),
-        ("sentinel3_1_olci", None, {"camera": "FM7", "ccd_col": 374}),
-        (("MSG2", "seviri"), None, None),
-        (("ENVISAT", "MERIS"), None, None),
-        ("Proba-V", None, {"camera": "CENTER"}),
-        ("VGT1", None, None),
+        ("landsat_8_oli", {}, None),
+        ("sentinel2_1_msi", {"band_ids": msi_bands, "thres_check": 100}, None),
+        ("sentinel3_1_olci", {}, {"camera": "FM7", "ccd_col": 374}),
+        (("MSG2", "seviri"), {}, None),
+        (("ENVISAT", "MERIS"), {}, None),
+        ("Proba-V", {}, {"camera": "CENTER"}),
+        ("VGT1", {}, None),
     ],
 )
-def test_get_srf(request, sensor, bands, sel):
-    srf = get_SRF(sensor, band_ids=bands, thres_check=100)
+def test_get_srf(request, sensor, kw, sel):
+    srf = get_SRF(sensor, **kw)
     if sel is not None:
         srf = select(srf, **sel)
 

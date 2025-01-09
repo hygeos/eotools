@@ -17,6 +17,7 @@ from eotools.bodhaine import rod
 
 def get_SRF(
     id_sensor: str | tuple | xr.Dataset,
+    band_ids: Optional[List[int]] = None,
     **kwargs
 ) -> xr.Dataset:
     """
@@ -25,20 +26,24 @@ def get_SRF(
     Args:
         id_sensor: can be one of:
             - str: identifies the sensor/platform as in the EUMETSAT database
-              ex: "msg_1_seviri"
+                ex: "msg_1_seviri" (see srf_eumetsat.csv)
             - tuple of (platform, sensor) or simply a str
-              identifies platform/sensors case by case 
-              ex: ("Sentinel3-A", "OLCI")
+                identifies platform/sensors case by case 
+                ex: ("Sentinel3-A", "OLCI")
             - a dataset, which contains platform and sensor attributes
+        band_ids (List): list of sensor band identifiers. If not provided and
+          id_sensor is a xr.Dataset, id_sensor.bands is used.
 
-        Other **kwargs are passed to get_SRF_eumetsat, check its doc for more
-        information.
+        Other **kwargs are passed to the rename function (if band_ids is provided)
 
-    Return a xr.Dataset with the SRF for each band.
-    The variable name for each SRF is either a default band identifier
-    (integer starting from 1 - if band_ids is None), or corresponds to the
-    list `band_ids`.
+    Return a xr.Dataset with the SRF for each band, defined by default identifiers.
     """
+    if ((band_ids is None)
+        and isinstance(id_sensor, xr.Dataset)
+        and "bands" in id_sensor
+        ):
+        band_ids = list(id_sensor.bands.values)
+
     if isinstance(id_sensor, xr.Dataset):
         id_sensor = (id_sensor.platform, id_sensor.sensor)
 
@@ -57,7 +62,7 @@ def get_SRF(
     elif id_sensor[1] == "MSI":  # ("S2X", "MSI")
         srf = get_SRF_msi(id_sensor[0])
     else:
-        # map other platform/sensor to EUMETSAT identifier
+        # map other platform/sensor to EUMETSAT identifiers
         id_sensor = {
             ("MSG1", "seviri"): "msg_1_seviri",
             ("MSG2", "seviri"): "msg_2_seviri",
@@ -66,39 +71,31 @@ def get_SRF(
         }.get(id_sensor, id_sensor) # type: ignore
 
         assert isinstance(id_sensor, str)
-        srf = get_SRF_eumetsat(id_sensor, **kwargs)
+        srf = get_SRF_eumetsat(id_sensor)
 
     if "desc" not in srf.attrs:
         srf.attrs["desc"] = f'Spectral response functions for {id_sensor}'
     if "sensor" not in srf.attrs:
         srf.attrs["sensor"] = id_sensor
+    
+    # rename bands if band_ids has been provided
+    if band_ids is not None:
+        return rename(srf, band_ids, **kwargs)
+    else:
+        assert len(kwargs) == 0
+        return srf
 
-    return srf
 
-
-def get_SRF_eumetsat(
-    id_sensor: str,
-    band_ids: Optional[List[int]] = None,
-    check_nbands: bool = True,
-    thres_check: Optional[float] = 10,
-) -> xr.Dataset:
+def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
     """
-    Download and store Specrtral Response Function (SRF) from EUMETSAT Website
+    Download and read Specrtral Response Function (SRF) from EUMETSAT database
         -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
 
-    Arguments:
-        - id_sensor: identifier of the sensor/platform (as in the srf_eumetsat.csv file)
-        - band_ids [List]: list of sensor band identifiers. If not provided and
-          id_sensor is a xr.Dataset, id_sensor.bands is used.
-        - check_nbands: whether the number of bands passed as band_ids should match
-          the number of files.
-        - thres_check: if band id is provided, check that the integrated srf is within
-          a distance of `thres_check` of this band_id
+    Args:
+        id_sensor: identifier of the sensor/platform (as in the srf_eumetsat.csv file)
 
-    Return a xr.Dataset with the SRF for each band.
-    The variable name for each SRF is either a default band identifier
-    (integer starting from 1 - if band_ids is None), or corresponds to the
-    list `band_ids`.
+    Return a xr.Dataset with the SRF for each band, identified by integers from 1 to
+    nbands
     """
     
     empty_link = "https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_{}_srf/rtcoef_{}_srf.tar.gz"
@@ -129,21 +126,7 @@ def get_SRF_eumetsat(
 
     list_files = sorted((directory / basename).glob("*.txt"))
 
-    if ((band_ids is None)
-        and isinstance(id_sensor, xr.Dataset)
-        and "bands" in id_sensor
-        ):
-        band_ids = list(id_sensor.bands.values)
-
-    nbands = len(list_files)
-    if (band_ids is not None):
-        if check_nbands:
-            # check that the number of read bands matches `band_ids`
-            assert nbands == len(band_ids)
-        else:
-            nbands = len(band_ids)
-
-    for i, filepath in enumerate(list_files[:nbands]):
+    for i, filepath in enumerate(list_files):
         srf = pd.read_csv(
             filepath,
             skiprows=4,
@@ -157,24 +140,13 @@ def get_SRF_eumetsat(
         srf["Wavelength"] = srf["Wavelength"].apply(lambda x: 1.0 / x * 1e7).values
         with open(filepath) as fp:
             binfo = fp.readline()
-        if band_ids is not None:
-            bid = band_ids[i]
-        else:
-            bid = i+1
+        bid = i+1
         ds[bid] = xr.DataArray(
             srf["Response"].values,
             coords={f"wav_{bid}": srf["Wavelength"].values},
             attrs={"band_info": binfo.strip()},
         )
         ds[f"wav_{bid}"].attrs["units"] = "nm"
-
-    if (band_ids is not None) and (thres_check is not None):
-        # check that the band id matches the srf
-        cwav = integrate_srf(ds, lambda x: x)
-        for bid in band_ids:
-            diff = abs(float(bid) - cwav[bid])
-            assert diff < thres_check, ("There might be an error when providing the "
-                f"SRFs. A central wavelength of {cwav[bid]} was found for band {bid}")
 
     if 'olci' in ds.sensor.lower():
         # Special case OLCI: provide a mapping of (band, camera, ccd_col) to the
@@ -194,13 +166,60 @@ def get_SRF_eumetsat(
     return ds
 
 
+def nbands(srf: xr.Dataset) -> int:
+    """
+    Returns the number of bands of a SRF object
+    """
+    if "id" in srf:
+        assert "band_id" in srf.id
+        return len(srf.id.band_id)
+    else:
+        return len(srf)
+
+
+def rename(
+    srf: xr.Dataset,
+    band_ids: List[int],
+    check_nbands: bool = True,
+    thres_check: float | None = 10.0,
+) -> xr.Dataset:
+    """
+    Rename bands in a SRF object
+
+    Args:
+        check_nbands: whether the number of bands passed as band_ids should match
+            the number of srfs.
+        thres_check: if band id is provided, check that the integrated srf is within
+            a distance of `thres_check` of this band_id.
+            If None, this test is disactivated.
+    """
+    if check_nbands:
+        # check that the number of read bands matches `band_ids`
+        assert nbands(srf) == len(band_ids)
+    
+    # rename input variables to band_ids
+    in_vars = [k for k in list(srf) if k != "id"]
+    srf = srf.rename(dict(zip(in_vars, band_ids)))
+
+    # check consistency
+    if (thres_check is not None):
+        # check that the band id matches the srf
+        cwav = integrate_srf(srf, lambda x: x)
+        for bid in band_ids:
+            diff = abs(float(bid) - cwav[bid])
+            assert diff < thres_check, ("There might be an error when providing the "
+                f"SRFs. A central wavelength of {cwav[bid]} was found for band {bid}")
+    
+    return srf
+
+
 @filegen(if_exists='skip')
 def download_extract(directory: Path, url: str, verbose: bool = False):
     """
     Download a tar.gz file, and extract it to `directory`
     """
     with TemporaryDirectory() as tmpdir:
-        tar_gz_path = download_url(url, tmpdir, verbose=verbose)
+        tar_gz_path = download_url(url, Path(tmpdir), verbose=verbose)
         with tarfile.open(tar_gz_path) as f:
             f.extractall(directory)
 
