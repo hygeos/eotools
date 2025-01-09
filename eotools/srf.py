@@ -291,6 +291,25 @@ class _Func_ODR:
         return np.trapz(y, x=x)
 
 
+def plot_srf(srf: xr.Dataset):
+    """
+    Plot a SRF Dataset
+    """
+    from matplotlib import pyplot as plt
+    plt.figure()
+    for iband in srf.data_vars:
+        if iband == 'id':
+            continue
+        srf[iband].plot(label=iband)
+        for coord in srf[iband].coords:
+            assert "units" in srf[coord].attrs
+    plt.title(srf.desc)
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.xlabel("wavelength")
+    plt.ylabel("SRF")
+    plt.grid(True)
+
+
 def to_tuple(
     srf: xr.Dataset, minT: float = 0.005, func_odr: Callable = _Func_ODR.simpson
 ) -> tuple:

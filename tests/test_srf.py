@@ -5,9 +5,8 @@ from pathlib import Path
 
 import pytest
 from eoread.reader import msi
-from eoread.utils.graphics import plot_srf
 
-from eotools.srf import get_SRF, select
+from eotools.srf import get_SRF, plot_srf, select
 
 from . import conftest
 
