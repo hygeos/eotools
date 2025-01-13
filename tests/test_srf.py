@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
-
 import pytest
+import xarray as xr
 from eoread.reader import msi
 
-from eotools.srf import get_SRF, plot_srf, select
+from eotools.srf import get_SRF, plot_srf, rename, select
 
 from . import conftest
 
@@ -18,19 +17,23 @@ msi_bands = [
     2190]
 
 @pytest.mark.parametrize(
-    "sensor,kw,sel",
+    "platform,sensor,ren_kw,sel",
     [
-        ("landsat_8_oli", {}, None),
-        ("sentinel2_1_msi", {"band_ids": msi_bands, "thres_check": 100}, None),
-        ("sentinel3_1_olci", {}, {"camera": "FM7", "ccd_col": 374}),
-        (("MSG2", "seviri"), {}, None),
-        (("ENVISAT", "MERIS"), {}, None),
-        ("Proba-V", {}, {"camera": "CENTER"}),
-        ("VGT1", {}, None),
+        ("LANDSAT-8", "OLI", {}, None),
+        ("sentinel2-A", "MSI", {"band_ids": msi_bands, "thres_check": 100}, None),
+        ("sentinel3_A", "olci", {}, {"camera": "FM7", "ccd_col": 374}),
+        ("MSG2", "seviri", {}, None),
+        ("ENVISAT", "MERIS", {}, None),
+        ("Proba-V", "Proba-V", {}, {"camera": "CENTER"}),
+        ("SPOT", "VGT1", {}, None),
     ],
 )
-def test_get_srf(request, sensor, kw, sel):
-    srf = get_SRF(sensor, **kw)
+def test_get_srf(request, platform, sensor, ren_kw, sel):
+    ds = xr.Dataset()
+    ds.attrs.update(sensor=sensor, platform=platform)
+    srf = get_SRF(ds)
+    if len(ren_kw) > 0:
+        srf = rename(srf, **ren_kw)
     if sel is not None:
         srf = select(srf, **sel)
 
@@ -38,8 +41,3 @@ def test_get_srf(request, sensor, kw, sel):
 
     conftest.savefig(request, bbox_inches="tight")
 
-
-def test_srf_from_l1(level1: Path):
-    l1 = msi.Level1_MSI(level1)
-    srf = get_SRF(l1, thres_check=100)
-    assert len(srf) == len(l1.bands)

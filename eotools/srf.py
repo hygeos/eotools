@@ -1,7 +1,8 @@
+import importlib
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Union
 from warnings import warn
 import h5py
 import numpy as np
@@ -16,80 +17,84 @@ from scipy.integrate import simpson
 from eotools.bodhaine import rod
 
 def get_SRF(
-    id_sensor: str | tuple | xr.Dataset,
-    band_ids: Optional[List[int]] = None,
+    ds: xr.Dataset,
+    srf_getter: str | None = None,
+    srf_getter_arg: str | None = None,
+    fuzzy: bool = True,
     **kwargs
 ) -> xr.Dataset:
     """
-    Get a SRF from multiple sources
+    Get a SRF for the product `ds`
 
     Args:
-        id_sensor: can be one of:
-            - str: identifies the sensor/platform as in the EUMETSAT database
-                ex: "msg_1_seviri" (see srf_eumetsat.csv)
-            - tuple of (platform, sensor) or simply a str
-                identifies platform/sensors case by case 
-                ex: ("Sentinel3-A", "OLCI")
-            - a dataset, which contains platform and sensor attributes
-        band_ids (List): list of sensor band identifiers. If not provided and
-          id_sensor is a xr.Dataset, id_sensor.bands is used.
-
-        Other **kwargs are passed to the rename function (if band_ids is provided)
+        ds: a dataset, which contains platform and sensor attributes (unless
+            srf_getter/srf_getter_arg is specified)
+        srf_getter (str): name of custom function to override the function for SRF reading.
+            Example: "eotools.srf.get_SRF_eumetsat"
+            If None, `srf_getter` and `srf_getter_arg` are searched in the `srf.csv`
+            file for the sensor/platform specified in `ds`.
+        srf_getter_arg (str): argument passed to the srf_getter function
+            Example: "dscovr_1_epic"
+        fuzzy (bool): whether to apply fuzzy search to the sensor and platform (don't match
+            case, ignore whitespaces, "-" and "_")
 
     Return a xr.Dataset with the SRF for each band, defined by default identifiers.
     """
-    if ((band_ids is None)
-        and isinstance(id_sensor, xr.Dataset)
-        and "bands" in id_sensor
-        ):
-        band_ids = list(id_sensor.bands.values)
+    def apply_fuzzy(x):
+        if fuzzy:
+            return x.replace("-", "").replace("_", "").strip().lower()
+        else:
+            return x
 
-    if isinstance(id_sensor, xr.Dataset):
-        id_sensor = (id_sensor.platform, id_sensor.sensor)
+    if srf_getter is None:
+        platform = ds.platform
+        sensor = ds.sensor
+        
+        # load CSV file
+        file_srf = Path(__file__).parent / "srf.csv"
+        csv_data = pd.read_csv(
+            file_srf, header=0, index_col=False, dtype=str, comment="#"
+        )
 
-    if id_sensor == ("LANDSAT8", "OLI"):
-        srf = get_SRF_landsat8_oli()
-    elif id_sensor in ["VGT1", "VGT2"]:
-        srf = get_SRF_vgt(id_sensor)
-    elif id_sensor == "MISR":
-        srf = get_SRF_misr()
-    elif id_sensor == "Proba-V":
-        srf = get_SRF_probav()
-    elif id_sensor[1] == "OLCI": # ("S3X", "OLCI")
-        srf = get_SRF_olci(id_sensor[0])
-    elif id_sensor == ("ENVISAT", "MERIS"):
-        srf = get_SRF_meris()
-    elif id_sensor[1] == "MSI":  # ("S2X", "MSI")
-        srf = get_SRF_msi(id_sensor[0])
+        csv_platform = csv_data["platform"].astype("str").apply(apply_fuzzy)
+        csv_sensor = csv_data["sensor"].astype("str").apply(apply_fuzzy)
+
+        eq = (csv_sensor == apply_fuzzy(sensor)) & (
+            csv_platform == apply_fuzzy(platform)
+        )
+
+        if sum(eq) != 1:
+            raise ValueError(
+                f"Sensor {platform}/{sensor} is not present in srf_eumetsat.csv, "
+                "and may be unavailable in EUMETSAT database."
+            )
+        
+        srf_getter = str(csv_data[eq].srf_getter.values[0])
+        srf_getter_arg = str(csv_data[eq].srf_getter_arg.values[0])
+
+    # Run the SRF getter
+    p, m = srf_getter.rsplit(".", 1)
+    mod = importlib.import_module(p)
+    getter = getattr(mod, m)
+    if srf_getter_arg == 'nan':
+        srf = getter()
     else:
-        # map other platform/sensor to EUMETSAT identifiers
-        id_sensor = {
-            ("MSG1", "seviri"): "msg_1_seviri",
-            ("MSG2", "seviri"): "msg_2_seviri",
-            ("MSG3", "seviri"): "msg_3_seviri",
-            ("MSG4", "seviri"): "msg_4_seviri",
-        }.get(id_sensor, id_sensor) # type: ignore
-
-        assert isinstance(id_sensor, str)
-        srf = get_SRF_eumetsat(id_sensor)
+        srf = getter(srf_getter_arg)
 
     if "desc" not in srf.attrs:
-        srf.attrs["desc"] = f'Spectral response functions for {id_sensor}'
+        srf.attrs["desc"] = f'Spectral response functions for {platform}/{sensor}'
     if "sensor" not in srf.attrs:
-        srf.attrs["sensor"] = id_sensor
+        srf.attrs["sensor"] = sensor
+    if "platform" not in srf.attrs:
+        srf.attrs["platform"] = platform
     
-    # rename bands if band_ids has been provided
-    if band_ids is not None:
-        return rename(srf, band_ids, **kwargs)
-    else:
-        assert len(kwargs) == 0
-        return srf
+    return srf
 
 
 def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
     """
     Download and read Specrtral Response Function (SRF) from EUMETSAT database
-        -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
+    -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
 
     Args:
         id_sensor: identifier of the sensor/platform (as in the srf_eumetsat.csv file)
@@ -179,7 +184,7 @@ def nbands(srf: xr.Dataset) -> int:
 
 def rename(
     srf: xr.Dataset,
-    band_ids: List[int],
+    band_ids: List[int] | np.ndarray,
     check_nbands: bool = True,
     thres_check: float | None = 10.0,
 ) -> xr.Dataset:
@@ -566,29 +571,16 @@ def get_SRF_olci(platform: str) -> xr.Dataset:
     """
     Get SRF for OLCI
 
-    platform: one of:
-        "SENTINEL3_1", "SENTINEL3-A", 
-        "SENTINEL3_2"  "SENTINEL3-B"
+    platform: one of "SENTINEL3_1", "SENTINEL3_2"
     """
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
 
-    if platform == "SENTINEL3_1":
-        fsrf = h5py.File(
-            download_url(
-                "https://docs.hygeos.com/s/BTRbcPoiqnwrrTj/download/S3A_OL_SRF_20160713_mean_rsr.nc4",
-                dir_SRFs,
-            ),
-            "r",
-        )
-    else:
-        fsrf = h5py.File(
-            download_url(
-                "https://docs.hygeos.com/s/YNfiCaBZXfsYfQB/download/S3B_OL_SRF_0_20180109_mean_rsr.nc4",
-                dir_SRFs,
-            ),
-            "r",
-        )
+    url = {
+        "SENTINEL3_1": "https://docs.hygeos.com/s/BTRbcPoiqnwrrTj/download/S3A_OL_SRF_20160713_mean_rsr.nc4",
+        "SENTINEL3_2": "https://docs.hygeos.com/s/YNfiCaBZXfsYfQB/download/S3B_OL_SRF_0_20180109_mean_rsr.nc4",
+    }[platform]
+    fsrf = h5py.File(download_url(url, dir_SRFs), "r")
     central_wvl_i = np.copy(fsrf["srf_centre_wavelength"])
     srf_wvl_i = np.copy(fsrf["mean_spectral_response_function_wavelength"])
     srf_i = np.copy(fsrf["mean_spectral_response_function"])
