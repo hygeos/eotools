@@ -3,7 +3,7 @@
 
 import pytest
 import xarray as xr
-from eoread.reader import msi
+from eoread import msi
 
 from eotools.srf import get_SRF, plot_srf, rename, select
 

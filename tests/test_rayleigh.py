@@ -7,7 +7,7 @@ import pytest
 import xarray as xr
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.eo import init_geometry
-from eoread.reader import msi
+from eoread import msi
 from luts import Idx
 
 from eotools.apply_ancillary import apply_ancillary

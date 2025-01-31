@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 from eoread.ancillary_nasa import Ancillary_NASA
-from eoread.reader import msi
-from eoread.utils.pytest_utils import parametrize_dict
+from eoread import msi
+from core.pytest_utils import parametrize_dict
 from eoread.utils.xrtags import tag_filter
 from matplotlib import pyplot as plt
 
