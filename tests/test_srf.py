@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
 import pytest
 import xarray as xr
 from eoread import msi
@@ -41,3 +42,8 @@ def test_get_srf(request, platform, sensor, ren_kw, sel):
 
     conftest.savefig(request, bbox_inches="tight")
 
+
+def test_srf_from_l1(level1: Path):
+    l1 = msi.Level1_MSI(level1)
+    srf = get_SRF(l1, thres_check=100)
+    assert len(srf) == len(l1.bands)

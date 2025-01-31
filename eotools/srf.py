@@ -65,8 +65,8 @@ def get_SRF(
 
         if sum(eq) != 1:
             raise ValueError(
-                f"Sensor {platform}/{sensor} is not present in srf_eumetsat.csv, "
-                "and may be unavailable in EUMETSAT database."
+                f"Sensor {platform}/{sensor} is not present in srf.csv. Please provide"
+                "your own srf_getter."
             )
         
         srf_getter = str(csv_data[eq].srf_getter.values[0])
@@ -97,7 +97,7 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
     -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
 
     Args:
-        id_sensor: identifier of the sensor/platform (as in the srf_eumetsat.csv file)
+        id_sensor: identifier of the sensor/platform (as in the srf.csv file)
 
     Return a xr.Dataset with the SRF for each band, identified by integers from 1 to
     nbands
@@ -108,13 +108,15 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
     # Default directory
     directory = env.getdir("DIR_STATIC") / "srf"
 
-    # Load srf_eumetsat.csv to check the list of available sensors
+    # Load srf.csv to check the list of available sensors
     # and raise a warning if needed
-    file_srf_eum = Path(__file__).parent / "srf_eumetsat.csv"
-    csv_data = pd.read_csv(file_srf_eum, header=0, index_col=0)
+    file_srf = Path(__file__).parent / "srf.csv"
+    csv_data = pd.read_csv(
+        file_srf, header=0, index_col=False, dtype=str, comment="#"
+    )
     
-    if not (csv_data["id_EUMETSAT"] == id_sensor).any():
-        warn(f"Sensor {id_sensor} is not present in srf_eumetsat.csv, "
+    if not (csv_data["srf_getter_arg"] == id_sensor).any():
+        warn(f"Sensor {id_sensor} is not present in srf.csv, "
              "and may be unavailable in EUMETSAT database.")
 
     # Sensor selection
@@ -192,10 +194,12 @@ def rename(
     Rename bands in a SRF object
 
     Args:
+        srf: the input srf object, with arbitrary band names
+        band_ids: the new band identifiers
         check_nbands: whether the number of bands passed as band_ids should match
             the number of srfs.
-        thres_check: if band id is provided, check that the integrated srf is within
-            a distance of `thres_check` of this band_id.
+        thres_check: check that the integrated srf is within a distance of `thres_check`
+            of band_id (assumed integer)
             If None, this test is disactivated.
     """
     if check_nbands:
