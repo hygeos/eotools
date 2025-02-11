@@ -1,7 +1,7 @@
 from scipy.ndimage import convolve
-from numpy import ones, NaN, zeros_like, sqrt
+from numpy import ones, zeros_like, sqrt, nan
 
-def stdev(S, S2, N, fillv=NaN):
+def stdev(S, S2, N, fillv=nan):
     '''
     Returns standard deviation from:
         * S sum of the values
@@ -18,7 +18,7 @@ def stdev(S, S2, N, fillv=NaN):
     return R
 
 
-def stdNxN(X, N, mask=None, fillv=NaN):
+def stdNxN(X, N, mask=None, fillv=nan):
     '''
     Standard deviation over NxN blocks over array X
     '''

@@ -171,7 +171,7 @@ class Gaseous_correction:
 
         ozone : total column in Dobson Unit (DU)
         """
-        Rtoa_gc = np.zeros_like(Rtoa)+np.NaN
+        Rtoa_gc = np.zeros_like(Rtoa)+np.nan
         ok = ~np.isnan(latitude)   # FIXME:
 
         # TODO: nightpixels & invalid pixels

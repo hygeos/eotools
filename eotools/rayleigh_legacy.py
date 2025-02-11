@@ -32,9 +32,9 @@ class Rayleigh_correction:
         '''
         nbands = wav.shape[-1]
         dim3 = mus.shape + (nbands,)
-        Rmol = np.zeros(dim3, dtype='float32') + np.NaN
-        Rmolgli = np.zeros(dim3, dtype='float32') + np.NaN
-        Tmol = np.zeros(dim3, dtype='float32') + np.NaN
+        Rmol = np.zeros(dim3, dtype='float32') + np.nan
+        Rmolgli = np.zeros(dim3, dtype='float32') + np.nan
+        Tmol = np.zeros(dim3, dtype='float32') + np.nan
 
         ok = (((flags & self.bitmask_invalid) == 0)
               & (mus > 0.17)   # avoid cases where sun is too low
