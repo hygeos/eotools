@@ -49,7 +49,7 @@ HIMAWARI-9,AHI,eotools.srf.get_SRF_eumetsat,himawari_9_ahi
 CO2M,CLIM,eotools.srf.get_SRF_eumetsat,co2m_1_clim
 ISS,ECOSTRESS,eotools.srf.get_SRF_eumetsat,iss_1_ecostres
 ,,eotools.srf.get_SRF_eumetsat,dscovr_1_epic
-MTG,FCI,eotools.srf.get_SRF_eumetsat,mtg_1_fci
+MTG-I1,FCI,eotools.srf.get_SRF_eumetsat,mtg_1_fci
 ,,eotools.srf.get_SRF_eumetsat,gms_1_imager
 ,,eotools.srf.get_SRF_eumetsat,gms_2_imager
 ,,eotools.srf.get_SRF_eumetsat,gms_3_imager
