@@ -1,6 +1,6 @@
 import numpy as np
 import xarray as xr
-from eoread.download_legacy import download_url
+from core.download import download_url
 from core import env
 from luts import Idx, read_mlut_hdf
 

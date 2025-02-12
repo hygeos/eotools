@@ -7,7 +7,7 @@ import numpy as np
 from pyhdf.SD import SD
 from core.tools import datetime
 from core.fileutils import mdir
-from eoread.download_legacy import download_url
+from core.download import download_url
 from eotools.gaseous_absorption import get_absorption
 from eotools.srf import integrate_srf
 from core import env
