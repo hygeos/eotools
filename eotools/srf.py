@@ -103,7 +103,7 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
     nbands
     """
     
-    empty_link = "https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_{}_srf/rtcoef_{}_srf.tar.gz"
+    empty_link = "https://nwp-saf.eumetsat.int/downloads/rtcoef_info/visir_srf/rtcoef_{}_srf/rtcoef_{}_srf.tar.gz"
 
     # Default directory
     directory = env.getdir("DIR_STATIC") / "srf"
