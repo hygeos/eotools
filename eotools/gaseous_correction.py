@@ -80,8 +80,8 @@ class Gaseous_correction:
         k_oz_data  = get_absorption('o3', dirname=dir_common)
         k_no2_data = get_absorption('no2', dirname=dir_common)
 
-        self.K_OZ = integrate_srf(srf, k_oz_data)
-        self.K_NO2 = integrate_srf(srf, k_no2_data)
+        self.K_OZ = integrate_srf(srf, k_oz_data, resample='x')
+        self.K_NO2 = integrate_srf(srf, k_no2_data, resample='x')
 
         # consistency checking: check that both wavc and ds.bands are sorted
         # wavc = integrate_srf(srf, lambda x: x)

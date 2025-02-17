@@ -2,7 +2,7 @@ import importlib
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Literal, Optional, Union
 from warnings import warn
 import h5py
 import numpy as np
@@ -235,13 +235,17 @@ def download_extract(directory: Path, url: str, verbose: bool = False):
 
 def integrate_srf(
     srf: xr.Dataset, x: Union[Callable, xr.DataArray],
-    integration_function: Callable = simpson
+    integration_function: Callable = simpson,
+    resample: Optional[Literal["x", "srf"]] = None,
 ) -> Dict:
     """
     Integrate the quantity x over each spectral band in srf
 
-    If x is a Callable, it is assumed that it takes inputs as a unit of nm
-    If x is a DataArray, it should have a dimension "wav" and an associated unit
+    If `x` is a Callable, it is assumed that it takes inputs as a unit of nm
+    If `x` is a DataArray, it should have a dimension "wav" and an associated unit
+    corresponding to the unit on which the srf is defined. In this case, either the srf
+    is resampled to the wav dimension of `x` (resample="x") or `x` is resampled to the
+    wav dimension of the srf (resample="srf").
 
     integration_function: can be one of:
         - np.trapz
@@ -256,23 +260,40 @@ def integrate_srf(
             # thus it should not be considered in integrate_srf
             continue
 
-        srf_wav = srf_band[only(srf_band.dims)]
-        wav = srf_wav.values
+        srf_bandname = only(srf_band.dims)
+        srf_wav = srf_band[srf_bandname]
 
         # Calculate quantity x over values `wav`
         # either by interpolation or by calling x
         if callable(x):
             # Check that the input unit is consistent
             assert srf_wav.units == 'nm'
+            wav = srf_wav.values
             xx = x(wav)
+            srf_values = srf_band.values
         elif isinstance(x, xr.DataArray):
             assert x.wav.units == srf_wav.units
-            xx = x.interp(wav=srf_wav.values).values
+            if resample == "srf":
+                wav = srf_wav.values
+                xx = x.interp(wav=wav).values
+                if np.isnan(x).any():
+                    raise ValueError('x contains NaNs after interpolation on SRF grid. '
+                                     'Please check its domain of validity.')
+                srf_values = srf_band.values
+            elif resample == "x":
+                wav = x.wav.values
+                xx = x.values
+                # NaNs are replaced by zeros
+                srf_values = np.nan_to_num(srf_band.interp({srf_bandname: wav}).values)
+            else:
+                raise ValueError(
+                    "When integrating numerical values, please specify either "
+                    f"resample='x' or resample='srf'. Here, resample={resample}")
         else:
             raise TypeError(f"Error, x is of type {x.__class__}")
 
-        integrate = integration_function(srf_band.values * xx, x=wav)
-        normalize = integration_function(srf_band.values, x=wav)
+        integrate = integration_function(srf_values * xx, x=wav)
+        normalize = integration_function(srf_values, x=wav)
         integrated[band] = integrate / normalize
 
     return integrated

@@ -36,9 +36,14 @@ def test_integrate_srf(platform, sensor, gas, integration_function):
     srf = get_SRF(ds)
     k = get_absorption(gas)
 
-    integrated = integrate_srf(srf, k, integration_function=integration_function)
-
-    print(integrated)
+    for resample in ["x", "srf"]:
+        integrated = integrate_srf(
+            srf,
+            k,
+            integration_function=integration_function,
+            resample=resample,
+        )
+        print(resample, integrated)
 
 
 def test_gaseous_correction(level1: Path):
