@@ -98,9 +98,9 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
 
     Args:
         id_sensor: identifier of the sensor/platform (as in the srf.csv file)
+            Provide an empty string to list available id_sensors.
 
-    Return a xr.Dataset with the SRF for each band, identified by integers from 1 to
-    nbands
+    Return a xr.Dataset with the SRF for each band.
     """
     
     empty_link = "https://nwp-saf.eumetsat.int/downloads/rtcoef_info/visir_srf/rtcoef_{}_srf/rtcoef_{}_srf.tar.gz"
@@ -115,6 +115,13 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
         file_srf, header=0, index_col=False, dtype=str, comment="#"
     )
     
+    if id_sensor == '':
+        print('List of supported id_sensor:')
+        for _, row in csv_data.iterrows():
+            if row['srf_getter'] == 'eotools.srf.get_SRF_eumetsat':
+                print('   ', row["srf_getter_arg"])
+        raise ValueError
+
     if not (csv_data["srf_getter_arg"] == id_sensor).any():
         warn(f"Sensor {id_sensor} is not present in srf.csv, "
              "and may be unavailable in EUMETSAT database.")
