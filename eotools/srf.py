@@ -237,7 +237,7 @@ def integrate_srf(
     srf: xr.Dataset, x: Union[Callable, xr.DataArray],
     integration_function: Callable = simpson,
     resample: Optional[Literal["x", "srf"]] = None,
-) -> Dict:
+) -> xr.Dataset:
     """
     Integrate the quantity x over each spectral band in srf
 
@@ -253,7 +253,7 @@ def integrate_srf(
 
     Returns a dict of integrated values
     """
-    integrated = {}
+    integrated = xr.Dataset()
     for band, srf_band in srf.items():
         if band == "id":
             # "id" is a special variable mapping various parameters to a variable name
