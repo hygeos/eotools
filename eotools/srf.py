@@ -236,6 +236,7 @@ def download_extract(directory: Path, url: str, verbose: bool = False):
 def integrate_srf(
     srf: xr.Dataset, x: Union[Callable, xr.DataArray],
     integration_function: Callable = simpson,
+    integration_dimension: Optional[str]=None,
     resample: Optional[Literal["x", "srf"]] = None,
 ) -> xr.Dataset:
     """
@@ -250,8 +251,11 @@ def integrate_srf(
     integration_function: can be one of:
         - np.trapz
         - scipy.integrate.simpson
+    
+    If the SRFs are defined over more than 1 dimension, the spectral dimension is
+    specified through the `integration_dimension` argument.
 
-    Returns a dict of integrated values
+    Returns a Dataset of integrated values
     """
     integrated = xr.Dataset()
     for band, srf_band in srf.items():
@@ -260,7 +264,14 @@ def integrate_srf(
             # thus it should not be considered in integrate_srf
             continue
 
-        srf_bandname = only(srf_band.dims)
+        if len(srf_band.dims) == 1:
+            srf_bandname = only(srf_band.dims)
+        else:
+            assert len(srf_band.dims) > 1
+            assert integration_dimension is not None, \
+                'When integrating multi dimensional datasets, please provide the integration dimension'
+            srf_bandname = integration_dimension
+
         srf_wav = srf_band[srf_bandname]
 
         # Calculate quantity x over values `wav`
@@ -294,9 +305,20 @@ def integrate_srf(
 
         integrate = integration_function(srf_values * xx, x=wav)
         normalize = integration_function(srf_values, x=wav)
-        integrated[band] = integrate / normalize
+        if integration_dimension is None:
+            dims = None
+        else:
+            dims=[x for x in srf_band.dims if x != integration_dimension]
 
-    return integrated
+        integrated[band] = xr.DataArray(integrate / normalize, dims=dims)
+
+    # reassign input coordinates if needed
+    if integration_dimension is None:
+        return integrated
+    else:
+        return integrated.assign_coords(
+            {k: v for k, v in srf.coords.items() if k != integration_dimension}
+        )
 
 
 def select(srf: xr.Dataset, **kwargs) -> xr.Dataset:
