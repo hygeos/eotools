@@ -131,7 +131,7 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
     # Download and extract the SRF files
     download_extract(directory / basename, urlpath)
 
-    list_files = sorted((directory / basename).glob("*.txt"))
+    list_files = (directory / basename).glob("*.txt")
 
     for i, filepath in enumerate(list_files):
         srf = pd.read_csv(
@@ -147,21 +147,27 @@ def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
         srf["Wavelength"] = srf["Wavelength"].apply(lambda x: 1.0 / x * 1e7).values
         with open(filepath) as fp:
             binfo = fp.readline()
-        bid = i+1
+        bid = binfo.split(',')[1].strip()
+        bindex = int(binfo.split(',')[0].strip())
         ds[bid] = xr.DataArray(
             srf["Response"].values,
             coords={f"wav_{bid}": srf["Wavelength"].values},
-            attrs={"band_info": binfo.strip()},
+            attrs={
+                "band_info": binfo.strip(),
+                "index": bindex,
+            },
         )
         ds[f"wav_{bid}"].attrs["units"] = "nm"
+
+    # sort the bands by index
+    ds = ds[sorted(ds, key=lambda x: ds[x].attrs['index'])]
 
     if 'olci' in ds.sensor.lower():
         # Special case OLCI: provide a mapping of (band, camera, ccd_col) to the
         # corresponding variable name
         # https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html
-        assert (315 in ds) and (316 not in ds)
         ds["id"] = xr.DataArray(
-            np.arange(1, 316).reshape((21, 5, 3)),
+            np.array(sorted(ds)).reshape((21, 5, 3)),
             dims=("band_id", "camera", "ccd_col"),
             coords={
                 "band_id": np.arange(1, 22),
