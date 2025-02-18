@@ -91,16 +91,16 @@ def get_SRF(
     return srf
 
 
-def get_SRF_eumetsat(id_sensor: str) -> xr.Dataset:
+def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
     """
     Download and read Specrtral Response Function (SRF) from EUMETSAT database
     -> https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
 
     Args:
         id_sensor: identifier of the sensor/platform (as in the srf.csv file)
-            Provide an empty string to list available id_sensors.
+            Provide an empty string to list available id_sensors (default).
 
-    Return a xr.Dataset with the SRF for each band.
+    Returns a xr.Dataset with the SRF for each band.
     """
     
     empty_link = "https://nwp-saf.eumetsat.int/downloads/rtcoef_info/visir_srf/rtcoef_{}_srf/rtcoef_{}_srf.tar.gz"
