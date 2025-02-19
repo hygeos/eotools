@@ -60,3 +60,4 @@ def test_gaseous_correction(level1: Path):
     )
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
     Gaseous_correction(ds, srf, input_var='Rtoa').apply()
+    ds.sel(x=1000, y=1000).compute()

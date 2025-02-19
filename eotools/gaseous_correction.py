@@ -184,7 +184,7 @@ class Gaseous_correction:
             if not Rtoa.size:
                 break 
 
-            tauO3 = self.K_OZ[b] * ozone[ok] * 1e-3  # convert from DU to cm*atm
+            tauO3 = self.K_OZ[b].values * ozone[ok] * 1e-3  # convert from DU to cm*atm
 
             # ozone transmittance
             trans_O3 = np.exp(-tauO3 * air_mass[ok])
@@ -201,7 +201,7 @@ class Gaseous_correction:
             if not Rtoa.size:
                 break 
 
-            k_no2 = self.K_NO2[b]
+            k_no2 = self.K_NO2[b].values
 
             a_285 = k_no2 * (1.0 - 0.003*(285.0-294.0))
             a_225 = k_no2 * (1.0 - 0.003*(225.0-294.0))
