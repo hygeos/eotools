@@ -1,8 +1,9 @@
 import importlib
+import re
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List, Literal, Optional, Union
+from typing import Callable, List, Literal, Optional, Union
 from warnings import warn
 import h5py
 import numpy as np
@@ -155,7 +156,12 @@ def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
         with open(filepath) as fp:
             binfo = fp.readline()
         bid = binfo.split(',')[1].strip()
-        bindex = int(binfo.split(',')[0].strip())
+
+        # get the channel index from file name
+        match = re.search(r'ch(\d+).txt', filepath.name)
+        assert match
+        bindex = int(match.group(1))
+
         ds[bid] = xr.DataArray(
             srf["Response"].values,
             coords={f"wav_{bid}": srf["Wavelength"].values},
@@ -249,13 +255,14 @@ def download_extract(directory: Path, url: str, verbose: bool = False):
 def integrate_srf(
     srf: xr.Dataset, x: Union[Callable, xr.DataArray],
     integration_function: Callable = simpson,
-    integration_dimension: Optional[str]=None,
+    integration_dimension: Optional[str] = None,
     resample: Optional[Literal["x", "srf"]] = None,
 ) -> xr.Dataset:
     """
-    Integrate the quantity x over each spectral band in srf
+    Integrate the quantity `x` over each spectral band in `srf`
 
-    If `x` is a Callable, it is assumed that it takes inputs as a unit of nm
+    If `x` is a Callable, it is assumed to take inputs in the same unit as defined
+    in `srf`.
     If `x` is a DataArray, it should have a dimension "wav" and an associated unit
     corresponding to the unit on which the srf is defined. In this case, either the srf
     is resampled to the wav dimension of `x` (resample="x") or `x` is resampled to the
