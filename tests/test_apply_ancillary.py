@@ -4,7 +4,7 @@ import pytest
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread import msi
 from core.pytest_utils import parametrize_dict
-from eoread.utils.xrtags import tag_filter
+from core.xrtags import tag_filter
 from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import apply_ancillary

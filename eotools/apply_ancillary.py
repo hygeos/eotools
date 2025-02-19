@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 import xarray as xr
 from core.interpolate import interp, Linear
-from eoread.utils.xrtags import tag_add
+from core.xrtags import tag_add
 import pint_xarray     # noqa: F401
 from cf_xarray.units import units
 from core.tools import datetime
