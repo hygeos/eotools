@@ -355,7 +355,7 @@ def select(srf: xr.Dataset, **kwargs) -> xr.Dataset:
     if "id" in srf:
         ids = srf.id.sel(**kwargs)
         list_vars = list(ids.values)
-        return srf[list_vars]
+        return srf[[x for x in srf if x in list_vars]]
     else:
         return srf.sel(**kwargs)
 
