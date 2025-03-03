@@ -71,11 +71,37 @@ def load_rayleigh_lut(lut_rayleigh_pp: Path,
     
     else:
         raise ValueError(rayleigh)
-    
-    return lut.compute(scheduler='sync')
+
+    return lut.compute(scheduler="sync")
 
 
-def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset, **cfg):
+def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
+    """
+    Calculates ODR (Optical Depth Rayleigh)
+    """
+    if "odr" in ds:
+        # TODO: make it pixel by pixel, account for surface pressure
+        assert ds.odr.ndim == 1
+        ds.attrs.update({"rod_source": str(ds.odr.values)})
+        return ds["odr"]
+
+    elif srf is not None:
+        # calculate ODR from SRF
+        odr_dict = integrate_srf(srf, lambda wav_nm: rod(wav_nm / 1000))
+        odr = xr.DataArray([odr_dict[b] for b in ds.bands.values], dims="bands")
+        ds.attrs.update({"rod_source": "Bodhaine99"})
+        ds["odr"] = odr
+        return odr
+
+    elif "wav" in ds:
+        # calculate ODR from central wavelength "wav"
+        raise NotImplementedError
+
+    else:
+        raise RuntimeError("Unable to calculate ODR.")
+
+
+def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
     """Apply Rayleigh correction to `ds`
     
     This creates the following variables in `ds`:
@@ -102,14 +128,7 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset, **cfg):
 
     lut = load_rayleigh_lut(**cfg)
 
-    if "odr" in ds:
-        odr = ds["odr"]
-        # TODO: account for sea level pressure
-        attrs = {"rod_source": str(odr.values)}
-    else:
-        odr_dict = integrate_srf(srf, lambda wav_nm: rod(wav_nm / 1000))
-        odr = xr.DataArray([odr_dict[b] for b in ds.bands.values], dims="bands")
-        attrs = {"rod_source": "Bodhaine99"}
+    odr = calc_odr(ds, srf)
 
     wdspd = ds["horizontal_wind"]
 
@@ -128,17 +147,17 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset, **cfg):
         **coords,
     )
     ds["rho_mol_gli"].attrs.update(
-        {"desc": "Rayleigh + sun glint reflectance", **attrs}
+        {"desc": "Rayleigh + sun glint reflectance"}
     )
 
     ds["rho_mol"] = interp(
         rho_toa - rho_gli,
         **coords,
     )
-    ds["rho_mol"].attrs.update({"desc": "Rayleigh reflectance (no sun glint)", **attrs})
+    ds["rho_mol"].attrs.update({"desc": "Rayleigh reflectance (no sun glint)"})
 
     ds["rho_rc"] = ds["rho_gc"] - ds["rho_mol_gli"]
-    ds["rho_rc"].attrs.update({"desc": "Rayleigh corrected reflectance", **attrs})
+    ds["rho_rc"].attrs.update({"desc": "Rayleigh corrected reflectance"})
 
     # Total atmospheric diffuse transmittance
     ds["t_d"] = interp(
@@ -151,4 +170,4 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset, **cfg):
         mu_v=Linear(ds.mus, bounds="nan"),
         odr=Linear(odr),
     )
-    ds["t_d"].attrs.update({"desc": "Total atmospheric transmittance", **attrs})
+    ds["t_d"].attrs.update({"desc": "Total atmospheric transmittance"})
