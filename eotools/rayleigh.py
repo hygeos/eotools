@@ -79,6 +79,9 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
     """
     Calculates ODR (Optical Depth Rayleigh)
     """
+    def func_rod(wav_nm):
+        return rod(wav_nm / 1000)
+
     if "odr" in ds:
         # TODO: make it pixel by pixel, account for surface pressure
         assert ds.odr.ndim == 1
@@ -87,7 +90,7 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
 
     elif srf is not None:
         # calculate ODR from SRF
-        odr_dict = integrate_srf(srf, lambda wav_nm: rod(wav_nm / 1000))
+        odr_dict = integrate_srf(srf, func_rod)
         odr = xr.DataArray([odr_dict[b] for b in ds.bands.values], dims="bands")
         ds.attrs.update({"rod_source": "Bodhaine99"})
         ds["odr"] = odr
@@ -95,7 +98,11 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
 
     elif "wav" in ds:
         # calculate ODR from central wavelength "wav"
-        raise NotImplementedError
+        assert ds.wav.units == "nm"
+        odr = func_rod(ds.wav)
+        ds.attrs.update({"rod_source": "Bodhaine99"})
+        ds["odr"] = odr
+        return odr
 
     else:
         raise RuntimeError("Unable to calculate ODR.")
