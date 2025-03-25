@@ -72,12 +72,15 @@ def get_SRF(
         
         srf_getter = str(csv_data[eq].srf_getter.values[0])
         srf_getter_arg = str(csv_data[eq].srf_getter_arg.values[0])
+    else:
+        sensor = None
+        platform = None
 
     # Run the SRF getter
     p, m = srf_getter.rsplit(".", 1)
     mod = importlib.import_module(p)
     getter = getattr(mod, m)
-    if srf_getter_arg == 'nan':
+    if srf_getter_arg is None:
         srf = getter()
     else:
         srf = getter(srf_getter_arg)
