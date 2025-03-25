@@ -25,7 +25,8 @@ def apply_ancillary(
 
         ds: destination dataset
 
-        ancillary: ancillary data provider
+        ancillary: ancillary data provider. If None, just check that all variables are
+            already provided in ds.
 
         variables: dictionary containing the list of variables to get and
             interpolate in `ancillary`, and their units (as interpreted
@@ -46,6 +47,15 @@ def apply_ancillary(
         
         tag: Defines the tag to be added to the output variables.
     """
+    if ancillary is None:
+        # check that all variables are provided in ds with the expected unit
+        for var in variables.keys():
+            assert var in ds
+            if units(ds[var].units).units != units(variables[var]).units:
+                ds[var] = ds[var].pint.quantify().pint.to(units(variables[var]).units).pint.dequantify()
+        
+        return
+
     interp_dims = interp_dims or {"latitude": "latitude", "longitude": "longitude"}
 
     anc = ancillary.get(datetime(ds))
