@@ -47,15 +47,15 @@ class Gaseous_correction:
                  input_var: str='rho_toa',
                  ouput_var: str='rho_gc',
                  spectral_dim: str='bands',
-                 dir_common: Optional[Path]=None):
+                 dir_common: Optional[Path]=None,
+                 **kwargs
+                 ):
 
         self.ds = ds
         self.spectral_dim = spectral_dim
         self.bands = list(ds[spectral_dim].data)
         self.input_var = input_var
         self.output_var = ouput_var
-        for b in self.bands:
-            assert b in srf
 
         try:
             # image mode: single date for the whole image
@@ -76,17 +76,32 @@ class Gaseous_correction:
             dir_common, verbose=False,
         )
 
-        # load absorption rate for each gas
-        k_oz_data  = get_absorption('o3', dirname=dir_common)
-        k_no2_data = get_absorption('no2', dirname=dir_common)
+        if "K_OZ" in kwargs:
+            # K_OZ and K_NO2 are provided explicitly
+            assert "K_NO2" in kwargs
+            
+            self.K_OZ = xr.Dataset()
+            for k, v in kwargs['K_OZ'].items():
+                self.K_OZ[k] = v
+            self.K_NO2 = xr.Dataset()
+            for k, v in kwargs['K_NO2'].items():
+                self.K_NO2[k] = v
 
-        self.K_OZ = integrate_srf(srf, k_oz_data, resample='x')
-        self.K_NO2 = integrate_srf(srf, k_no2_data, resample='x')
+        else: # K_OZ and K_NO2 are calculated from srf
+            for b in self.bands:
+                assert b in srf
 
-        # consistency checking: check that both wavc and ds.bands are sorted
-        # wavc = integrate_srf(srf, lambda x: x)
-        # assert (np.diff(ds.bands) > 0).all()
-        # assert (np.diff(list(wavc.values())) > 0).all()
+            # load absorption rate for each gas
+            k_oz_data  = get_absorption('o3', dirname=dir_common)
+            k_no2_data = get_absorption('no2', dirname=dir_common)
+
+            self.K_OZ = integrate_srf(srf, k_oz_data, resample='x')
+            self.K_NO2 = integrate_srf(srf, k_no2_data, resample='x')
+
+            # consistency checking: check that both wavc and ds.bands are sorted
+            # wavc = integrate_srf(srf, lambda x: x)
+            # assert (np.diff(ds.bands) > 0).all()
+            # assert (np.diff(list(wavc.values())) > 0).all()
 
     def read_no2_data(self, month):
         '''
