@@ -269,7 +269,7 @@ class Gaseous_correction:
 
         elif method == 'map_blocks':
             ds_out = xr.map_blocks(
-                self.run_map_blocks,
+                self.apply_block,
                 xr.Dataset(
                     {
                         'rho_toa': rho_toa,
@@ -289,7 +289,7 @@ class Gaseous_correction:
         else:
             raise ValueError(method)
 
-    def run_map_blocks(self, ds: xr.Dataset, dt):
+    def apply_block(self, ds: xr.Dataset, dt):
         Rtoa_gc = self.run(
             ds[self.spectral_dim].data,
             ds.rho_toa.transpose(..., 'bands').data,

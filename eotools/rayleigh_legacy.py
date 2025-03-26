@@ -91,7 +91,7 @@ class Rayleigh_correction:
 
         return Rmol.astype('float32'), Rmolgli.astype('float32'), Tmol.astype('float32')
 
-    def map_block(self, ds: xr.Dataset):
+    def apply_block(self, ds: xr.Dataset):
         Rmol, Rmolgli, Tmol = self.run(
             ds.wav.transpose(..., "bands").data,
             ds.mus.data,
@@ -131,7 +131,7 @@ class Rayleigh_correction:
             )
         else:
             ds_out = xr.map_blocks(
-                self.map_block,
+                self.apply_block,
                 xr.Dataset({
                     "wav": ds.wav,
                     "mus": ds.mus,
