@@ -36,10 +36,15 @@ class Rayleigh_correction:
         Rmolgli = np.zeros(dim3, dtype='float32') + np.nan
         Tmol = np.zeros(dim3, dtype='float32') + np.nan
 
-        ok = (((flags & self.bitmask_invalid) == 0)
-              & (mus > 0.17)   # avoid cases where sun is too low
-              & (muv > 0.17)   # ...or sensor
-              )
+        if self.bitmask_invalid >= 0:
+            ok = (((flags & self.bitmask_invalid) == 0)
+                & (mus > 0.17)   # avoid cases where sun is too low
+                & (muv > 0.17)   # ...or sensor
+                )
+        else:
+            ok = ((mus > 0.17)   # avoid cases where sun is too low
+                & (muv > 0.17)   # ...or sensor
+                )
 
         wind = wind_speed[ok]
         wmax = np.amax(self.mlut.axis('dim_wind'))

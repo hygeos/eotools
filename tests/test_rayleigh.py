@@ -3,12 +3,15 @@
 
 from pathlib import Path
 
+from matplotlib import pyplot as plt
 import pytest
 import xarray as xr
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.eo import init_geometry
 from eoread import msi
 from luts import Idx
+from eoread.common import timeit
+from core.conftest import savefig
 
 from eotools.apply_ancillary import apply_ancillary
 from eotools.bodhaine import rod
@@ -42,7 +45,7 @@ def test_plot_rho_ray(level1, request):
     assert sub[Idx(0.5), Idx(180)] > sub[Idx(0.3), Idx(0)]  # type: ignore
 
 
-def test_rayleigh_correction(level1: Path):
+def test_rayleigh_correction(level1: Path, request):
     ds = msi.Level1_MSI(level1)
     ds = ds.chunk(bands=-1)
     init_geometry(ds)
@@ -58,4 +61,16 @@ def test_rayleigh_correction(level1: Path):
     ds["altitude"] = xr.zeros_like(ds["total_column_ozone"])
 
     ds["rho_gc"] = ds.Rtoa
-    Rayleigh_correction(ds).apply()
+
+    list_vars = ['Rtoa', 'Rprime', 'rho_r']
+    with timeit('Init'):
+        Rayleigh_correction(ds).apply()
+    with timeit('Compute'):
+        px = ds[list_vars].sel(x=1000, y=1000).compute()
+    plt.plot()
+    for varname in list_vars:
+        px[varname].plot(label=varname)
+    plt.grid(True)
+    plt.legend()
+    savefig(request)
+
