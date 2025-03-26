@@ -3,12 +3,15 @@
 
 from pathlib import Path
 
+from matplotlib import pyplot as plt
 import numpy as np
 import xarray as xr
 import pytest
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.eo import init_geometry
 from eoread import msi
+from eoread.common import timeit
+from core.conftest import savefig
 
 from eotools.apply_ancillary import apply_ancillary
 from eotools.gaseous_absorption import get_absorption
@@ -46,8 +49,10 @@ def test_integrate_srf(platform, sensor, gas, integration_function):
         print(resample, integrated)
 
 
-def test_gaseous_correction(level1: Path):
-    ds = msi.Level1_MSI(level1)
+
+@pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
+def test_gaseous_correction(level1: Path, method, request):
+    ds = msi.Level1_MSI(level1).chunk(bands=-1)
     init_geometry(ds)
     apply_ancillary(
         ds,
@@ -59,5 +64,16 @@ def test_gaseous_correction(level1: Path):
         },
     )
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
-    Gaseous_correction(ds, srf, input_var='Rtoa').apply()
-    ds.sel(x=1000, y=1000).compute()
+    with timeit('Init'):
+        Gaseous_correction(ds, srf, input_var='Rtoa').apply(method=method)
+    plt.plot()
+    list_vars = ['Rtoa', 'rho_gc']
+    with timeit('Compute'):
+        px = ds[list_vars].sel(x=1000, y=1000).compute()
+    for varname in list_vars:
+        px[varname].plot(label=varname)
+    plt.grid(True)
+    plt.axis(ymin=0, ymax=0.3)
+    plt.legend()
+    savefig(request)
+    plt.close()

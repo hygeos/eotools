@@ -11,6 +11,7 @@ from core.download import download_url
 from eotools.gaseous_absorption import get_absorption
 from eotools.srf import integrate_srf
 from core import env
+from core.tools import MapBlocksOutput, Var
 
 
 class Gaseous_correction:
@@ -56,6 +57,9 @@ class Gaseous_correction:
         self.bands = list(ds[spectral_dim].data)
         self.input_var = input_var
         self.output_var = ouput_var
+        self.model = MapBlocksOutput([
+            Var(ouput_var, dtype='float32', dims=('y', 'x', 'bands'))
+        ])
 
         try:
             # image mode: single date for the whole image
@@ -79,7 +83,7 @@ class Gaseous_correction:
         if "K_OZ" in kwargs:
             # K_OZ and K_NO2 are provided explicitly
             assert "K_NO2" in kwargs
-            
+
             self.K_OZ = xr.Dataset()
             for k, v in kwargs['K_OZ'].items():
                 self.K_OZ[k] = v
@@ -229,7 +233,7 @@ class Gaseous_correction:
 
         return Rtoa_gc.astype('float32')
 
-    def apply(self):
+    def apply(self, method='apply_ufunc'):
         """Apply gaseous to current dataset `ds`
 
         This creates the variable `rho_gc` in the current dataset
@@ -244,19 +248,63 @@ class Gaseous_correction:
             assert ds.total_column_ozone.units in ['DU','Dobsons', 'Dobson']
 
         rho_toa = ds[self.input_var].chunk({self.spectral_dim: -1})
-        ds[self.output_var] = xr.apply_ufunc(
-            self.run,
-            ds[self.spectral_dim],
-            rho_toa,
-            ds.mus,
-            ds.muv,
-            total_ozone,
-            ds.latitude,
-            ds.longitude,
-            ds.flags,
-            dask='parallelized',
-            kwargs={'datetime': date},
-            input_core_dims=[[self.spectral_dim], [self.spectral_dim], [], [], [], [], [], []],
-            output_core_dims=[[self.spectral_dim]],
-            output_dtypes=['float32'],
+
+        if method == 'apply_ufunc':
+            ds[self.output_var] = xr.apply_ufunc(
+                self.run,
+                ds[self.spectral_dim],
+                rho_toa,
+                ds.mus,
+                ds.muv,
+                total_ozone,
+                ds.latitude,
+                ds.longitude,
+                ds.flags,
+                dask='parallelized',
+                kwargs={'datetime': date},
+                input_core_dims=[[self.spectral_dim], [self.spectral_dim], [], [], [], [], [], []],
+                output_core_dims=[[self.spectral_dim]],
+                output_dtypes=['float32'],
+            )
+
+        elif method == 'map_blocks':
+            ds_out = xr.map_blocks(
+                self.run_map_blocks,
+                xr.Dataset(
+                    {
+                        'rho_toa': rho_toa,
+                        'mus': ds.mus,
+                        'muv': ds.muv,
+                        'total_ozone': total_ozone,
+                        'latitude': ds.latitude,
+                        'longitude': ds.longitude,
+                        'flags': ds.flags,
+                    }
+                ),
+                template=self.model.template(ds),
+                kwargs={'dt': date},
+            )
+            ds[self.output_var] = ds_out[self.output_var]
+
+        else:
+            raise ValueError(method)
+
+    def run_map_blocks(self, ds: xr.Dataset, dt):
+        Rtoa_gc = self.run(
+            ds[self.spectral_dim].data,
+            ds.rho_toa.transpose(..., 'bands').data,
+            ds.mus.data,
+            ds.muv.data,
+            ds.total_ozone.data,
+            ds.latitude.data,
+            ds.longitude.data,
+            ds.flags.data,
+            datetime=dt
         )
+        out = xr.Dataset()
+        out[self.output_var] = xr.DataArray(
+            Rtoa_gc,
+            dims=ds.latitude.dims + ("bands",),
+            coords={"bands": ds.bands},
+        )
+        return self.model.conform(out)
