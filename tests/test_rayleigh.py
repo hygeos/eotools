@@ -45,7 +45,8 @@ def test_plot_rho_ray(level1, request):
     assert sub[Idx(0.5), Idx(180)] > sub[Idx(0.3), Idx(0)]  # type: ignore
 
 
-def test_rayleigh_correction(level1: Path, request):
+@pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
+def test_rayleigh_correction(level1: Path, method, request):
     ds = msi.Level1_MSI(level1)
     ds = ds.chunk(bands=-1)
     init_geometry(ds)
@@ -64,7 +65,7 @@ def test_rayleigh_correction(level1: Path, request):
 
     list_vars = ['Rtoa', 'Rprime', 'rho_r']
     with timeit('Init'):
-        Rayleigh_correction(ds).apply()
+        Rayleigh_correction(ds).apply(method=method)
     with timeit('Compute'):
         px = ds[list_vars].sel(x=1000, y=1000).compute()
     plt.plot()
