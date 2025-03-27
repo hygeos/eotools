@@ -4,23 +4,30 @@
 
 from numpy import pi, sin, exp, sqrt, cos
 import xarray as xr
+from core.tools import Var
 
 
-def apply_glitter(ds):
-    ds['Rgli'] = xr.apply_ufunc(
-        glitter,
-        ds['horizontal_wind'],
-        ds['mus'],
-        ds['muv'],
-        ds['scat_angle'],
-        dask='parallelized',
-        input_core_dims=[
-            [], [], [], []
-            ],
-        output_core_dims=[[]],
-        output_dtypes=['float32'],
-    )
-
+def apply_glitter(ds, method='apply_ufunc'):
+    if method == 'apply_ufunc':
+        ds['Rgli'] = xr.apply_ufunc(
+            glitter,
+            ds['horizontal_wind'],
+            ds['mus'],
+            ds['muv'],
+            ds['scat_angle'],
+            dask='parallelized',
+            input_core_dims=[
+                [], [], [], []
+                ],
+            output_core_dims=[[]],
+            output_dtypes=['float32'],
+        )
+    else:
+        ds["Rgli"] = xr.map_blocks(
+            apply_glitter_block,
+            ds[['horizontal_wind', 'mus', 'muv', 'scat_angle']],
+            template=Var('Rgli', 'float32', ('y', 'x')).to_dataarray(ds),
+        )
 
 def glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None):
     '''
@@ -116,4 +123,11 @@ def glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None):
     return Rgli.astype('float32')
 
 
-
+def apply_glitter_block(ds: xr.Dataset) -> xr.Dataset:
+    Rgli = glitter(
+        ds["horizontal_wind"],
+        ds["mus"],
+        ds["muv"],
+        ds["scat_angle"],
+    )
+    return Rgli
