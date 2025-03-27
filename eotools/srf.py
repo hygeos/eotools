@@ -80,7 +80,7 @@ def get_SRF(
     p, m = srf_getter.rsplit(".", 1)
     mod = importlib.import_module(p)
     getter = getattr(mod, m)
-    if srf_getter_arg is None:
+    if srf_getter_arg in [None, 'nan']:
         srf = getter()
     else:
         srf = getter(srf_getter_arg)
