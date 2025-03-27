@@ -93,6 +93,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.12.2-pyha770c72_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025b-h78e105d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/xarray-2025.3.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/xlrd-2.0.1-pyhd8ed1ab_3.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxau-1.0.12-hb9d3cd8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxdmcp-1.1.5-hb9d3cd8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
@@ -110,7 +111,7 @@ environments:
       - pypi: git+https://github.com/hygeos/core.git#4425d600b11e6fc97875883073a903146cadd6ab
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/27/e9/7f0d670fb7e6f9bba334c138a1035604d630a9571e7338182bf09f7ae028/datapi-0.3.0-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/eoread.git#d8e68ba8ddbe9fa489e5bd5f9790205cb7c8afd2
+      - pypi: git+https://github.com/hygeos/eoread.git#4cf967baf583aedf1b46253ba697d3501d5b9ad1
       - pypi: https://files.pythonhosted.org/packages/ed/1d/409e819e00aed51f3e23df570e219621c0d64c458c9b8df4e7ae1c27e23d/eumdac-3.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b9/5c/a3d95dc1ec6cdeb032d789b552ecc76effa3557ea9186e1566df6aac18df/fs-2.4.16-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
@@ -133,7 +134,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/05/19/94d6c66184c7d0f9374330c714f62c147dbb53eda9efdcc8fc6e2ac454c5/rasterio-1.4.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fb/b0/2c74f302512fbd24d68fbba0ec6b650b33ef83e398daeb0a2bb1a4cd641c/rioxarray-0.18.2-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/sand.git#799ed999a0c7034583ef39267500689b0b303d97
+      - pypi: git+https://github.com/hygeos/sand.git#d398ad820e1da51c29a237746e453a375e405d02
       - pypi: https://files.pythonhosted.org/packages/03/5a/fc34bf1aa14dc7c0e701691fa8685f3faec80e57d816615e3625f28feb43/scipy-1.15.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/54/21/f43f0a1fa8b06b32812e0975981f4677d28e0f3271601dc88ac5a5b83220/setuptools-78.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f5/8a/2545cc2a30afc63fc6176c1da3b76af28ef9c7358ed4f68f7c6a9d86cf5b/shapely-2.0.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
@@ -443,7 +444,7 @@ packages:
   - typing-extensions
   - cdsapi>=0.7.5 ; extra == 'legacy'
   requires_python: '>=3.8'
-- pypi: git+https://github.com/hygeos/eoread.git#d8e68ba8ddbe9fa489e5bd5f9790205cb7c8afd2
+- pypi: git+https://github.com/hygeos/eoread.git#4cf967baf583aedf1b46253ba697d3501d5b9ad1
   name: eoread
   version: 0.3.dev0
   requires_dist:
@@ -1705,7 +1706,7 @@ packages:
   - scipy ; extra == 'interp'
   - scipy ; extra == 'all'
   requires_python: '>=3.10'
-- pypi: git+https://github.com/hygeos/sand.git#799ed999a0c7034583ef39267500689b0b303d97
+- pypi: git+https://github.com/hygeos/sand.git#d398ad820e1da51c29a237746e453a375e405d02
   name: sand
   version: 0.2.1
   requires_dist:
@@ -1716,6 +1717,7 @@ packages:
   - shapely
   - pyotp
   - xmltodict
+  - pillow
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/03/5a/fc34bf1aa14dc7c0e701691fa8685f3faec80e57d816615e3625f28feb43/scipy-1.15.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   name: scipy
@@ -1965,6 +1967,17 @@ packages:
   - pkg:pypi/xarray?source=compressed-mapping
   size: 852028
   timestamp: 1742448453517
+- conda: https://conda.anaconda.org/conda-forge/noarch/xlrd-2.0.1-pyhd8ed1ab_3.tar.bz2
+  sha256: a97030fc6cde1a335c035392db47efdb4add7d1db76a11b4bfac6ec7fc42bfe5
+  md5: 97dfcd5ff030d829b55f67e82f928093
+  depends:
+  - python >=3.6
+  license: BSD-3-Clause AND BSD-4-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/xlrd?source=hash-mapping
+  size: 94071
+  timestamp: 1610224499738
 - pypi: https://files.pythonhosted.org/packages/d6/45/fc303eb433e8a2a271739c98e953728422fa61a3c1f36077a49e395c972e/xmltodict-0.14.2-py2.py3-none-any.whl
   name: xmltodict
   version: 0.14.2

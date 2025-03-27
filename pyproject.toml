@@ -26,6 +26,7 @@ xarray = "*"
 openpyxl = "*"
 pint-xarray = "*"
 cf-xarray = "*"
+xlrd = "*"
 
 [tool.pixi.tasks]
 tests = "pytest tests/"
