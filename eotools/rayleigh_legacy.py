@@ -15,7 +15,10 @@ Relies on HDF4 LUT and luts objects
 
 
 class Rayleigh_correction:
-    def __init__(self, ds, **kwargs):
+    def __init__(self,
+                 ds: xr.Dataset,
+                 bitmask_invalid: int,
+                 **kwargs):
         self.ds = ds
 
         lut_file = download_url(
@@ -23,7 +26,7 @@ class Rayleigh_correction:
             env.getdir('DIR_STATIC')/'rayleigh'
         )
         self.mlut = read_mlut_hdf(str(lut_file))
-        self.bitmask_invalid = -1  # FIXME:
+        self.bitmask_invalid = bitmask_invalid
         self.model = MapBlocksOutput([
             Var('Rmol', 'float32', ('y', 'x', 'bands')),
             Var('Rmolgli', 'float32', ('y', 'x', 'bands')),
