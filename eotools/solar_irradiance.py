@@ -8,7 +8,7 @@ def solar_irradiance(source: str, **kwargs) -> xr.DataArray:
     """
     Get solar irradiance from various sources (xarray DataArray)
 
-    Ex: solar_irradiance('LISIRD', '1nm')
+    Ex: solar_irradiance('LISIRD', variant='1nm')
     """
     if source == "LISIRD":
         return solar_irradiance_lisird(**kwargs).SSI

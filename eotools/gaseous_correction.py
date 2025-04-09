@@ -91,21 +91,30 @@ class Gaseous_correction:
             for k, v in kwargs['K_NO2'].items():
                 self.K_NO2[k] = v
 
-        else: # K_OZ and K_NO2 are calculated from srf
-            for b in self.bands:
-                assert b in srf
-
+        else:
             # load absorption rate for each gas
             k_oz_data  = get_absorption('o3', dirname=dir_common)
             k_no2_data = get_absorption('no2', dirname=dir_common)
 
-            self.K_OZ = integrate_srf(srf, k_oz_data, resample='x')
-            self.K_NO2 = integrate_srf(srf, k_no2_data, resample='x')
+            if len(srf) > 0: # K_OZ and K_NO2 are calculated from srf
+                for b in self.bands:
+                    assert b in srf
 
-            # consistency checking: check that both wavc and ds.bands are sorted
-            # wavc = integrate_srf(srf, lambda x: x)
-            # assert (np.diff(ds.bands) > 0).all()
-            # assert (np.diff(list(wavc.values())) > 0).all()
+                self.K_OZ = integrate_srf(srf, k_oz_data, resample='x')
+                self.K_NO2 = integrate_srf(srf, k_no2_data, resample='x')
+
+                # consistency checking: check that both wavc and ds.bands are sorted
+                # wavc = integrate_srf(srf, lambda x: x)
+                # assert (np.diff(ds.bands) > 0).all()
+                # assert (np.diff(list(wavc.values())) > 0).all()
+        
+            else: # K_OZ and K_NO2 are calculated from central wavelengths
+                self.K_OZ = xr.Dataset()
+                for i, k in enumerate(k_oz_data.interp(wav=ds.wav).values):
+                    self.K_OZ[self.bands[i]] = k
+                self.K_NO2 = xr.Dataset()
+                for i, k in enumerate(k_no2_data.interp(wav=ds.wav).values):
+                    self.K_NO2[self.bands[i]] = k
 
     def read_no2_data(self, month):
         '''
