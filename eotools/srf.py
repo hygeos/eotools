@@ -142,7 +142,20 @@ def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
     # Download and extract the SRF files
     download_extract(directory / basename, urlpath)
 
-    list_files = (directory / basename).glob("*.txt")
+    list_files = list((directory / basename).glob("*.txt"))
+
+    # read headers to determine band names
+    binfos = []
+    for filepath in list_files:
+        with open(filepath) as fp:
+            binfo = fp.readline()
+            binfos.append([x.strip() for x in binfo.split(',', 1)])
+    
+    if len(set([x[1] for x in binfos])) != len(binfos):
+        # duplicate items in binfo names: use their index
+        binfos = [x[0] for x in binfos]
+    else:
+        binfos = [x[1] for x in binfos]
 
     for i, filepath in enumerate(list_files):
         srf = pd.read_csv(
@@ -156,9 +169,7 @@ def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
         )
         # Convert wavelength from cm-1 to nm
         srf["Wavelength"] = srf["Wavelength"].apply(lambda x: 1.0 / x * 1e7).values
-        with open(filepath) as fp:
-            binfo = fp.readline()
-        bid = binfo.split(',')[1].strip()
+        bid = binfos[i]
 
         # get the channel index from file name
         match = re.search(r'ch(\d+).txt', filepath.name)
