@@ -4,7 +4,13 @@ version = "0.1-dev"
 description = "A collection of tools and modules for building processing chains."
 authors = [{name = "HYGEOS team"}]
 requires-python = ">= 3.11"
-dependencies = ["core @ git+https://github.com/hygeos/core.git", "luts @ git+https://github.com/hygeos/luts.git"]
+
+[project.optional-dependencies]
+git = [
+    "core @ git+https://github.com/hygeos/core.git",
+    "luts @ git+https://github.com/hygeos/luts.git",
+    "eoread @ git+https://github.com/hygeos/eoread.git"
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -15,7 +21,7 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
-eoread = {git = "https://github.com/hygeos/eoread.git"}
+eotools = { path = ".", editable = true, extras = ["git"]}
 
 [tool.pixi.dependencies]
 pytest-html = "*"
