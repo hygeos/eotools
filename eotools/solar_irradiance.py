@@ -1,6 +1,6 @@
 from typing import Literal
 import xarray as xr
-from core.download import download_url
+from core.network.download import download_url
 from core.env import getdir
 
 

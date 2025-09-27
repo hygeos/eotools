@@ -4,6 +4,12 @@ version = "0.1-dev"
 description = "A collection of tools and modules for building processing chains."
 authors = [{name = "HYGEOS team"}]
 requires-python = ">= 3.11"
+dependencies = [
+    "xarray",
+    "cf-xarray",
+    "pint-xarray",
+    "xlrd",
+]
 
 [project.optional-dependencies]
 git = [
@@ -32,7 +38,7 @@ xarray = "*"
 openpyxl = "*"
 pint-xarray = "*"
 cf-xarray = "*"
-xlrd = "*"
+xlrd = "*"  # used only for get_SRF_meris
 
 [tool.pixi.tasks]
 tests = "pytest tests/"

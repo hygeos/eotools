@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 from eotools.solar_irradiance import solar_irradiance_lisird
-from core.conftest import savefig, pytest_runtest_makereport  # noqa
+from core.tests.conftest import savefig, pytest_runtest_makereport  # noqa
 
 
 def test_solar_irradiance(request):

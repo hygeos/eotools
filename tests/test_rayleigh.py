@@ -11,14 +11,13 @@ from eoread.eo import init_geometry
 from eoread import msi
 from luts import Idx
 from eoread.common import timeit
-from core.conftest import savefig
 
 from eotools.apply_ancillary import apply_ancillary
 from eotools.bodhaine import rod
 from eotools.rayleigh_legacy import Rayleigh_correction
 from eotools.srf import get_SRF, integrate_srf, rename
 
-from . import conftest
+from core.tests import conftest
 
 level1 = pytest.fixture(msi.get_sample)
 
@@ -32,7 +31,7 @@ def test_calc_odr(level1: Path):
 
 def test_plot_rho_ray(level1, request):
     ds = msi.Level1_MSI(level1)
-    rc = Rayleigh_correction(ds)
+    rc = Rayleigh_correction(ds, bitmask_invalid=0)
     rc.mlut.describe()
     # [0] Rmolgli (float32 in [0, 6.5e+04]), axes=('dim_mu', 'dim_phi', 'dim_mu', 'dim_tauray', 'dim_wind')
     # [1] Rmol (float32 in [0, 6.53]), axes=('dim_mu', 'dim_phi', 'dim_mu', 'dim_tauray')
@@ -65,7 +64,7 @@ def test_rayleigh_correction(level1: Path, method, request):
 
     list_vars = ['Rtoa', 'Rprime', 'rho_r']
     with timeit('Init'):
-        Rayleigh_correction(ds).apply(method=method)
+        Rayleigh_correction(ds, bitmask_invalid=0).apply(method=method)
     with timeit('Compute'):
         px = ds[list_vars].sel(x=1000, y=1000).compute()
     plt.plot()
@@ -73,5 +72,5 @@ def test_rayleigh_correction(level1: Path, method, request):
         px[varname].plot(label=varname)
     plt.grid(True)
     plt.legend()
-    savefig(request)
+    conftest.savefig(request)
 

@@ -4,7 +4,7 @@
 from pathlib import Path
 
 import pytest
-from core.conftest import savefig
+from core.tests.conftest import savefig
 from eoread import msi
 from eoread.common import timeit
 from matplotlib import pyplot as plt

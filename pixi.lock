@@ -108,7 +108,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3d/9a/2abecb28ae875e39c8cad711eb1186d8d14eab564705325e77e4e6ab9ae5/click_plugins-1.1.1.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/73/86/43fa9f15c5b9fb6e82620428827cd3c284aa933431405d1bcf5231ae3d3e/cligj-0.7.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/core.git#91161a338660ba731d90bb84afd3afa6105b3a0d
+      - pypi: git+https://github.com/hygeos/core.git#a76250ab66f2063dd04298447282a6628adeb7a7
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/d8/99025aa78d947ca2f457be15238ed9baf962588ca8efc0476021eeb6dbce/ecmwf_datastores_client-0.2.0-py3-none-any.whl
       - pypi: git+https://github.com/hygeos/eoread.git#0dc627aa11f368fc9d8440374ac69e1b96c9ac56
@@ -376,9 +376,9 @@ packages:
   - pkg:pypi/contourpy?source=hash-mapping
   size: 276640
   timestamp: 1731428466509
-- pypi: git+https://github.com/hygeos/core.git#91161a338660ba731d90bb84afd3afa6105b3a0d
+- pypi: git+https://github.com/hygeos/core.git#a76250ab66f2063dd04298447282a6628adeb7a7
   name: core
-  version: 1.0.29
+  version: 1.1.0
   requires_dist:
   - tqdm
   - xarray
@@ -387,6 +387,7 @@ packages:
   - h5netcdf
   - python-dotenv
   - toml
+  - lxml
 - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
   sha256: 9827efa891e507a91a8a2acf64e210d2aff394e1cde432ad08e1f8c66b12293c
   md5: 44600c4667a319d67dbe0681fc0bc833
@@ -460,8 +461,12 @@ packages:
 - pypi: ./
   name: eotools
   version: 0.1.dev0
-  sha256: 02d019c8b50cf0c796bab51f94d187999c98accb139e0811c4d760904db395e9
+  sha256: 79909f81117253386882d6e9629433beac80d2e1cf8088d9c679f1bf9d77edf1
   requires_dist:
+  - xarray
+  - cf-xarray
+  - pint-xarray
+  - xlrd
   - core @ git+https://github.com/hygeos/core.git ; extra == 'git'
   - luts @ git+https://github.com/hygeos/luts.git ; extra == 'git'
   - eoread @ git+https://github.com/hygeos/eoread.git ; extra == 'git'

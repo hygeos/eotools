@@ -9,10 +9,10 @@ import h5py
 import numpy as np
 import pandas as pd
 import xarray as xr
-from core.fileutils import filegen
+from core.files.fileutils import filegen
 from core.tools import only
 from core import env
-from core.download import download_url
+from core.network.download import download_url
 
 from scipy.integrate import simpson
 from eotools.bodhaine import rod

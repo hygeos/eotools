@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import pandas as pd
 import xarray as xr
-from core.download import download_url
+from core.network.download import download_url
 from core import env
 
 
