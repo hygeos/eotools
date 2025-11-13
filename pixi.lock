@@ -108,21 +108,23 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3d/9a/2abecb28ae875e39c8cad711eb1186d8d14eab564705325e77e4e6ab9ae5/click_plugins-1.1.1.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/73/86/43fa9f15c5b9fb6e82620428827cd3c284aa933431405d1bcf5231ae3d3e/cligj-0.7.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/core.git#a76250ab66f2063dd04298447282a6628adeb7a7
+      - pypi: git+https://github.com/hygeos/core.git#6718dffd6d38d54f3d39920fe8f95ad05bcf6e6f
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/d8/99025aa78d947ca2f457be15238ed9baf962588ca8efc0476021eeb6dbce/ecmwf_datastores_client-0.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/eoread.git#0dc627aa11f368fc9d8440374ac69e1b96c9ac56
+      - pypi: git+https://github.com/hygeos/eoread.git#3997d176ec43231064d7455dc1e23e689cc4a528
       - pypi: https://files.pythonhosted.org/packages/ed/1d/409e819e00aed51f3e23df570e219621c0d64c458c9b8df4e7ae1c27e23d/eumdac-3.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b9/5c/a3d95dc1ec6cdeb032d789b552ecc76effa3557ea9186e1566df6aac18df/fs-2.4.16-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b2/fc/e73747f3dd31906bfbb78c76069f67d91525fefa28492a1f949cbb4a3c7f/h5netcdf-1.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fd/41/bc2df86b72965775f6d621e0ee269a5f3ac23e8f870abf519de9c7d93b4d/h5py-3.13.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/f7/97/ad1a907c0173a90dd4df7228f24a3ec61058bc1a9ff8a0caec20a0cc622e/llvmlite-0.45.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/luts.git#354b37df2eb0f3aee1bede05d9e366316ba80bf5
+      - pypi: git+https://github.com/hygeos/luts.git#1d6452697e65af60304cf49448a6ce336b498b69
       - pypi: https://files.pythonhosted.org/packages/d4/dd/39c8507c16db6031f8c1ddf70ed95dbb0a6d466a40002a3522c128aba472/lxml-6.0.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7f/a7/7fc6c6c456508a55c35fb0e034b9f70edefa93e880905bf4db0ad26be045/multiurl-0.3.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d1/80/b9c19f1bb4ac6c5fa6f94a4f278bc68a778473d1814a86a375d7cffa193a/netCDF4-1.7.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/78/7e/bf2e3634993d57f95305c7cee4c9c6cb3c9c78404ee7b49569a0dfecfe33/numba-0.62.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/71/e7/40fb618334dcdf7c5a316c0e7343c5cd82d3d866edc100d98e29bc945ecd/partd-1.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/66/bc/ea171de49dc0802cc9eab501eef5b18c06e78166e2cd08ccd031e44eb89d/pyepr-1.2.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/09/de/7a274c2dcbfc7a1c8d65f0d1e5bda2829fdaf509f39e97463348661bab93/pyhdf-0.11.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
@@ -376,18 +378,19 @@ packages:
   - pkg:pypi/contourpy?source=hash-mapping
   size: 276640
   timestamp: 1731428466509
-- pypi: git+https://github.com/hygeos/core.git#a76250ab66f2063dd04298447282a6628adeb7a7
+- pypi: git+https://github.com/hygeos/core.git#6718dffd6d38d54f3d39920fe8f95ad05bcf6e6f
   name: core
-  version: 1.1.0
+  version: 1.2.0
   requires_dist:
   - tqdm
   - xarray
   - dask
-  - scipy
+  - numba
   - h5netcdf
   - python-dotenv
   - toml
   - lxml
+  requires_python: '>=3.10,<3.14'
 - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda
   sha256: 9827efa891e507a91a8a2acf64e210d2aff394e1cde432ad08e1f8c66b12293c
   md5: 44600c4667a319d67dbe0681fc0bc833
@@ -442,9 +445,9 @@ packages:
   - typing-extensions
   - cdsapi>=0.7.6 ; extra == 'legacy'
   requires_python: '>=3.8'
-- pypi: git+https://github.com/hygeos/eoread.git#0dc627aa11f368fc9d8440374ac69e1b96c9ac56
+- pypi: git+https://github.com/hygeos/eoread.git#3997d176ec43231064d7455dc1e23e689cc4a528
   name: eoread
-  version: 0.3.dev0
+  version: 0.4.0
   requires_dist:
   - lxml
   - pyproj
@@ -460,8 +463,8 @@ packages:
   requires_python: '>=3.11'
 - pypi: ./
   name: eotools
-  version: 0.1.dev0
-  sha256: 79909f81117253386882d6e9629433beac80d2e1cf8088d9c679f1bf9d77edf1
+  version: 0.1.0
+  sha256: b3e4cf3c6705786f5ca1797241cb0f7a47107ebbd111a0a760bd48fd2f6c5438
   requires_dist:
   - xarray
   - cf-xarray
@@ -1127,14 +1130,19 @@ packages:
   purls: []
   size: 60963
   timestamp: 1727963148474
+- pypi: https://files.pythonhosted.org/packages/f7/97/ad1a907c0173a90dd4df7228f24a3ec61058bc1a9ff8a0caec20a0cc622e/llvmlite-0.45.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+  name: llvmlite
+  version: 0.45.1
+  sha256: 57c48bf2e1083eedbc9406fb83c4e6483017879714916fe8be8a72a9672c995a
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
   name: locket
   version: 1.0.0
   sha256: b6c819a722f7b6bd955b80781788e4a66a55628b858d347536b7e81325a3a5e3
   requires_python: '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
-- pypi: git+https://github.com/hygeos/luts.git#354b37df2eb0f3aee1bede05d9e366316ba80bf5
+- pypi: git+https://github.com/hygeos/luts.git#1d6452697e65af60304cf49448a6ce336b498b69
   name: luts
-  version: 1.0.3
+  version: 1.0.4
   requires_dist:
   - numpy
   - scipy
@@ -1238,6 +1246,14 @@ packages:
   - packaging ; extra == 'tests'
   - pytest ; extra == 'tests'
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/78/7e/bf2e3634993d57f95305c7cee4c9c6cb3c9c78404ee7b49569a0dfecfe33/numba-0.62.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+  name: numba
+  version: 0.62.1
+  sha256: 8c9460b9e936c5bd2f0570e20a0a5909ee6e8b694fd958b210e3bde3a6dba2d7
+  requires_dist:
+  - llvmlite>=0.45.0.dev0,<0.46
+  - numpy>=1.22,<2.4
+  requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.2.4-py313h17eae1a_0.conda
   sha256: d27a5b605dac225d3b9b28bd4b3dc4479210d6ae72619f56594b4d74c88cb206
   md5: 6c905a8f170edd64f3a390c76572e331

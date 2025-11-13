@@ -1,6 +1,6 @@
 [project]
 name = "eotools"
-version = "0.1-dev"
+version = "0.1.0"
 description = "A collection of tools and modules for building processing chains."
 authors = [{name = "HYGEOS team"}]
 requires-python = ">= 3.11"
@@ -22,7 +22,7 @@ git = [
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.pixi.project]
+[tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
