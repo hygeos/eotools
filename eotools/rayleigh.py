@@ -1,8 +1,3 @@
-'''
- Copyright (c) 2024 EUMETSAT
- License: MIT
-'''
-
 from pathlib import Path
 from typing import Literal
 import numpy as np
