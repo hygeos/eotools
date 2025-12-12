@@ -27,9 +27,8 @@ level1 = pytest.fixture(msi.get_sample)
     ],
 )
 def test_get_srf(request, platform, sensor, sel):
-    ds = xr.Dataset()
-    ds.attrs.update(sensor=sensor, platform=platform)
-    srf = rename(get_SRF(ds), "trim")
+    srf = rename(get_SRF((platform, sensor)), "trim")
+    print(srf)
     if sel is not None:
         srf = select(srf, **sel)
 

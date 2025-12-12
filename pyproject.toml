@@ -17,6 +17,9 @@ git = [
     "luts @ git+https://github.com/hygeos/luts.git",
     "eoread @ git+https://github.com/hygeos/eoread.git"
 ]
+gatiab = [
+    "gatiab"
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -40,5 +43,13 @@ pint-xarray = "*"
 cf-xarray = "*"
 xlrd = "*"  # used only for get_SRF_meris
 
-[tool.pixi.tasks]
+[tool.pixi.feature.gatiab.dependencies]
+gatiab = "*"
+
+[tool.pixi.feature.gatiab.tasks]
 tests = "pytest tests/"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+gatiab = { features = ["gatiab"], solve-group = "default" }
+
