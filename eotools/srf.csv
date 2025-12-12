@@ -8,8 +8,8 @@ ENVISAT,MERIS,eotools.srf.get_SRF_meris,
 SPOT,VGT-1,eotools.srf.get_SRF_vgt,VGT1
 SPOT,VGT-2,eotools.srf.get_SRF_vgt,VGT2
 MODIS,MISR,eotools.srf.get_SRF_misr
-Sentinel-3A,OLCI-FULL,eotools.srf.get_SRF_olci,SENTINEL3_1
-Sentinel-3B,OLCI-FULL,eotools.srf.get_SRF_olci,SENTINEL3_2
+Sentinel-3A,OLCI-FULL,eotools.srf.get_SRF_olci_full,SENTINEL3_1
+Sentinel-3B,OLCI-FULL,eotools.srf.get_SRF_olci_full,SENTINEL3_2
 
 # From the EUMETSAT database
 # https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
@@ -130,8 +130,8 @@ MTG-I1,FCI,eotools.srf.get_SRF_eumetsat,mtg_1_fci
 ,,eotools.srf.get_SRF_eumetsat,nimbus_2_mrir
 ,,eotools.srf.get_SRF_eumetsat,nimbus_3_mrir
 ,,eotools.srf.get_SRF_eumetsat,earthcare_1_msi
-SENTINEL2-A,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_1_msi
-SENTINEL2-B,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
+SENTINEL-2A,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_1_msi
+SENTINEL-2B,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
 S2A,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_1_msi
 S2B,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
 ,,eotools.srf.get_SRF_eumetsat,electro-l_2_msugs
@@ -154,15 +154,15 @@ S2B,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
 ,,eotools.srf.get_SRF_eumetsat,meteosat_7_mviri-vis
 ,,eotools.srf.get_SRF_eumetsat,fy1_3_mvisr
 ,,eotools.srf.get_SRF_eumetsat,fy1_4_mvisr
-SENTINEL-3A,OLCI,eotools.srf.get_SRF_eumetsat,sentinel3_1_olci
-SENTINEL-3B,OLCI,eotools.srf.get_SRF_eumetsat,sentinel3_2_olci
+SENTINEL-3A,OLCI,eotools.srf.get_SRF_olci,sentinel3_1_olci
+SENTINEL-3B,OLCI,eotools.srf.get_SRF_olci,sentinel3_2_olci
 LANDSAT-8,OLI,eotools.srf.get_SRF_eumetsat,landsat_8_oli
 LANDSAT-9,OLI,eotools.srf.get_SRF_eumetsat,landsat_9_oli
 ,,eotools.srf.get_SRF_eumetsat,sbg_1_sbg
-MSG-1,SEVIRI,eotools.srf.get_SRF_eumetsat,msg_1_seviri
-MSG-2,SEVIRI,eotools.srf.get_SRF_eumetsat,msg_2_seviri
-MSG-3,SEVIRI,eotools.srf.get_SRF_eumetsat,msg_3_seviri
-MSG-4,SEVIRI,eotools.srf.get_SRF_eumetsat,msg_4_seviri
+MSG-1,SEVIRI,eotools.srf.get_SRF_seviri,msg_1_seviri
+MSG-2,SEVIRI,eotools.srf.get_SRF_seviri,msg_2_seviri
+MSG-3,SEVIRI,eotools.srf.get_SRF_seviri,msg_3_seviri
+MSG-4,SEVIRI,eotools.srf.get_SRF_seviri,msg_4_seviri
 ,,eotools.srf.get_SRF_eumetsat,gcom-c_1_sgli
 ,,eotools.srf.get_SRF_eumetsat,nimbus_3_sirs
 ,,eotools.srf.get_SRF_eumetsat,nimbus_3_sirs-blur

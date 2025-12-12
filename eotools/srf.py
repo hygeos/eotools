@@ -3,7 +3,7 @@ import re
 import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, List, Literal, Optional, Union
+from typing import Callable, List, Literal, Optional, Tuple, Union
 from warnings import warn
 import h5py
 import numpy as np
@@ -18,7 +18,7 @@ from scipy.integrate import simpson
 from eotools.bodhaine import rod
 
 def get_SRF(
-    ds: xr.Dataset,
+    platform_sensor: xr.Dataset | Tuple | str | None = None,
     srf_getter: str | None = None,
     srf_getter_arg: str | None = None,
     fuzzy: bool = True,
@@ -28,13 +28,16 @@ def get_SRF(
     Get a SRF for the product `ds`
 
     Args:
-        ds: a dataset, which contains platform and sensor attributes (unless
-            srf_getter/srf_getter_arg is specified)
+        platform_sensor: sensor and platform definition
+            - if a xr.Dataset, use the `platform` and `sensor` attributes of the Dataset
+            - if a Tuple, it is (platform, sensor)
+            - if a string, it is "<platform>_<sensor>"
+            - if None (default, use srf_getter/srf_getter_arg)
         srf_getter (str): name of custom function to override the function for SRF reading.
             Example: "eotools.srf.get_SRF_eumetsat"
             If None, `srf_getter` and `srf_getter_arg` are searched in the `srf.csv`
             file for the sensor/platform specified in `ds`.
-        srf_getter_arg (str): argument passed to the srf_getter function
+        srf_getter_arg (str): argument passed to the srf_getter function, if any
             Example: "dscovr_1_epic"
         fuzzy (bool): whether to apply fuzzy search to the sensor and platform (don't match
             case, ignore whitespaces, "-" and "_")
@@ -47,9 +50,18 @@ def get_SRF(
         else:
             return x
 
-    if srf_getter is None:
-        platform = ds.platform
-        sensor = ds.sensor
+    if platform_sensor is not None:
+        # initialize platform/sensor
+        assert srf_getter is None
+        if isinstance(platform_sensor, xr.Dataset):
+            platform = platform_sensor.attrs['platform']
+            sensor = platform_sensor.attrs['sensor']
+        elif isinstance(platform_sensor, str):
+            (platform, sensor) = platform_sensor.split("_")
+        elif isinstance(platform_sensor, tuple):
+            (platform, sensor) = platform_sensor
+        else:
+            raise TypeError
         
         # load CSV file
         file_srf = Path(__file__).parent / "srf.csv"
@@ -60,6 +72,7 @@ def get_SRF(
         csv_platform = csv_data["platform"].astype("str").apply(apply_fuzzy)
         csv_sensor = csv_data["sensor"].astype("str").apply(apply_fuzzy)
 
+        # search in the srf.csv file
         eq = (csv_sensor == apply_fuzzy(sensor)) & (
             csv_platform == apply_fuzzy(platform)
         )
@@ -73,6 +86,7 @@ def get_SRF(
         srf_getter = str(csv_data[eq].srf_getter.values[0])
         srf_getter_arg = str(csv_data[eq].srf_getter_arg.values[0])
     else:
+        assert srf_getter is not None
         sensor = None
         platform = None
 
@@ -189,62 +203,196 @@ def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
     # sort the bands by index
     ds = ds[sorted(ds, key=lambda x: ds[x].attrs['index'])]
 
-    if 'olci' in ds.sensor.lower():
-        # Special case OLCI: provide a mapping of (band, camera, ccd_col) to the
-        # corresponding variable name
-        # https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html
-        ds["id"] = xr.DataArray(
-            np.array(sorted(ds)).reshape((21, 5, 3)),
-            dims=("band_id", "camera", "ccd_col"),
-            coords={
-                "band_id": np.arange(1, 22),
-                "camera": ["FM5R", "FM9", "FM7", "FM10", "FM8"],
-                "ccd_col": [10, 374, 730],
-            },
-        )
-
     return ds
+
+
+def get_bands(srf: xr.Dataset) -> list:
+    """
+    Returns the identifiers of the bands of a srf object
+    """
+    if "id" in srf:
+        assert "band_id" in srf.id.coords
+        return list(srf.id.band_id)
+    else:
+        return list(srf)
 
 
 def nbands(srf: xr.Dataset) -> int:
     """
     Returns the number of bands of a SRF object
     """
+    return len(get_bands(srf))
+
+
+def filter_bands(
+    srf: xr.Dataset,
+    wav_min: float | None = None,
+    wav_max: float | None = None,
+    use_cwav: bool = False,
+) -> xr.Dataset:
+    """
+    Filter the bands in `srf` to keep only the bands defined between `wav_min` and `wav_max`
+    
+    If use_cwav is True, filtering is based on the central wavelength of each band.
+    If use_cwav is False, filtering requires the entire wavelength range of each SRF 
+    to fall within the specified bounds.
+    """
+    if wav_min is None and wav_max is None:
+        return srf
+    
+    # Calculate central wavelengths if needed
+    cwav = integrate_srf(srf, lambda x: x) if use_cwav else None
+    
+    # Find bands to keep based on wavelength criteria
+    vars_to_keep = []
+    
+    for band in srf.data_vars:
+        if band == "id":
+            continue
+        
+        keep_band = True
+        
+        if use_cwav:
+            # Use central wavelength for filtering
+            if cwav is not None and band in cwav:
+                central_wav = float(cwav[band].values)
+                
+                if wav_min is not None and central_wav < wav_min:
+                    keep_band = False
+                if wav_max is not None and central_wav > wav_max:
+                    keep_band = False
+        else:
+            # Use entire wavelength range for filtering
+            srf_band = srf[band]
+            
+            # Get the wavelength coordinate for this band
+            assert len(srf_band.dims) == 1
+            wav_coord_name = srf_band.dims[0]
+            
+            wav_values = srf_band[wav_coord_name].values
+            wav_range_min = float(np.min(wav_values))
+            wav_range_max = float(np.max(wav_values))
+            
+            # Check if entire range is within specified bounds
+            if wav_min is not None and wav_range_min < wav_min:
+                keep_band = False
+            if wav_max is not None and wav_range_max > wav_max:
+                keep_band = False
+        
+        if keep_band:
+            vars_to_keep.append(band)
+        else:
+            # "id" variable not supported here
+            assert "id" not in srf
+    
+    # Always include the "id" variable if it exists
     if "id" in srf:
-        assert "band_id" in srf.id
-        return len(srf.id.band_id)
+        vars_to_keep.append("id")
+    
+    # Return filtered dataset
+    if vars_to_keep:
+        return srf[vars_to_keep]
     else:
-        return len(srf)
+        # Return empty dataset with same structure but no bands
+        return xr.Dataset(attrs=srf.attrs)
+
+
+def squeeze(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Remove the "id" variable if it has only a single dimension, and rename the
+    main variables accordingly
+    """
+    if 'id' not in ds:
+        return ds
+
+    if ds['id'].ndim == 1:
+        ds = rename(ds, 
+            [x.item() for x in ds['id'][ds['id'].dims[0]]]
+        )
+        return ds.drop('id')
+            
+    else:
+        return ds
 
 
 def rename(
     srf: xr.Dataset,
-    band_ids: List[int] | np.ndarray,
+    band_ids: List | np.ndarray | Literal["cwav", "enum", "trim"],
     check_nbands: bool = True,
-    thres_check: float | None = 10.0,
+    thres_check: float | None = None,
 ) -> xr.Dataset:
     """
     Rename bands in a SRF object
 
     Args:
         srf: the input srf object, with arbitrary band names
-        band_ids: the new band identifiers
+        band_ids: the new band identifiers.
+            if list or array, they are defined as the central
+            if str:
+                "cwav": define the bands as their central wavelength
+                "trim": trim the variable names start and end to keep only the variable part
+                "enum": enumerate the bands, starting from 1
         check_nbands: whether the number of bands passed as band_ids should match
             the number of srfs.
         thres_check: check that the integrated srf is within a distance of `thres_check`
             of band_id (assumed integer)
             If None, this test is disactivated.
     """
+    original_vars = [x for x in srf if x != "id"]
+    if isinstance(band_ids, str):
+        if band_ids == "cwav":
+            cwav = integrate_srf(srf, lambda x: x)
+            band_ids_ = [int(cwav[x].values) for x in cwav]
+            # check that there are no duplicates
+        elif band_ids == "enum":
+            band_ids_ = list(range(1, len(original_vars)+1))
+        elif band_ids == "trim":
+            def trim(ls):
+                if len(set([x[0] for x in ls])) == 1:
+                    # there is a common char prefix
+                    return trim([x[1:] for x in ls])
+                elif len(set([x[-1] for x in ls])) == 1:
+                    # there is a common char suffix
+                    return trim([x[:-1] for x in ls])
+                else:
+                    return ls
+            if False not in [isinstance(x, str) for x in original_vars]:
+                # all original_vars are str
+                original_vars: List[str]
+                band_ids_ = trim([x.strip() for x in original_vars])
+            else:
+                # Non-str bands: return input as-is
+                return srf
+        else:
+            raise ValueError(band_ids)
+    else:
+        band_ids_ = band_ids
+
+    # check that ids are unique
+    assert len(band_ids_) == len(set(band_ids_))
+
     if check_nbands:
         # check that the number of read bands matches `band_ids`
-        assert nbands(srf) == len(band_ids)
+        nb = len(original_vars)
+        assert nb == len(band_ids_)
     
     # rename input variables to band_ids
-    in_vars = [k for k in list(srf) if k != "id"]
-    srf = srf.rename(dict(zip(in_vars, band_ids)))
+    rename_dict = dict(zip(original_vars, band_ids_))
+
+    # also rename the dimensions
+    for var in original_vars:
+        if var == rename_dict[var]:
+            continue # nothing to rename
+        dimname0 = f'wav_{var}'
+        dimname1 = f'wav_{rename_dict[var]}'
+        if dimname0 in srf[var].dims:
+            rename_dict[dimname0] = dimname1 # type: ignore
+
+    # apply rename
+    srf = srf.rename(rename_dict)
 
     # check consistency
-    if (thres_check is not None):
+    if (thres_check is not None) and (not isinstance(band_ids, str)):
         # check that the band id matches the srf
         cwav = integrate_srf(srf, lambda x: x)
         for bid in band_ids:
@@ -252,6 +400,14 @@ def rename(
             assert diff < thres_check, ("There might be an error when providing the "
                 f"SRFs. A central wavelength of {cwav[bid]} was found for band {bid}")
     
+    if 'id' in srf:
+        # Replace indices in the "id" array
+        srf["id"] = xr.DataArray(
+            np.vectorize(rename_dict.get)(srf.id),
+            dims=srf["id"].dims,
+            coords=srf["id"].coords,
+        )
+
     return srf
 
 
@@ -267,7 +423,8 @@ def download_extract(directory: Path, url: str, verbose: bool = False):
 
 
 def integrate_srf(
-    srf: xr.Dataset, x: Union[Callable, xr.DataArray],
+    srf: xr.Dataset,
+    x: Union[Callable, xr.DataArray],
     integration_function: Callable = simpson,
     integration_dimension: Optional[str] = None,
     resample: Optional[Literal["x", "srf"]] = None,
@@ -368,8 +525,10 @@ def select(srf: xr.Dataset, **kwargs) -> xr.Dataset:
     """
     if "id" in srf:
         ids = srf.id.sel(**kwargs)
-        list_vars = list(ids.values)
-        return srf[[x for x in srf if x in list_vars]]
+        list_vars = list(ids.values.ravel())
+        sub = srf[[x for x in srf if x in list_vars]]
+        sub['id'] = ids
+        return sub
     else:
         return srf.sel(**kwargs)
 
@@ -402,6 +561,7 @@ def plot_srf(srf: xr.Dataset):
     plt.xlabel("wavelength")
     plt.ylabel("SRF")
     plt.grid(True)
+    plt.tight_layout()
 
 
 def to_tuple(
@@ -648,7 +808,7 @@ def get_SRF_vgt(sensor: str) -> xr.Dataset:
     return ds
 
 
-def get_SRF_olci(platform: str) -> xr.Dataset:
+def get_SRF_olci_full(platform: str) -> xr.Dataset:
     """
     Get SRF for OLCI
 
@@ -774,3 +934,57 @@ def get_SRF_msi(platform : str) -> xr.Dataset:
         index += 1
     ds["wav"].attrs["units"] = "nm"
     return ds
+
+
+def get_SRF_seviri(sensor: str):
+    """
+    Read SEVIRI SRF from EUMETSAT database, and rename with shorter band names
+
+    Sensor:
+        msg_1_seviri
+        msg_2_seviri
+        msg_3_seviri
+        msg_4_seviri
+    """
+    srf = get_SRF_eumetsat(sensor)
+    seviri_band_names = [
+            "VIS0.6",
+            "VIS0.8",
+            "NIR1.6",
+            "IR3.9",
+            "WV6.2",
+            "WV7.3",
+            "IR8.7",
+            "IR9.7",
+            "IR10.8",
+            "IR12.0",
+            "IR13.4",
+            "HRV",
+        ]
+
+    return rename(srf, seviri_band_names, thres_check=None)
+
+
+def get_SRF_olci(sensor: str):
+    """
+    Read OLCI SRF from EUM database
+
+    Add the "id" variable for indexing
+    Provide a mapping of (band, camera, ccd_col) to the
+    corresponding variable name
+    https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html
+    """
+
+    srf = get_SRF_eumetsat(sensor)
+
+    srf["id"] = xr.DataArray(
+        np.array(list(srf)).reshape((21, 5, 3)),
+        dims=("band_id", "camera", "ccd_col"),
+        coords={
+            "band_id": np.arange(1, 22),
+            "camera": ["FM5R", "FM9", "FM7", "FM10", "FM8"],
+            "ccd_col": [10, 374, 730],
+        },
+    )
+
+    return srf
