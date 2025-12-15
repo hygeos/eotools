@@ -133,7 +133,7 @@ environments:
       - pypi: git+https://github.com/hygeos/core.git#413270b5572bb8193485394bbed1525dd226b727
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/d8/99025aa78d947ca2f457be15238ed9baf962588ca8efc0476021eeb6dbce/ecmwf_datastores_client-0.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/eoread.git#3997d176ec43231064d7455dc1e23e689cc4a528
+      - pypi: git+https://github.com/hygeos/eoread.git#9265252e13d2e4c875c49674c9b4f2328623c0bf
       - pypi: https://files.pythonhosted.org/packages/ed/1d/409e819e00aed51f3e23df570e219621c0d64c458c9b8df4e7ae1c27e23d/eumdac-3.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b9/5c/a3d95dc1ec6cdeb032d789b552ecc76effa3557ea9186e1566df6aac18df/fs-2.4.16-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
@@ -295,7 +295,7 @@ environments:
       - pypi: git+https://github.com/hygeos/core.git#413270b5572bb8193485394bbed1525dd226b727
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/d8/99025aa78d947ca2f457be15238ed9baf962588ca8efc0476021eeb6dbce/ecmwf_datastores_client-0.2.0-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/eoread.git#3997d176ec43231064d7455dc1e23e689cc4a528
+      - pypi: git+https://github.com/hygeos/eoread.git#9265252e13d2e4c875c49674c9b4f2328623c0bf
       - pypi: https://files.pythonhosted.org/packages/ed/1d/409e819e00aed51f3e23df570e219621c0d64c458c9b8df4e7ae1c27e23d/eumdac-3.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b9/5c/a3d95dc1ec6cdeb032d789b552ecc76effa3557ea9186e1566df6aac18df/fs-2.4.16-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
@@ -665,7 +665,7 @@ packages:
   - typing-extensions
   - cdsapi>=0.7.6 ; extra == 'legacy'
   requires_python: '>=3.8'
-- pypi: git+https://github.com/hygeos/eoread.git#3997d176ec43231064d7455dc1e23e689cc4a528
+- pypi: git+https://github.com/hygeos/eoread.git#9265252e13d2e4c875c49674c9b4f2328623c0bf
   name: eoread
   version: 0.4.0
   requires_dist:

@@ -53,7 +53,7 @@ class Gaseous_correction:
                  K_OZ: Dict | None = None,
                  no2_correction: str = "legacy",
                  gas_correction: str = "o3_legacy",
-                 bands_sel_ckdmip: list | None = None,
+                 bands_sel_ckdmip: list | slice | None = None,
                  **kwargs
                  ):
 
@@ -181,6 +181,8 @@ class Gaseous_correction:
                         'mus': ds.mus,
                         'muv': ds.muv,
                         'total_ozone': total_ozone,
+                        'tcwv': tcwv,
+                        'ssp': ssp_hPa,
                         'latitude': ds.latitude,
                         'longitude': ds.longitude,
                         'flags': ds.flags,
@@ -201,6 +203,8 @@ class Gaseous_correction:
             ds.mus.data,
             ds.muv.data,
             ds.total_ozone.data,
+         ds.tcwv.data,
+            ds.ssp.data,
             ds.latitude.data,
             ds.longitude.data,
             ds.flags.data,
@@ -446,7 +450,7 @@ class Gas_correction_NO2:
 
 
 class Gas_correction_CKDMIP:
-    def __init__(self, ds: xr.Dataset, bands_sel: list):
+    def __init__(self, ds: xr.Dataset, bands_sel: list | slice):
         self.coeffs = get_transmission_coeffs((ds.platform, ds.sensor)).sel(
             bands=bands_sel
         )

@@ -70,12 +70,15 @@ def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
             "horizontal_wind": "m/s",
             "sea_level_pressure": "hectopascals",
             "total_column_ozone": "Dobson",
+            "total_column_water_vapour": "g/cm²",
         },
     )
+    ds.attrs.update(platform='Sentinel-2A')   # FIXME: should be integrated in Level1_MSI
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
     with timeit('Init'):
         Gaseous_correction(
-            ds, srf, input_var="Rtoa", gas_correction=gas_correction
+            ds, srf, input_var="Rtoa", gas_correction=gas_correction,
+            bands_sel_ckdmip=slice(None),
         ).apply(method=method)
     plt.plot()
     list_vars = ['Rtoa', 'rho_gc']
