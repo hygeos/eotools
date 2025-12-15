@@ -125,7 +125,7 @@ def get_abs_data(srf: xr.Dataset, gas: str) -> xr.Dataset:
     elif gas == 'O3':
         U_O3 = np.linspace(100.0, 500.0, 15)
         ds_gas = gt.calc(U_O3, air_mass, P0[None], srf_wvl, rsrf)
-        U_units = 'DU'
+        U_units = 'Dobson'
     else:
         # Ratio pressure/ground_pressure for other gases
         R_P_P0 = np.linspace(0.83909181, 1.0266535, 15)
@@ -235,6 +235,7 @@ def abs_data_fit(
             'n': (['bands'], n_coeffs, {'description': 'Exponent parameter', 'units': 'dimensionless'}),
             'U0': ds_gas.U0,
             'P0': ds_gas.P0,
+            'U_units': ds_gas.U0.attrs['units'],
         },
         coords={'bands': ds_gas.bands},
         attrs={
@@ -251,9 +252,14 @@ def abs_data_fit(
     return coeffs
 
 
-def get_transmission_coeffs(platform_sensor: str | Tuple) -> xr.Dataset:
+def get_transmission_coeffs(
+    platform_sensor: str | Tuple, create: bool = False
+) -> xr.Dataset:
     """
     Calculate transmission coefficients for all gases, for a given sensor
+
+    If `create`, allow the creation of the file containing the transmission
+    coefficients.
     """
     version = 'v1'
     if isinstance(platform_sensor, tuple):
@@ -262,6 +268,9 @@ def get_transmission_coeffs(platform_sensor: str | Tuple) -> xr.Dataset:
         psensor = platform_sensor.upper()
     dir_gatiab = mdir(getdir('DIR_STATIC')/"absorption"/"gatiab")
     filename = dir_gatiab/f"abs_coeff_{psensor}_{version}.nc"
+
+    if (not create) and (not filename.exists()):
+        raise FileNotFoundError(filename)
 
     @cache_dataset(filename, attrs={'platform_sensor': psensor})
     def wrapped(platform_sensor_: str | Tuple):
