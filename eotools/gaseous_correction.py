@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 import pandas as pd
 import xarray as xr
 import numpy as np
@@ -8,8 +8,9 @@ from pyhdf.SD import SD
 from core.tools import datetime
 from core.files.fileutils import mdir
 from core.network.download import download_url
-from eotools.gaseous_absorption import get_absorption
+from eotools.gaseous_absorption import get_absorption, get_transmission_coeffs
 from eotools.srf import integrate_srf
+from eotools.units_conversion import convert
 from core import env
 from core.tools import MapBlocksOutput, Var
 
@@ -50,10 +51,14 @@ class Gaseous_correction:
                  spectral_dim: str='bands',
                  K_NO2: Dict | None = None,
                  K_OZ: Dict | None = None,
-                 dir_common: Optional[Path]=None,
+                 no2_correction: str = "legacy",
+                 gas_correction: str = "o3_legacy",
+                 bands_sel_ckdmip: list | None = None,
                  **kwargs
                  ):
 
+        self.no2_correction = no2_correction
+        self.gas_correction = gas_correction
         self.ds = ds
         self.spectral_dim = spectral_dim
         self.bands = list(ds[spectral_dim].data)
@@ -73,18 +78,27 @@ class Gaseous_correction:
         dir_common = mdir(env.getdir("DIR_STATIC") / "common")
         
         # Initialize sub classes
-        self.corr_NO2 = Gas_correction_NO2(ds, srf, dir_common, K_NO2, spectral_dim)
-        self.corr_O3 = Gas_correction_O3(ds, srf, dir_common, K_OZ, spectral_dim)
+        if no2_correction == "legacy":
+            self.corr_NO2 = Gas_correction_NO2(ds, srf, dir_common, K_NO2, spectral_dim)
+        if gas_correction == 'o3_legacy':
+            self.corr_O3 = Gas_correction_O3(ds, srf, dir_common, K_OZ, spectral_dim)
+        elif gas_correction == 'ckdmip':
+            assert bands_sel_ckdmip is not None
+            self.corr_ckdmip = Gas_correction_CKDMIP(ds, bands_sel=bands_sel_ckdmip)
+        else:
+            raise ValueError
 
 
     def run(self, bands, Rtoa, mus, muv,
-            ozone, latitude, longitude,
+            ozone_dobson, tcwv_kgm2, ssp_hPa, latitude, longitude,
             flags, 
             datetime):
         """
         Apply gaseous correction to Rtoa (ozone, NO2)
 
         ozone : total column in Dobson Unit (DU)
+        tcwv: total column water vapour # TODO: units
+        sp : sea surface pressure # TODO: units
         """
         Rtoa_gc = Rtoa.copy()
         ok = ~np.isnan(latitude)
@@ -93,19 +107,23 @@ class Gaseous_correction:
         air_mass = 1/muv + 1/mus
 
         # O3 correction
-        self.corr_O3.run(bands, Rtoa_gc, ok, air_mass, ozone)
+        if self.gas_correction == 'o3_legacy':
+            self.corr_O3.run(bands, Rtoa_gc, ok, air_mass, ozone_dobson)
+        elif self.gas_correction == 'ckdmip':
+            self.corr_ckdmip.run(bands, Rtoa_gc, ok, air_mass, ozone_dobson, tcwv_kgm2, ssp_hPa)
 
         # NO2 correction
-        self.corr_NO2.run(
-            bands,
-            Rtoa_gc,
-            ok,
-            air_mass,
-            latitude,
-            longitude,
-            flags,
-            datetime,
-        )
+        if self.no2_correction == "legacy":
+            self.corr_NO2.run(
+                bands,
+                Rtoa_gc,
+                ok,
+                air_mass,
+                latitude,
+                longitude,
+                flags,
+                datetime,
+            )
 
         return Rtoa_gc
 
@@ -117,11 +135,20 @@ class Gaseous_correction:
         ds = self.ds
         date = datetime(ds)
 
+        # TODO: use pint here
         if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2', 'kg.m-2']:
             total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
         else:
             total_ozone = ds.total_column_ozone
             assert ds.total_column_ozone.units in ['DU','Dobsons', 'Dobson']
+        
+
+        if self.gas_correction == 'ckdmip':
+            tcwv = convert(ds['total_column_water_vapour'], 'g/cm²')
+            ssp_hPa = convert(ds['sea_level_pressure'], 'hPa')
+        else:
+            tcwv = None
+            ssp_hPa = None
 
         rho_toa = ds[self.input_var].chunk({self.spectral_dim: -1})
 
@@ -133,12 +160,14 @@ class Gaseous_correction:
                 ds.mus,
                 ds.muv,
                 total_ozone,
+                tcwv,
+                ssp_hPa,
                 ds.latitude,
                 ds.longitude,
                 ds.flags,
                 dask='parallelized',
                 kwargs={'datetime': date},
-                input_core_dims=[[self.spectral_dim], [self.spectral_dim], [], [], [], [], [], []],
+                input_core_dims=[[self.spectral_dim], [self.spectral_dim], [], [], [], [], [], [], [], []],
                 output_core_dims=[[self.spectral_dim]],
                 output_dtypes=['float32'],
             )
@@ -250,7 +279,6 @@ class Gas_correction_O3:
 
             # TODO: check this
             Rtoa_gc[ok, i] /= trans_O3
-
 
         return Rtoa_gc.astype('float32')
 
@@ -418,6 +446,39 @@ class Gas_correction_NO2:
 
 
 class Gas_correction_CKDMIP:
-    def __init__(self):
-        raise NotImplementedError
+    def __init__(self, ds: xr.Dataset, bands_sel: list):
+        self.coeffs = get_transmission_coeffs((ds.platform, ds.sensor)).sel(
+            bands=bands_sel
+        )
+
+        self.nbands = len(self.coeffs.bands)
+
+    def run(
+        self, bands, Rtoa_gc, ok, air_mass, ozone, tcwv, sea_surface_pressure
+    ):
+        """
+        Ozone in Dobson
+        tcwv in g/cm2
+        sea_surface_pressure in hPa
+        """
+
+        assert self.nbands == Rtoa_gc.shape[-1]
+        
+        for gas in self.coeffs.gas:
+            c = self.coeffs.sel(gas=gas)
+            if gas == 'O3':
+                assert c.U_units.values == "Dobson"
+                x = air_mass[ok] * ozone[ok] / c.U0.values
+            elif gas == 'H2O':
+                assert c.U_units.values == "g/cm²"
+                x = air_mass[ok] * tcwv[ok] / c.U0.values
+            else:
+                x = air_mass[ok] * sea_surface_pressure[ok] / c.P0.values
+            T = np.exp(-c.a.values * x[:,None]**c.n.values)
+            
+            Rtoa_gc[ok,:] /= T
+        
+
+
+
 

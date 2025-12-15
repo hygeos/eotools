@@ -59,7 +59,8 @@ def test_integrate_srf(platform, sensor, gas, integration_function):
 
 
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
-def test_gaseous_correction(level1: Path, method, request):
+@pytest.mark.parametrize('gas_correction', ['o3_legacy', 'ckdmip'])
+def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
     ds = msi.Level1_MSI(level1).chunk(bands=-1)
     init_geometry(ds)
     apply_ancillary(
@@ -73,7 +74,9 @@ def test_gaseous_correction(level1: Path, method, request):
     )
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
     with timeit('Init'):
-        Gaseous_correction(ds, srf, input_var='Rtoa').apply(method=method)
+        Gaseous_correction(
+            ds, srf, input_var="Rtoa", gas_correction=gas_correction
+        ).apply(method=method)
     plt.plot()
     list_vars = ['Rtoa', 'rho_gc']
     with timeit('Compute'):
@@ -92,8 +95,8 @@ def test_gaseous_correction(level1: Path, method, request):
     "platform_sensor,sel", [
         ("SENTINEL-3A_OLCI", {"ccd_col": 374, "camera": "FM7"}),
         ("SENTINEL-3B_OLCI", {"ccd_col": 374, "camera": "FM7"}),
-        ("SENTINEL2-A_MSI", {}),
-        ("SENTINEL2-B_MSI", {}),
+        ("SENTINEL-2A_MSI", {}),
+        ("SENTINEL-2B_MSI", {}),
         ("MSG-1_SEVIRI", {}),
         ("MSG-2_SEVIRI", {}),
         ("MSG-3_SEVIRI", {}),
@@ -105,7 +108,7 @@ def test_all_gases(platform_sensor: str, sel: Dict, request):
     """
     Generate all coeffs for gatiab supported gases
     """
-    coeffs = get_transmission_coeffs(platform_sensor).sel(sel)
+    coeffs = get_transmission_coeffs(platform_sensor, create=True).sel(sel)
     srf = filter_bands(get_SRF(platform_sensor), 250., 2500.)
     srf = rename(srf, 'trim')
     srf = squeeze(select(srf, **sel))
