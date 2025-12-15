@@ -318,7 +318,6 @@ def squeeze(ds: xr.Dataset) -> xr.Dataset:
 def rename(
     srf: xr.Dataset,
     band_ids: List | np.ndarray | Literal["cwav", "enum", "trim"],
-    check_nbands: bool = True,
     thres_check: float | None = None,
 ) -> xr.Dataset:
     """
@@ -332,8 +331,6 @@ def rename(
                 "cwav": define the bands as their central wavelength
                 "trim": trim the variable names start and end to keep only the variable part
                 "enum": enumerate the bands, starting from 1
-        check_nbands: whether the number of bands passed as band_ids should match
-            the number of srfs.
         thres_check: check that the integrated srf is within a distance of `thres_check`
             of band_id (assumed integer)
             If None, this test is disactivated.
@@ -371,10 +368,8 @@ def rename(
     # check that ids are unique
     assert len(band_ids_) == len(set(band_ids_))
 
-    if check_nbands:
-        # check that the number of read bands matches `band_ids`
-        nb = len(original_vars)
-        assert nb == len(band_ids_)
+    nb = len(original_vars)
+    assert nb == len(band_ids_)
     
     # rename input variables to band_ids
     rename_dict = dict(zip(original_vars, band_ids_))
@@ -531,6 +526,13 @@ def select(srf: xr.Dataset, **kwargs) -> xr.Dataset:
         return sub
     else:
         return srf.sel(**kwargs)
+
+
+def select_first(srf: xr.Dataset, N: int):
+    """
+    Select the first `N` variables in `srf`
+    """
+    return srf[[x for x in srf][:N]]
 
 
 class _Func_ODR:
