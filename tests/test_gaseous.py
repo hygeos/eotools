@@ -125,20 +125,28 @@ def test_all_gases(platform_sensor: str, sel: Dict, request):
 
     # plot the transmissions
     plt.figure()
-    plt.yscale("function", functions=(lambda x: x**2, lambda x: x**(1/2)))
-    air_mass = 2.
+    plt.yscale("function", functions=(lambda x: x**4, lambda x: x**(1/4)))
+    air_mass = 3.
     iwav = np.argsort(cwav)
     for gas in coeffs.gas:
         c = coeffs.sel(gas = gas)
         x = air_mass
         plt.plot(cwav[iwav], np.exp(-c.a * x**c.n)[iwav], "+-", label=str(gas.values))
 
+    # plot full transmission
+    plt.plot(
+        cwav[iwav],
+        np.exp(-coeffs.a * x**coeffs.n).prod(dim="gas")[iwav],
+        "k--",
+        label="Total",
+    )
+
     # plot also the other implementation of O3 transmission
     tau_O3 = get_absorption("o3") * coeffs.U0.sel(gas="O3").values * 1e-3
     plt.plot(tau_O3['wav'], np.exp(-tau_O3*air_mass), color='gray', ls='--', label='O3 spectrum')
 
-    plt.axis(ymin=0, ymax=1.05)
-    plt.yticks([0, 0.3, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0])
+    plt.axis(ymin=0, ymax=1.01)
+    plt.yticks([0, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0])
     plt.ylabel('transmission')
     plt.xlabel('wavelength (nm)')
     plt.grid(True)
