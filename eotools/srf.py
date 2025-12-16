@@ -50,9 +50,8 @@ def get_SRF(
         else:
             return x
 
-    if platform_sensor is not None:
+    if srf_getter is None:
         # initialize platform/sensor
-        assert srf_getter is None
         if isinstance(platform_sensor, xr.Dataset):
             platform = platform_sensor.attrs['platform']
             sensor = platform_sensor.attrs['sensor']
@@ -86,7 +85,6 @@ def get_SRF(
         srf_getter = str(csv_data[eq].srf_getter.values[0])
         srf_getter_arg = str(csv_data[eq].srf_getter_arg.values[0])
     else:
-        assert srf_getter is not None
         sensor = None
         platform = None
 
