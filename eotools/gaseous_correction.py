@@ -10,7 +10,7 @@ from core.files.fileutils import mdir
 from core.network.download import download_url
 from eotools.gaseous_absorption import get_absorption, get_transmission_coeffs
 from eotools.srf import integrate_srf
-from eotools.units_conversion import convert
+from eotools.units import convert
 from core import env
 from core.tools import MapBlocksOutput, Var
 
@@ -209,7 +209,7 @@ class Gaseous_correction:
             ds.longitude.data,
             ds.flags.data,
             datetime=dt
-        )
+        ).astype('float32')
         out = xr.Dataset()
         out[self.output_var] = xr.DataArray(
             Rtoa_gc,
