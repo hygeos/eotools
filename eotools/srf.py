@@ -689,6 +689,8 @@ def get_SRF_landsat8_oli() -> xr.Dataset:
         dsb[name_wvl].attrs["units"] = "nm"
         ds = ds.merge(dsb)
         index += 1
+
+    ds.attrs["desc"] = 'Spectral response functions for LANDSAT8-OLI'
     return ds
 
 

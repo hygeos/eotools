@@ -7,7 +7,16 @@ import pytest
 import xarray as xr
 from eoread import msi
 
-from eotools.srf import get_SRF, get_SRF_eumetsat, integrate_srf, plot_srf, rename, select, filter_bands, nbands
+from eotools.srf import (
+    get_SRF,
+    get_SRF_eumetsat,
+    get_SRF_landsat8_oli,
+    integrate_srf,
+    plot_srf,
+    rename,
+    select,
+    filter_bands,
+)
 
 from . import conftest
 
@@ -36,6 +45,13 @@ def test_get_srf(request, platform, sensor, sel):
 
     conftest.savefig(request, bbox_inches="tight")
 
+def test_get_srf2(request):
+    srf = rename(get_SRF_landsat8_oli(), "trim")
+    print(srf)
+
+    plot_srf(srf)
+
+    conftest.savefig(request, bbox_inches="tight")
 
 @pytest.mark.parametrize('sensor', ["SENTINEL-3A_OLCI"])
 def test_select(sensor: str):
