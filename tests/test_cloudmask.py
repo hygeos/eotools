@@ -16,7 +16,8 @@ level1 = pytest.fixture(msi.get_sample)
 
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
 def test_cloudmask(level1: Path, method, request):
-    ds = msi.Level1_MSI(level1)
+    ds = msi.Level1_MSI(level1, v1_compat=True)
+    ds = ds.drop(['x', 'y'])  # TODO shall be removed for v2 compat
 
     with timeit('Init'):
         Cloud_mask(ds, 'Rtoa', 865, 1).apply(method=method)

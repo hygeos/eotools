@@ -19,7 +19,8 @@ level1 = pytest.fixture(msi.get_sample)
 
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
 def test_glint(level1: Path, method, request):
-    ds = msi.Level1_MSI(level1)
+    ds = msi.Level1_MSI(level1, v1_compat=True)
+    ds = ds.drop(['x', 'y'])  # TODO shall be removed for v2 compat
     init_geometry(ds, scat_angle=True)
     apply_ancillary(
         ds,

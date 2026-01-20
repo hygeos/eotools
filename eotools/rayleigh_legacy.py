@@ -28,9 +28,9 @@ class Rayleigh_correction:
         self.mlut = read_mlut_hdf(str(lut_file))
         self.bitmask_invalid = bitmask_invalid
         self.model = MapBlocksOutput([
-            Var('Rmol', 'float32', ('y', 'x', 'bands')),
-            Var('Rmolgli', 'float32', ('y', 'x', 'bands')),
-            Var('Tmol', 'float32', ('y', 'x', 'bands')),
+            Var('Rmol', dtype='float32', dims=('y', 'x', 'bands')),
+            Var('Rmolgli', dtype='float32', dims=('y', 'x', 'bands')),
+            Var('Tmol', dtype='float32', dims=('y', 'x', 'bands')),
         ])
 
     def run(self, wav, mus, muv, raa, altitude, surf_press, wind_speed, flags):

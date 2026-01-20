@@ -23,7 +23,7 @@ level1 = pytest.fixture(msi.get_sample)
 
 
 def test_calc_odr(level1: Path):
-    ds = msi.Level1_MSI(level1)
+    ds = msi.Level1_MSI(level1, v1_compat=True)
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
     tau_r = integrate_srf(srf, lambda wav_nm: rod(wav_nm * 1e-3))
     print(tau_r)
@@ -46,7 +46,8 @@ def test_plot_rho_ray(level1, request):
 
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
 def test_rayleigh_correction(level1: Path, method, request):
-    ds = msi.Level1_MSI(level1)
+    ds = msi.Level1_MSI(level1, v1_compat=True)
+    ds = ds.drop(['x', 'y'])  # TODO shall be removed for v2 compat
     ds = ds.chunk(bands=-1)
     init_geometry(ds)
     apply_ancillary(
@@ -66,7 +67,7 @@ def test_rayleigh_correction(level1: Path, method, request):
     with timeit('Init'):
         Rayleigh_correction(ds, bitmask_invalid=0).apply(method=method)
     with timeit('Compute'):
-        px = ds[list_vars].sel(x=1000, y=1000).compute()
+        px = ds[list_vars].isel(x=1000, y=1000).compute()
     plt.plot()
     for varname in list_vars:
         px[varname].plot(label=varname)

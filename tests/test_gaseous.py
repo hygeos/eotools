@@ -61,7 +61,8 @@ def test_integrate_srf(platform, sensor, gas, integration_function):
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
 @pytest.mark.parametrize('gas_correction', ['o3_legacy', 'ckdmip'])
 def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
-    ds = msi.Level1_MSI(level1).chunk(bands=-1)
+    ds = msi.Level1_MSI(level1, v1_compat=True).chunk(bands=-1)
+    ds = ds.drop(['x', 'y'])  # TODO shall be removed for v2 compat
     init_geometry(ds)
     apply_ancillary(
         ds,
@@ -83,7 +84,7 @@ def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
     plt.plot()
     list_vars = ['Rtoa', 'rho_gc']
     with timeit('Compute'):
-        px = ds[list_vars].sel(x=1000, y=1000).compute()
+        px = ds[list_vars].isel(x=1000, y=1000).compute()
     for varname in list_vars:
         px[varname].plot(label=varname)
     plt.grid(True)

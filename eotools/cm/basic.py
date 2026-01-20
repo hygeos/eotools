@@ -42,7 +42,7 @@ class Cloud_mask:
         self.flag_variable = cm_flag_variable
         self.bitmask_invalid = bitmask_invalid
         self.model = MapBlocksOutput([
-            Var('cloudmask', 'uint8', ('y', 'x'))
+            Var('cloudmask', dtype='uint8', dims=('y', 'x'))
         ])
 
     def run(self, Rnir, flags):
