@@ -5,7 +5,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Callable, List, Literal, Optional, Tuple, Union
 from warnings import warn
-import h5py
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -816,6 +815,7 @@ def get_SRF_olci_full(platform: str) -> xr.Dataset:
 
     platform: one of "SENTINEL3_1", "SENTINEL3_2"
     """
+    import h5py
     # Default directory
     dir_SRFs = env.getdir("DIR_STATIC") / "srf"
 
