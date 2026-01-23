@@ -1,4 +1,3 @@
-import importlib
 import re
 import tarfile
 from pathlib import Path
@@ -12,6 +11,7 @@ from core.files.fileutils import filegen
 from core.tools import only
 from core import env
 from core.network.download import download_url
+from core.import_utils import import_module
 
 from scipy.integrate import simpson
 from eotools.bodhaine import rod
@@ -87,10 +87,8 @@ def get_SRF(
         sensor = None
         platform = None
 
-    # Run the SRF getter
-    p, m = srf_getter.rsplit(".", 1)
-    mod = importlib.import_module(p)
-    getter = getattr(mod, m)
+    # Import and run the SRF getter
+    getter = import_module(srf_getter)
     if srf_getter_arg in [None, 'nan']:
         srf = getter()
     else:
