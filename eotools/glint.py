@@ -26,7 +26,7 @@ def apply_glitter(ds, method='apply_ufunc'):
         ds["Rgli"] = xr.map_blocks(
             apply_glitter_block,
             ds[['horizontal_wind', 'mus', 'muv', 'scat_angle']],
-            template=Var('Rgli', dtype='float32', dims=('y', 'x')).to_template(ds),
+            template=Var('Rgli', dtype='float32', dims=ds.mus.dims).to_template(ds),
         )
 
 def glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None):
