@@ -318,7 +318,7 @@ class Gas_correction_NO2:
             # load absorption rate for each gas
             k_no2_data = get_absorption('no2', dirname=dir_common)
 
-            if srf is not None:
+            if len(srf) > 0:
                 for b in self.bands:
                     assert b in srf
 
