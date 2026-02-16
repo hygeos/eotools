@@ -15,7 +15,8 @@ dependencies = [
 git = [
     "core @ git+https://github.com/hygeos/core.git",
     "luts @ git+https://github.com/hygeos/luts.git",
-    "eoread[git] @ git+https://github.com/hygeos/eoread.git"
+    "eoread @ git+https://github.com/hygeos/eoread.git",
+    "sand @ git+https://github.com/hygeos/sand.git",
 ]
 gatiab = [
     "gatiab"
