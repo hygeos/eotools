@@ -33,6 +33,7 @@ level1 = pytest.fixture(msi.get_sample)
         ("ENVISAT", "MERIS", None),
         ("Proba-V", "Proba-V", {"camera": "CENTER"}),
         ("SPOT", "VGT1", None),
+        ("SeaHawk", "HawkEye", None),
     ],
 )
 def test_get_srf(request, platform, sensor, sel):
@@ -42,6 +43,9 @@ def test_get_srf(request, platform, sensor, sel):
         srf = select(srf, **sel)
 
     plot_srf(srf)
+
+    cwav = integrate_srf(srf, lambda x: x)
+    print(cwav)
 
     conftest.savefig(request, bbox_inches="tight")
 

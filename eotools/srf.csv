@@ -10,6 +10,7 @@ SPOT,VGT-2,eotools.srf.get_SRF_vgt,VGT2
 MODIS,MISR,eotools.srf.get_SRF_misr
 Sentinel-3A,OLCI-FULL,eotools.srf.get_SRF_olci_full,SENTINEL3_1
 Sentinel-3B,OLCI-FULL,eotools.srf.get_SRF_olci_full,SENTINEL3_2
+SeaHawk,HawkEye,eotools.srf.get_SRF_NASA,seahawk1_hawkeye
 
 # From the EUMETSAT database
 # https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/

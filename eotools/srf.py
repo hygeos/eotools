@@ -201,6 +201,40 @@ def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
     return ds
 
 
+def get_SRF_NASA(id_sensor: str) -> xr.Dataset:
+    """
+    Download and read Spectral Response Function (SRF) from NASA ocean color
+    website.
+
+    Args:
+        id_sensor (str): identifier of the sensor/platform.
+
+    Returns:
+        xr.Dataset: A dataset with the SRF for each band, defined by default identifiers.
+    """
+    url = f'https://oceancolor.gsfc.nasa.gov/images/rsr/{id_sensor}_RSR.nc'
+
+    # Directory for storing SRFs locally
+    directory = env.getdir("DIR_STATIC") / "srf"
+
+    srf_filename = download_url(url, directory)
+    srf = xr.open_dataset(srf_filename)
+    
+    # Split the 'bands' dimension into individual variables
+    ds = xr.Dataset()
+    for band in srf.bands:
+        band_name = int(float(band.values))
+        ds[band_name] = srf.RSR.sel(bands=band).drop('bands')
+    
+    # Add attributes if present
+    if 'desc' in srf.attrs:
+        ds.attrs['desc'] = srf.attrs['desc']
+    else:
+        ds.attrs['desc'] = f'Spectral response functions for {id_sensor}'
+    
+    return ds.assign_coords(wavelengths=srf.wavelength)
+
+
 def get_bands(srf: xr.Dataset) -> list:
     """
     Returns the identifiers of the bands of a srf object
