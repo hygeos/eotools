@@ -462,7 +462,7 @@ def integrate_srf(
             assert srf_wav.units == 'nm'
             wav = srf_wav.values
             xx = x(wav)
-            srf_values = srf_band.values
+            srf_values = np.nan_to_num(srf_band.values)
         elif isinstance(x, xr.DataArray):
             assert x.wav.units == srf_wav.units
             if resample == "srf":
