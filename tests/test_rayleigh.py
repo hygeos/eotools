@@ -3,34 +3,36 @@
 
 from pathlib import Path
 
-from matplotlib import pyplot as plt
 import pytest
 import xarray as xr
-from eoread.ancillary_nasa import Ancillary_NASA
-from eoread.eo import init_geometry
+from core.process.blockwise import CompoundProcessor
+from core.tests import conftest
 from eoread import msi
-from luts import Idx
+from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.common import timeit
+from eoread.eo import init_geometry
+from luts import Idx
+from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import apply_ancillary
 from eotools.bodhaine import rod
+from eotools.geometry import InitGeometry
+from eotools.rayleigh import RayleighCorrection
 from eotools.rayleigh_legacy import Rayleigh_correction
 from eotools.srf import get_SRF, integrate_srf, rename
+from tests import samples
 
-from core.tests import conftest
+level1_msi = pytest.fixture(samples.level1_msi)
 
-level1 = pytest.fixture(msi.get_sample)
-
-
-def test_calc_odr(level1: Path):
-    ds = msi.Level1_MSI(level1, v1_compat=True)
+def test_calc_odr(level1_msi: Path):
+    ds = msi.Level1_MSI(level1_msi, v1_compat=True)
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
     tau_r = integrate_srf(srf, lambda wav_nm: rod(wav_nm * 1e-3))
     print(tau_r)
 
 
-def test_plot_rho_ray(level1, request):
-    ds = msi.Level1_MSI(level1)
+def test_plot_rho_ray(level1_msi, request):
+    ds = msi.Level1_MSI(level1_msi)
     rc = Rayleigh_correction(ds, bitmask_invalid=0)
     rc.mlut.describe()
     # [0] Rmolgli (float32 in [0, 6.5e+04]), axes=('dim_mu', 'dim_phi', 'dim_mu', 'dim_tauray', 'dim_wind')
@@ -45,9 +47,9 @@ def test_plot_rho_ray(level1, request):
 
 
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
-def test_rayleigh_correction(level1: Path, method, request):
-    ds = msi.Level1_MSI(level1, v1_compat=True)
-    ds = ds.drop(['x', 'y'])  # TODO shall be removed for v2 compat
+def test_rayleigh_correction(level1_msi: Path, method, request):
+    ds = msi.Level1_MSI(level1_msi, v1_compat=True)
+    ds = ds.drop(['x', 'y']).unify_chunks()  # TODO shall be removed for v2 compat
     ds = ds.chunk(bands=-1)
     init_geometry(ds)
     apply_ancillary(
@@ -75,3 +77,32 @@ def test_rayleigh_correction(level1: Path, method, request):
     plt.legend()
     conftest.savefig(request)
 
+
+
+@pytest.mark.parametrize('mode', ['srf', 'wav'])
+def test_rayleigh_correction_new(level1_msi: Path, mode: str, request):
+    ds = msi.Level1_MSI(level1_msi).isel(x=slice(1000, 1500), y=slice(1000, 1500))
+    ds.cwav.attrs.update(units='nm')  # TODO: move in eoread
+    ds['altitude'] = xr.zeros_like(ds.latitude, dtype='float32')
+    ds['altitude'].attrs.update(units='m')
+    ds = ds.chunk(bands=-1).unify_chunks()
+    srf = get_SRF(ds) if mode == "srf" else None
+    compound = CompoundProcessor(
+        [
+            InitGeometry(ds),
+            Interpolator(   # TODO: use dedicates class "ApplyAncillary".
+                Ancillary_NASA().get(datetime(ds)),
+                latitude=Linear("latitude"),
+                longitude=Linear("longitude"),
+            ),
+            RayleighCorrection(srf=srf),
+        ]
+    )
+    ds['rho_gc'] = ds['Rtoa']
+    res = compound.map_blocks(ds)
+    res = res.compute()
+
+    res.rho_rc.sel(bands='B8A').plot()
+    conftest.savefig(request)
+
+    

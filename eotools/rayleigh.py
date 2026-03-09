@@ -1,10 +1,18 @@
 from pathlib import Path
 from typing import Literal
+from core.tools import Var
 import numpy as np
 import xarray as xr
 from eotools.srf import integrate_srf
-from eotools.bodhaine import rod
+from eotools.bodhaine import rod, raycrs, column_number_density
 from eotools.chapman import chapman
+from core.process.blockwise import BlockProcessor
+from core.interpolate import Interpolator
+from core.download import download_url
+from core import env
+from eotools.units import check_units, convert
+from eotools.utils.tools import deduplicate_dims
+from luts import read_mlut_hdf
 
 from core.interpolate import interp, Linear
 
@@ -73,28 +81,64 @@ def load_rayleigh_lut(lut_rayleigh_pp: Path,
 def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
     """
     Calculates ODR (Optical Depth Rayleigh)
+
+    Computes the Rayleigh optical depth based on altitude and pressure.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input dataset containing altitude and pressure information.
+        Must contain either:
+        - "altitude" and "surface_pressure" or "sea_level_pressure"
+        - "cwav" (central wavelength) for single-wavelength calculation
+    srf : xr.Dataset | None, optional
+        Sensor spectral response function for multi-wavelength calculation.
+        If provided, ODR is calculated by integrating the Rayleigh cross-section
+        over the SRF.
+
+    Returns
+    -------
+    xr.DataArray
+        Rayleigh optical depth values with same dimensions as input.
+
+    Notes
+    -----
+    - If srf is provided, ODR is computed by integrating the Rayleigh cross-section
+      over the SRF using the Bodhaine et al. (1999) method.
+    - If srf is None, ODR is computed using the central wavelength from "cwav"
     """
-    def func_rod(wav_nm):
-        return rod(wav_nm / 1000)
+    altitude_m = convert(ds["altitude"], "m")
+    if "surface_pressure" in ds:
+        pressure_hpa = convert(ds["surface"], "hPa")
+        pressure_kind = "surface"
+    else:
+        pressure_hpa = convert(ds["sea_level_pressure"], "hPa")
+        pressure_kind = "sea-level"
 
-    if "odr" in ds:
-        # TODO: make it pixel by pixel, account for surface pressure
-        assert ds.odr.ndim == 1
-        ds.attrs.update({"rod_source": str(ds.odr.values)})
-        return ds["odr"]
+    if srf is not None:
+        # calculate ODR from SRF integration
+        for coord in srf.coords:
+            check_units(srf.coords[coord], 'nm')
+        ray_crs = integrate_srf(srf, lambda lam_nm: raycrs(lam_nm/1000.))
+        ray_crs = xr.concat([ray_crs[x] for x in ray_crs], dim='bands')
 
-    elif srf is not None:
-        # calculate ODR from SRF
-        odr_dict = integrate_srf(srf, func_rod)
-        odr = xr.DataArray([odr_dict[b] for b in ds.bands.values], dims="bands")
-        ds.attrs.update({"rod_source": "Bodhaine99"})
-        ds["odr"] = odr
+        cnd = column_number_density(
+            z=altitude_m, P=pressure_hpa, pressure=pressure_kind
+        )
+
+        # ray_crs is wavelength dependent
+        # cnd has image dimensions (altitude, pressure)
+        odr = ray_crs * cnd
+
         return odr
 
-    elif "wav" in ds:
-        # calculate ODR from central wavelength "wav"
-        assert ds.wav.units == "nm"
-        odr = func_rod(ds.wav)
+    elif "cwav" in ds:
+        # calculate ODR from central wavelength "wav" provided as input
+        if hasattr(ds["cwav"], "units"):
+            check_units(ds['cwav'], 'nm')
+        odr = rod(
+            ds['cwav'] / 1000.0, z=altitude_m, P=pressure_hpa, pressure=pressure_kind
+        )
         ds.attrs.update({"rod_source": "Bodhaine99"})
         ds["odr"] = odr
         return odr
@@ -104,8 +148,13 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
 
 
 def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
-    """Apply Rayleigh correction to `ds`
-    
+    """
+    Apply Rayleigh correction to `ds`
+
+    This function applies atmospheric Rayleigh scattering correction to the
+    top-of-atmosphere reflectance data. It computes the Rayleigh-corrected
+    reflectance and related atmospheric transmission parameters.
+
     This creates the following variables in `ds`:
 
     +-------------+-----------------------------------------------+
@@ -115,7 +164,7 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
     +-------------+-----------------------------------------------+
     | rho_mol_gli | Rayleigh + glint reflectance                  |
     +-------------+-----------------------------------------------+
-    | rho_mod     | Rayleigh reflectance (no glint)               |
+    | rho_mol     | Rayleigh reflectance (no glint)               |
     +-------------+-----------------------------------------------+
     | t_d         | Total diffuse transmittance (downward+upward) |
     +-------------+-----------------------------------------------+
@@ -123,9 +172,23 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
     Parameters
     ----------
     ds : xr.Dataset
-        The Dataset used for inputs/outputs.
-    srf : xr.Dataset
+        The Dataset used for inputs/outputs. Must contain:
+        - "altitude": altitude above sea level
+        - "horizontal_wind": horizontal wind speed
+        - "mus": cosine of solar zenith angle
+        - "muv": cosine of viewing zenith angle
+        - "raa": relative azimuth angle (saa - vaa)
+        - "rho_gc": ground-corrected reflectance
+        - "surface_pressure" or "sea_level_pressure": atmospheric pressure
+    srf : xr.Dataset | None, optional
         The sensor spectral response function (SRF).
+    **cfg : dict
+        Additional configuration parameters passed to `load_rayleigh_lut`.
+
+    Returns
+    -------
+    xr.Dataset
+        The input dataset with added variables: rho_rc, rho_mol_gli, rho_mol, t_d.
     """
 
     lut = load_rayleigh_lut(**cfg)
@@ -173,3 +236,131 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
         odr=Linear(odr),
     )
     ds["t_d"].attrs.update({"desc": "Total atmospheric transmittance"})
+
+
+def read_lut_polymer_legacy() -> xr.Dataset:
+    lut_file = download_url(
+        "https://docs.hygeos.com/s/M7iK4eX4CbpYKj8/download/LUT.hdf",
+        env.getdir('DIR_STATIC')/'rayleigh'
+    )
+
+    # TODO: use xr.open_dataset(engine='netcdf4') to avoid mlut dependency
+    rayleigh_lut = read_mlut_hdf(str(lut_file)).to_xarray()
+
+    # Remove duplicate dimensions
+    rayleigh_lut_dedup = deduplicate_dims(
+        rayleigh_lut[["Rmol", "Rmolgli"]], {"dim_mu": ["mu_s", "mu_v"]}
+    )
+
+    # rayleigh_lut_dedup['Tmolgli'] = rayleigh_lut['Tmolgli'].rename({'dim_mu': 'mu'})
+    t_d_down = rayleigh_lut['Tmolgli'].rename(dim_mu='mu_s')
+    t_d_up = rayleigh_lut['Tmolgli'].rename(dim_mu='mu_v')
+
+    rayleigh_lut_dedup['t_d'] = t_d_down * t_d_up
+
+    return rayleigh_lut_dedup.rename(
+        dim_phi="raa",
+        dim_tauray="odr",
+        dim_wind="wind_speed",
+        Rmol="rho_r",
+        Rmolgli="rho_rg",
+    )
+
+
+class RayleighCorrection(BlockProcessor):
+    """
+    Block processor for applying Rayleigh scattering correction.
+
+    This processor applies atmospheric Rayleigh scattering correction to
+    satellite reflectance data using pre-computed lookup tables (LUTs).
+
+    Parameters
+    ----------
+    srf : xr.Dataset | None, optional
+        Sensor spectral response function for multi-wavelength correction.
+    version : Literal["polymer_legacy"], default="polymer_legacy"
+        Version of the Rayleigh LUT to use. Currently only "polymer_legacy"
+        is supported.
+    pressure_kind : Literal["surface_pressure", "sea_level_pressure"], default="sea_level_pressure"
+        Type of pressure data to use. "sea_level_pressure" uses sea-level
+        pressure, "surface_pressure" uses surface pressure.
+    **cfg : dict
+        Additional configuration parameters passed to `load_rayleigh_lut`.
+
+    Attributes
+    ----------
+    rayleigh_lut : xr.Dataset
+        Pre-computed Rayleigh scattering lookup table.
+    interpolator : Interpolator
+        Interpolator object for performing multi-dimensional interpolation.
+    pressure_kind : str
+        Type of pressure data used.
+    """
+
+    def __init__(
+        self,
+        srf: xr.Dataset | None = None,
+        version: Literal["polymer_legacy"] = "polymer_legacy",
+        pressure_kind: Literal[
+            "surface_pressure", "sea_level_pressure"
+        ] = "sea_level_pressure",
+        **cfg,
+    ):
+        """
+        Initialize the Rayleigh correction processor.
+
+        Parameters
+        ----------
+        srf : xr.Dataset | None, optional
+            Sensor spectral response function.
+        version : Literal["polymer_legacy"], default="polymer_legacy"
+            LUT version to use.
+        pressure_kind : Literal["surface_pressure", "sea_level_pressure"], default="sea_level_pressure"
+            Pressure data type.
+        **cfg : dict
+            Additional configuration.
+        """
+        # todo: bitmask invalid
+        if version == 'polymer_legacy':
+            self.rayleigh_lut = read_lut_polymer_legacy()
+        self.srf = srf
+        self.interpolator = Interpolator(
+            self.rayleigh_lut,
+            odr=Linear("odr"),
+            mu_s=Linear("mus"),
+            mu_v=Linear("muv"),
+            raa=Linear("raa"),
+            wind_speed=Linear("horizontal_wind"),
+        )
+        self.pressure_kind = pressure_kind
+    
+    def input_vars(self) -> list[Var]:
+        ivars = [
+            Var("altitude"),
+            Var("horizontal_wind"),
+            Var(self.pressure_kind),
+            Var("mus"),
+            Var("muv"),
+            Var("raa"),
+            Var("rho_gc"),
+        ]
+        if self.srf is None:
+            ivars.append(Var("cwav"))
+        return ivars
+    
+    def created_vars(self) -> list[Var]:
+        # self.interpolator.created_vars()
+        return [
+            Var("rho_r", dtype='float64', dims_like="rho_gc"),
+            Var("rho_rg", dtype='float64', dims_like="rho_gc"),
+            Var("t_d", dtype='float64', dims_like="rho_gc"),
+            Var("rho_rc", dtype="float64", dims_like="rho_gc"),
+        ]
+    
+    def process_block(self, block: xr.Dataset):
+        check_units(block['horizontal_wind'], 'm/s')
+
+        block['odr'] = calc_odr(block, self.srf).transpose(*block.rho_gc.dims)
+
+        self.interpolator.process_block(block)
+        block['rho_rc'] = block['rho_gc'] - block['rho_rg']
