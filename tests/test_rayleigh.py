@@ -14,7 +14,7 @@ from eoread.eo import init_geometry
 from luts import Idx
 from matplotlib import pyplot as plt
 
-from eotools.apply_ancillary import apply_ancillary
+from eotools.apply_ancillary import ApplyAncillary, apply_ancillary
 from eotools.bodhaine import rod
 from eotools.geometry import InitGeometry
 from eotools.rayleigh import RayleighCorrection
@@ -85,16 +85,12 @@ def test_rayleigh_correction_new(level1_msi: Path, mode: str, request):
     ds.cwav.attrs.update(units='nm')  # TODO: move in eoread
     ds['altitude'] = xr.zeros_like(ds.latitude, dtype='float32')
     ds['altitude'].attrs.update(units='m')
-    ds = ds.chunk(bands=-1).unify_chunks()
+    ds = ds.chunk(bands=-1)
     srf = get_SRF(ds) if mode == "srf" else None
     compound = CompoundProcessor(
         [
             InitGeometry(ds),
-            Interpolator(   # TODO: use dedicates class "ApplyAncillary".
-                Ancillary_NASA().get(datetime(ds)),
-                latitude=Linear("latitude"),
-                longitude=Linear("longitude"),
-            ),
+            ApplyAncillary(ds, Ancillary_NASA()),
             RayleighCorrection(srf=srf),
         ]
     )
