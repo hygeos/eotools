@@ -49,11 +49,21 @@ def get_SRF(
         else:
             return x
 
+    sensor = None
+    platform = None
+
     if srf_getter is None:
         # initialize platform/sensor
         if isinstance(platform_sensor, xr.Dataset):
-            platform = platform_sensor.attrs['platform']
-            sensor = platform_sensor.attrs['sensor']
+            if '_srf_getter' in platform_sensor.attrs:
+                srf_getter = platform_sensor.attrs['_srf_getter']
+                if '_srf_getter_arg' in platform_sensor.attrs:
+                    srf_getter_arg = platform_sensor.attrs['_srf_getter_arg']
+                else:
+                    srf_getter_arg = None
+            else:
+                platform = platform_sensor.attrs['platform']
+                sensor = platform_sensor.attrs['sensor']
         elif isinstance(platform_sensor, str):
             (platform, sensor) = platform_sensor.split("_")
         elif isinstance(platform_sensor, tuple):
@@ -61,6 +71,9 @@ def get_SRF(
         else:
             raise TypeError
         
+    if srf_getter is None:
+        # srf_getter lookup in srf.csv
+
         # load CSV file
         file_srf = Path(__file__).parent / "srf.csv"
         csv_data = pd.read_csv(
@@ -83,9 +96,6 @@ def get_SRF(
         
         srf_getter = str(csv_data[eq].srf_getter.values[0])
         srf_getter_arg = str(csv_data[eq].srf_getter_arg.values[0])
-    else:
-        sensor = None
-        platform = None
 
     # Import and run the SRF getter
     getter = import_module(srf_getter)
@@ -205,6 +215,8 @@ def get_SRF_NASA(id_sensor: str) -> xr.Dataset:
     """
     Download and read Spectral Response Function (SRF) from NASA ocean color
     website.
+
+    https://oceancolor.gsfc.nasa.gov/resources/docs/rsr_tables/
 
     Args:
         id_sensor (str): identifier of the sensor/platform.

@@ -2,25 +2,20 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
+
 import numpy as np
 import pytest
 import xarray as xr
 from eoread import msi
 
-from eotools.srf import (
-    get_SRF,
-    get_SRF_eumetsat,
-    get_SRF_landsat8_oli,
-    integrate_srf,
-    plot_srf,
-    rename,
-    select,
-    filter_bands,
-)
+from eotools.srf import (filter_bands, get_SRF, get_SRF_eumetsat,
+                         get_SRF_landsat8_oli, integrate_srf, plot_srf, rename,
+                         select)
+from tests import samples
 
 from . import conftest
 
-level1 = pytest.fixture(msi.get_sample)
+level1 = pytest.fixture(samples.level1_msi)
   
 
 @pytest.mark.parametrize(
