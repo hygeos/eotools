@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import ApplyAncillary, apply_ancillary
 from eotools.bodhaine import rod
+from eotools.dem import InitAltitude
 from eotools.geometry import InitGeometry
 from eotools.rayleigh import RayleighCorrection
 from eotools.rayleigh_legacy import Rayleigh_correction
@@ -82,14 +83,13 @@ def test_rayleigh_correction(level1_msi: Path, method, request):
 @pytest.mark.parametrize('mode', ['srf', 'wav'])
 def test_rayleigh_correction_new(level1_msi: Path, mode: str, request):
     ds = msi.Level1_MSI(level1_msi).isel(x=slice(1000, 1500), y=slice(1000, 1500))
-    ds.cwav.attrs.update(units='nm')  # TODO: move in eoread
-    ds['altitude'] = xr.zeros_like(ds.latitude, dtype='float32')
-    ds['altitude'].attrs.update(units='m')
+
     ds = ds.chunk(bands=-1)
     srf = get_SRF(ds) if mode == "srf" else None
     compound = CompoundProcessor(
         [
             InitGeometry(ds),
+            InitAltitude(),
             ApplyAncillary(ds, Ancillary_NASA()),
             RayleighCorrection(srf=srf),
         ]
