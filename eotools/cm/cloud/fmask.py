@@ -1,18 +1,13 @@
 import numpy as np
-from xarray import DataArray
+from core.process.blockwise import BlockProcessor
+from core.geo.naming import names
+
+from dataclasses import dataclass
+from typing import Any
 
 
-def FMASK(
-    blue: DataArray,
-    green: DataArray,
-    red: DataArray,
-    nir: DataArray,
-    swir1: DataArray,
-    swir2: DataArray,
-    cirrus: DataArray,
-    tir1: DataArray,
-    tir2: DataArray,
-) -> tuple[DataArray, DataArray, DataArray]:
+@dataclass
+class FMASK(BlockProcessor):
     """Fmask cloud, cloud shadow, and water detection algorithm.
     
     Implements the Function of mask (Fmask) algorithm for automated detection
@@ -60,20 +55,51 @@ def FMASK(
            4–7, 8, and Sentinel 2 images. Remote Sensing of Environment, 159,
            pp.269-277.
     """
-    # Call original FMask algorithm with required bands
-    return _FmaskCM(
-        blue,
-        green,
-        red,
-        nir,
-        swir1,
-        swir2,
-        cirrus,
-        tir1,
-        tir2,
-        np.ones_like(blue, dtype=bool)
-    ).cloud_mask()
+    blue: Any
+    green: Any
+    red: Any
+    nir: Any
+    swir1: Any
+    swir2: Any
+    cirrus: Any
+    tir1: Any
+    tir2: Any
+    
+    def input_vars(self):
+        return [names.rtoa, names.bt]
+    
+    def modified_vars(self):
+        return [names.flags]
+    
+    def process_block(self, block):
 
+        blue    = block[str(names.rtoa)].sel({str(names.bands): self.blue})
+        green   = block[str(names.rtoa)].sel({str(names.bands): self.green})
+        red     = block[str(names.rtoa)].sel({str(names.bands): self.red})
+        nir     = block[str(names.rtoa)].sel({str(names.bands): self.nir})
+        swir1   = block[str(names.rtoa)].sel({str(names.bands): self.swir1})
+        swir2   = block[str(names.rtoa)].sel({str(names.bands): self.swir2})
+        cirrus  = block[str(names.rtoa)].sel({str(names.bands): self.cirrus})
+        tir1  = block[str(names.bt)].sel({str(names.bands): self.tir1})
+        tir2  = block[str(names.bt)].sel({str(names.bands): self.tir2})
+        
+        # Call original FMask algorithm with required bands
+        cloud, shadow, water = _FmaskCM(
+            blue,
+            green,
+            red,
+            nir,
+            swir1,
+            swir2,
+            cirrus,
+            tir1,
+            tir2,
+            np.ones_like(blue, dtype=bool)
+        ).cloud_mask()
+        
+        self.raiseflag(block, str(names.flags), 'cloud', cloud)
+        self.raiseflag(block, str(names.flags), 'shadow', shadow)
+        self.raiseflag(block, str(names.flags), 'water', water)
 
 class _FmaskCM(object):
     ''' Implement fmask algorithm.

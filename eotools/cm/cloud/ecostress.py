@@ -1,13 +1,14 @@
 from eotools.cm.cloud.utils import stdNxN
-from xarray import DataArray
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from core.process.blockwise import BlockProcessor
+from core.geo.naming import names
 
 
-def EcostressV1(
-    dem: DataArray, 
-    tir1: DataArray,
-    tir2: DataArray,
-    tir3: DataArray
-) -> DataArray:
+@dataclass
+class EcostressV1(BlockProcessor):
     """ECOSTRESS Version 1 cloud mask algorithm.
     
     Detects clouds using thermal infrared bands with elevation correction.
@@ -31,20 +32,36 @@ def EcostressV1(
         Cloud mask where True indicates cloud and False indicates clear sky
     """
     
-    # Apply thermal cloud detection tests
-    test1 = tir2 > 300 - 6*dem          # Elevation-corrected temperature test (K)
-    test2 = tir2 - tir3 < 1             # TIR1-TIR2 difference test
-    test3 = tir1 - tir2 < -1            # NIR-TIR1 difference test
+    tir1: Any
+    tir2: Any
+    tir3: Any
+    dem: str = field(default='dem', init=False)
+        
+    def input_vars(self):
+        return [self.dem, names.bt]
     
-    # Combine tests - any positive test indicates clear sky
-    return ~(test1 | test2 | test3)     # Invert to get cloud mask
+    def modified_vars(self):
+        return [names.flags]
+    
+    def process_block(self, block):
+        
+        dem = block[self.dem]
+        tir1 = block[str(names.bt)].sel({str(names.bands): self.tir1})
+        tir2 = block[str(names.bt)].sel({str(names.bands): self.tir2})
+        tir3 = block[str(names.bt)].sel({str(names.bands): self.tir3})
+    
+        # Apply thermal cloud detection tests
+        test1 = tir2 > 300 - 6*dem          # Elevation-corrected temperature test (K)
+        test2 = tir2 - tir3 < 1             # TIR1-TIR2 difference test
+        test3 = tir1 - tir2 < -1            # NIR-TIR1 difference test
+        
+        # Combine tests - any positive test indicates clear sky
+        mask = ~(test1 | test2 | test3)     # Invert to get cloud mask
+        self.raiseflag(block, str(names.flags), 'cloud', mask)
 
-def Strabala(
-    rad8: DataArray,
-    tir1: DataArray,
-    tir2: DataArray, 
-    tir3: DataArray
-) -> DataArray:
+
+@dataclass
+class Strabala(BlockProcessor):
     """Strabala cloud mask algorithm for thermal data.
     
     Implements the Strabala cloud detection method using thermal band
@@ -67,16 +84,35 @@ def Strabala(
     DataArray
         Cloud mask where True indicates cloud and False indicates clear sky
     """
-
-    # Spatial homogeneity test - low variance indicates uniform (clear) areas
-    test1 = stdNxN(rad8, 10) < 0.5
     
-    # Thermal band difference tests - small differences indicate clear sky
-    test2 = (tir1 - tir2) < 0.5  # TIR1-TIR2 difference
-    test3 = (tir2 - tir3) < 2.4  # TIR2-TIR3 difference
+    rad8: Any
+    tir1: Any
+    tir2: Any
+    tir3: Any
+        
+    def input_vars(self):
+        return [names.ltoa, names.bt]
     
-    # Temperature threshold - warm enough for clear conditions
-    test4 = tir2 > 277  # Temperature in Kelvin
+    def modified_vars(self):
+        return [names.flags]
+    
+    def process_block(self, block):
+        
+        rad8 = block[str(names.ltoa)].sel({str(names.bands): self.rad8})
+        tir1 = block[str(names.bt)].sel({str(names.bands): self.tir1})
+        tir2 = block[str(names.bt)].sel({str(names.bands): self.tir2})
+        tir3 = block[str(names.bt)].sel({str(names.bands): self.tir3})
+        
+        # Spatial homogeneity test - low variance indicates uniform (clear) areas
+        test1 = stdNxN(rad8, 10) < 0.5
+        
+        # Thermal band difference tests - small differences indicate clear sky
+        test2 = (tir1 - tir2) < 0.5  # TIR1-TIR2 difference
+        test3 = (tir2 - tir3) < 2.4  # TIR2-TIR3 difference
+        
+        # Temperature threshold - warm enough for clear conditions
+        test4 = tir2 > 277  # Temperature in Kelvin
 
-    # All tests must pass for clear sky classification
-    return ~(test1 & test2 & test3 & test4)
+        # All tests must pass for clear sky classification
+        mask = ~(test1 & test2 & test3 & test4)
+        self.raiseflag(block, str(names.flags), 'cloud', mask)
