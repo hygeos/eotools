@@ -1,7 +1,7 @@
 import xarray as xr
 
 from core.geo.naming import names
-from core.download import download_url
+from core.network.download import download_url
 from core.process.blockwise import BlockProcessor
 from core.interpolate import Interpolator, Linear, Nearest
 from core.tools import Var, xrcrop
