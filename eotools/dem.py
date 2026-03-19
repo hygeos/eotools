@@ -7,7 +7,7 @@ from core.interpolate import Interpolator, Linear, Nearest
 from core.tools import Var, xrcrop
 from core import env, mdir
 
-from typing import Any, Literal
+from typing import Any, Literal, Tuple
 from xarray import Dataset
 from pathlib import Path
 
@@ -37,11 +37,17 @@ class GTOPO30(BlockProcessor):
 
     Args:
     -----
+    l1: Xarray Dataset for an eoread reader
+    lat: tuple of (min, max) latitude bounds
+    lon: tuple of (min, max) longitude bounds
     directory: directory for tile storage
-    missing: float to provide in case of missing value
+    missing: value to use for missing elevation data (default: 0)
+    method: interpolation method, 'nearest' or 'linear' (default: 'linear')
     """
     
     def __init__(self, 
+            l1: xr.Dataset = None,
+            lat: Tuple[float] = None, lon: Tuple[float] = None,
             directory: str|Path|None = None, 
             missing: Any = 0,
             method: Literal['nearest','linear'] = 'linear'
@@ -57,10 +63,22 @@ class GTOPO30(BlockProcessor):
         else:
             directory = Path(directory)
 
+        # Download the GTOPO file
         url = 'http://download.hygeos.com/eoread/GTOPO30_DZ_MLUT.nc'  
         gtopo_file = download_url(url, directory, if_exists='skip')
-        self.dem = xr.open_dataset(gtopo_file, engine='h5netcdf')
-    
+        dem = xr.open_dataset(gtopo_file, engine='h5netcdf')
+        
+        # Crop it to avoid loading all the raster
+        if l1:
+            self.dem = xrcrop(dem, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
+            
+        elif lat or lon:
+            assert lat and lon, 'Latitude and longitude constraints should be provided'
+            dims = (str(names.rows), str(names.columns))
+            lon = xr.DataArray([lon]*2, dims=dims)
+            lat = xr.DataArray([lat]*2, dims=dims).T
+            self.dem = xrcrop(dem, lat=lat, lon=lon)
+        
     def input_vars(self) -> list[Var]:
         return [names.lat, names.lon]
 
@@ -68,7 +86,7 @@ class GTOPO30(BlockProcessor):
         return [Var("altitude", attrs={"units": "m"})]
     
     def process_block(self, block):
-        dem = xrcrop(self.dem, lat=block[str(names.lat)], lon=block[str(names.lon)])
+        assert hasattr(self, 'dem'), 'Provide LatLon constraints in constructor'
         params = dict(lat=self.method(str(names.lat)), lon=self.method(str(names.lon)))
-        Interpolator(dem, **params).process_block(block)
-        block["altitude"] = xr.where(dem.elev>0, dem.elev, self.missing)
+        Interpolator(self.dem, **params).process_block(block)
+        block["altitude"] = xr.where(block.elev>0, block.elev, self.missing)

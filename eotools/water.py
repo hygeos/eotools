@@ -41,9 +41,9 @@ class GSW(BlockProcessor):
 
     Args:
     -----
-
-    directory: str
-        directory for tile storage
+    lat: tuple of (min, max) latitude bounds
+    lon: tuple of (min, max) longitude bounds
+    directory: directory for tile storage
 
     Returns:
     -------
@@ -51,7 +51,11 @@ class GSW(BlockProcessor):
     A xarray.DataArray of the water occurrence between 0 and 100
     """
     
-    def __init__(self, directory: str|Path|None = None):
+    def __init__(self, 
+            l1: xr.Dataset = None,
+            lat: Tuple[float] = None, lon: Tuple[float] = None,
+            directory: str|Path|None = None
+        ):
         
         if directory is None:
             directory = mdir(env.getdir('DIR_ANCILLARY')/'GSW')
@@ -72,7 +76,18 @@ class GSW(BlockProcessor):
             lon=np.linspace(off-180, step*(gsw.shape[1]-1)+off-180, gsw.shape[1]),
             lat=-np.linspace(off-80, step*(gsw.shape[0]-1)+off-80, gsw.shape[0])[::-1],
         )
-        self.raster = xr.DataArray(gsw, name='occurrence', dims=dims, coords=coords)
+        raster = xr.DataArray(gsw, name='occurrence', dims=dims, coords=coords)
+        
+        # Crop it to avoid loading all the raster
+        if l1:
+            self.water = xrcrop(raster, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
+            
+        elif lat or lon:
+            assert lat and lon, 'Latitude and longitude constraints should be provided'
+            dims = (names.rows, names.columns)
+            lon = xr.DataArray([lon]*2, dims=dims)
+            lat = xr.DataArray([lat]*2, dims=dims).T
+            self.water = xrcrop(raster, lat=lat, lon=lon)
     
     def input_vars(self) -> list[Var]:
         return [names.lat, names.lon]
@@ -81,10 +96,9 @@ class GSW(BlockProcessor):
         return [Var("water", dtype='uint8', attrs={"units": "%"}, dims_like=str(names.lat))]
 
     def process_block(self, block: xr.Dataset) -> None:
-        if len(block[str(names.lat)]) == 0: return
-        gsw = xrcrop(self.raster, lat=block[str(names.lat)], lon=block[str(names.lon)])
+        assert hasattr(self, 'water'), 'Provide LatLon constraints in constructor'
         params = dict(lat=Nearest(str(names.lat)), lon=Nearest(str(names.lon)))
-        Interpolator(gsw.to_dataset(), **params).process_block(block)
+        Interpolator(self.water.to_dataset(), **params).process_block(block)
         block["water"] = xr.where(block.occurrence>=0, block.occurrence, 0)
 
 

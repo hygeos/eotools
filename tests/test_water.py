@@ -186,11 +186,11 @@ class TestReadTile:
 class TestGSWCompute:
     """Tests for GSW compute functionality with workarounds"""
     
-    def test_GSW_init(self):
+    def test_GSW_init(self, tmpdir):
         """
         Test that xarray DataArray works with dask arrays (validates GSW approach)
         """
-        GSW()
+        GSW(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=tmpdir)
     
     def test_GSW_compute(self, tmpdir):
         """
@@ -203,7 +203,7 @@ class TestGSWCompute:
         ds = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
         
         # Process block using GSW
-        gsw_processor = GSW(tmpdir)
+        gsw_processor = GSW(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=tmpdir)
         ds = gsw_processor.map_blocks(ds.chunk(-1))
         ds.compute()
         
