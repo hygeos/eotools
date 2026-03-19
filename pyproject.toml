@@ -9,7 +9,6 @@ dependencies = [
     "cf-xarray",
     "pint-xarray",
     "xlrd",
-    "scikit-learn"
 ]
 
 [project.optional-dependencies]

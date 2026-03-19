@@ -5,7 +5,6 @@ from core.geo.naming import names, Var
 from dataclasses import dataclass, field
 from xarray import DataArray, zeros_like
 from numpy import linspace
-from sklearn.decomposition import PCA as SklearnPCA
 from scipy.ndimage import uniform_filter
 import numpy as np
 
