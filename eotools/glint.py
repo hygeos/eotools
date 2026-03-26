@@ -4,7 +4,23 @@
 
 from numpy import pi, sin, exp, sqrt, cos
 import xarray as xr
-from core.tools import Var
+from core.process.blockwise import BlockProcessor, Var
+
+
+class CalcSunGlint(BlockProcessor):
+    def input_vars(self) -> list[Var]:
+        return [Var('horizontal_wind'), Var('mus'), Var('muv'), Var('scat_angle')]
+
+    def created_vars(self) -> list[Var]:
+        return [Var('Rgli', dtype='float32', dims_like='mus')]
+
+    def process_block(self, block: xr.Dataset):
+        block['Rgli'] = glitter(
+            block['horizontal_wind'],
+            block['mus'],
+            block['muv'],
+            block['scat_angle']
+        )
 
 
 def apply_glitter(ds, method='apply_ufunc'):
@@ -73,18 +89,18 @@ def glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None):
     # Compute Fresnel coefficients useful to know specular radiance
     y = sqrt(1.0 - ((1.0 - x * x) / (NH2O * NH2O)))
 
-    a = ((y - x * NH2O) / (y + x * NH2O));
-    b = ((x - y * NH2O) / (x + y * NH2O));
+    a = ((y - x * NH2O) / (y + x * NH2O))
+    b = ((x - y * NH2O) / (x + y * NH2O))
 
     # Compute specular radiance for air/water interface, given by Fresnel law
-    reflectspecu = 0.5 * ( a * a + b * b );
+    reflectspecu = 0.5 * (a * a + b * b)
 
     # Compute wave slope distribution
 
     if (phi is None): # Isotropic approximation case
 
         # Compute sig2 expressed as s function of wind vector norm [m/s]
-        sig2 = SIGWA + SIGWB * wind;
+        sig2 = SIGWA + SIGWB * wind
 
         # Cox and Munk formula
         pentevague = exp((cosbeta * cosbeta - 1.0) / (sig2 * cosbeta * cosbeta)) / sig2
