@@ -21,6 +21,7 @@ def get_SRF(
     srf_getter: str | None = None,
     srf_getter_arg: str | None = None,
     fuzzy: bool = True,
+    rename_method: Literal['none', 'cwav', 'bands'] = 'none',
     **kwargs
 ) -> xr.Dataset:
     """
@@ -111,7 +112,15 @@ def get_SRF(
     if "platform" not in srf.attrs:
         srf.attrs["platform"] = platform
     
-    return srf
+    if rename_method == 'none':
+        return srf
+    elif rename_method == 'bands':
+        assert isinstance(platform_sensor, xr.Dataset)
+        return rename(srf, platform_sensor.bands.values)
+    elif rename_method == 'cwav':
+        return rename(srf, "cwav")
+    else:
+        raise RuntimeError
 
 
 def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
