@@ -12,10 +12,11 @@ from eotools.gaseous_absorption import get_absorption, get_transmission_coeffs
 from eotools.srf import integrate_srf
 from eotools.units import convert
 from core import env
-from core.tools import MapBlocksOutput, Var
+from core.tools import MapBlocksOutput
+from core.process.blockwise import BlockProcessor, CompoundProcessor, Var
 
 
-class Gaseous_correction:
+class Gaseous_correction(CompoundProcessor):
     """Gaseous correction module
 
     Parameters
@@ -40,12 +41,9 @@ class Gaseous_correction:
 
     >>> Gaseous_correction(l1).apply()
     """                 
-
-    requires_anc = ['horizontal_wind', 'sea_level_pressure', 'total_column_ozone']
-
     def __init__(self,
                  ds: xr.Dataset,
-                 srf: xr.Dataset,
+                 srf: xr.Dataset | None = None,
                  input_var: str='rho_toa',
                  ouput_var: str='rho_gc',
                  spectral_dim: str='bands',
@@ -78,16 +76,24 @@ class Gaseous_correction:
         dir_common = mdir(env.getdir("DIR_STATIC") / "common")
         
         # Initialize sub classes
+        processors: list[BlockProcessor] = [
+            Init_rho_gc(input_var),
+            Init_air_mass(ds),
+        ]
         if no2_correction == "legacy":
             self.corr_NO2 = Gas_correction_NO2(ds, srf, dir_common, K_NO2, spectral_dim)
+            processors.append(self.corr_NO2)
         if gas_correction == 'o3_legacy':
             self.corr_O3 = Gas_correction_O3(ds, srf, dir_common, K_OZ, spectral_dim)
+            processors.append(self.corr_O3)
         elif gas_correction == 'ckdmip':
             assert bands_sel_ckdmip is not None
             self.corr_ckdmip = Gas_correction_CKDMIP(ds, bands_sel=bands_sel_ckdmip)
+            processors.append(self.corr_ckdmip)
         else:
             raise ValueError
 
+        super().__init__(processors)
 
     def run(self, bands, Rtoa, mus, muv,
             ozone_dobson, tcwv_kgm2, ssp_hPa, latitude, longitude,
@@ -96,9 +102,9 @@ class Gaseous_correction:
         """
         Apply gaseous correction to Rtoa (ozone, NO2)
 
-        ozone : total column in Dobson Unit (DU)
-        tcwv: total column water vapour # TODO: units
-        sp : sea surface pressure # TODO: units
+        ozone_dobson : total column in Dobson Unit (DU)
+        tcwv_kgm2: total column water vapour (kg/m2)
+        ssp_hPa : sea surface pressure (hPa)
         """
         Rtoa_gc = Rtoa.copy()
         ok = ~np.isnan(latitude)
@@ -127,7 +133,7 @@ class Gaseous_correction:
 
         return Rtoa_gc
 
-    def apply(self, method='apply_ufunc'):
+    def apply(self, method='map_blocks'):
         """Apply gaseous to current dataset `ds`
 
         This creates the variable `rho_gc` in the current dataset
@@ -136,6 +142,7 @@ class Gaseous_correction:
         date = datetime(ds)
 
         # TODO: use pint here
+        # TODO: move this to "map_blocks section"
         if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2', 'kg.m-2']:
             total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
         else:
@@ -152,27 +159,7 @@ class Gaseous_correction:
 
         rho_toa = ds[self.input_var].chunk({self.spectral_dim: -1})
 
-        if method == 'apply_ufunc':
-            ds[self.output_var] = xr.apply_ufunc(
-                self.run,
-                ds[self.spectral_dim],
-                rho_toa,
-                ds.mus,
-                ds.muv,
-                total_ozone,
-                tcwv,
-                ssp_hPa,
-                ds.latitude,
-                ds.longitude,
-                ds.flags,
-                dask='parallelized',
-                kwargs={'datetime': date},
-                input_core_dims=[[self.spectral_dim], [self.spectral_dim], [], [], [], [], [], [], [], []],
-                output_core_dims=[[self.spectral_dim]],
-                output_dtypes=['float32'],
-            )
-
-        elif method == 'map_blocks':
+        if method == 'map_blocks':
             ds_out = xr.map_blocks(
                 self.apply_block,
                 xr.Dataset(
@@ -193,6 +180,10 @@ class Gaseous_correction:
             )
             ds[self.output_var] = ds_out[self.output_var]
 
+        elif method == 'blockwise':
+            ds_out = self.map_blocks(ds)
+            for x in self.output_vars():
+                ds[x] = ds_out[x]
         else:
             raise ValueError(method)
 
@@ -203,7 +194,7 @@ class Gaseous_correction:
             ds.mus.data,
             ds.muv.data,
             ds.total_ozone.data,
-         ds.tcwv.data,
+            ds.tcwv.data,
             ds.ssp.data,
             ds.latitude.data,
             ds.longitude.data,
@@ -218,8 +209,42 @@ class Gaseous_correction:
         )
         return self.model.conform(out)
 
+class Init_rho_gc(BlockProcessor):
+    def __init__(self, input_var: str):
+        self.input_var = input_var
 
-class Gas_correction_O3:
+    def input_vars(self) -> list[Var]:
+        return [Var(self.input_var)]
+
+    def created_vars(self) -> list[Var]:
+        return [Var("rho_gc")]
+    
+    def auto_template(self) -> bool:
+        return True
+
+    def process_block(self, block: xr.Dataset):
+        block["rho_gc"] = block[self.input_var].copy(deep=True)
+
+
+class Init_air_mass(BlockProcessor):
+    def __init__(self, ds: xr.Dataset):
+        self.activate = "air_mass" not in ds
+
+    def input_vars(self) -> list[Var]:
+        return [Var("mus"), Var("muv")] if self.activate else []
+
+    def created_vars(self) -> list[Var]:
+        return [Var("air_mass")]
+    
+    def auto_template(self) -> bool:
+        return True
+
+    def process_block(self, block: xr.Dataset):
+        block['air_mass'] = 1/block.muv + 1/block.mus
+
+
+
+class Gas_correction_O3(BlockProcessor):
     """
     Ozone absorption correction module
     """
@@ -227,7 +252,7 @@ class Gas_correction_O3:
     def __init__(
         self,
         ds: xr.Dataset,
-        srf: xr.Dataset,
+        srf: xr.Dataset | None,
         dir_common: Path,
         K_OZ: Dict | None = None,
         spectral_dim: str='bands',
@@ -246,7 +271,7 @@ class Gas_correction_O3:
             # load absorption rate for each gas
             k_oz_data  = get_absorption('o3', dirname=dir_common)
 
-            if len(srf) > 0: # K_OZ and K_NO2 are calculated from srf
+            if srf is not None: # K_OZ and K_NO2 are calculated from srf
                 for b in self.bands:
                     assert b in srf
 
@@ -257,9 +282,9 @@ class Gas_correction_O3:
                 # assert (np.diff(ds.bands) > 0).all()
                 # assert (np.diff(list(wavc.values())) > 0).all()
         
-            else: # K_OZ and K_NO2 are calculated from central wavelengths
+            else: # K_OZ is calculated from central wavelengths
                 self.K_OZ = xr.Dataset()
-                for i, k in enumerate(k_oz_data.interp(wav=ds.wav).values):
+                for i, k in enumerate(k_oz_data.interp(wav=ds.cwav).values):
                     self.K_OZ[self.bands[i]] = k
     
     def run(self, bands, Rtoa_gc, ok, air_mass,
@@ -285,19 +310,42 @@ class Gas_correction_O3:
             Rtoa_gc[ok, i] /= trans_O3
 
         return Rtoa_gc.astype('float32')
+    
+    def input_vars(self) -> list[Var]:
+        return [
+            Var("air_mass"),
+            Var("total_column_ozone"),
+            Var("latitude"),
+            Var("longitude"),
+        ]
+
+    def modified_vars(self) -> list[Var]:
+        return [Var('rho_gc')]
+    
+    def process_block(self, block: xr.Dataset):
+        ok = ~np.isnan(block.latitude.data)
+        ozone_dobson = convert(block.total_column_ozone, 'Dobson').data
+        self.run(
+            block[self.spectral_dim].data,
+            block.rho_gc.transpose(..., 'bands').data,
+            ok,
+            block.air_mass.data,
+            ozone_dobson
+            )
 
 
-class Gas_correction_NO2:
+class Gas_correction_NO2(BlockProcessor):
     def __init__(
         self,
         ds: xr.Dataset,
-        srf: xr.Dataset,
+        srf: xr.Dataset | None,
         dir_common: Path,
         K_NO2: Dict | None = None,
         spectral_dim: str='bands',
     ):
         self.spectral_dim = spectral_dim
         self.bands = list(ds[spectral_dim].data)
+        self.datetime = datetime(ds)
 
         # Collect auxilary data
         self.no2_climatology = download_url(
@@ -318,7 +366,7 @@ class Gas_correction_NO2:
             # load absorption rate for each gas
             k_no2_data = get_absorption('no2', dirname=dir_common)
 
-            if len(srf) > 0:
+            if srf is not None:
                 for b in self.bands:
                     assert b in srf
 
@@ -331,7 +379,7 @@ class Gas_correction_NO2:
         
             else: # K_OZ and K_NO2 are calculated from central wavelengths
                 self.K_NO2 = xr.Dataset()
-                for i, k in enumerate(k_no2_data.interp(wav=ds.wav).values):
+                for i, k in enumerate(k_no2_data.interp(wav=ds.cwav).values):
                     self.K_NO2[self.bands[i]] = k
 
     def run(
@@ -421,7 +469,7 @@ class Gas_correction_NO2:
 
         try:
             self.no2_tropo_data
-        except:
+        except Exception:
             self.read_no2_data(mon)
 
         # coordinates of current block in 1440x720 grid
@@ -444,19 +492,40 @@ class Gas_correction_NO2:
         no2_frac = self.no2_frac200m_data[ilat,ilon]
 
         return no2_frac, no2_tropo, no2_strat
+
+    def input_vars(self) -> list[Var]:
+        return [
+            Var('latitude'),
+            Var('longitude'),
+            Var('air_mass'),
+            Var('flags'),
+        ]
+        
+    def modified_vars(self) -> list[Var]:
+        return [Var('rho_gc')]
     
-    def apply_block(self):
-        raise NotImplementedError
+    def process_block(self, block: xr.Dataset):
+        ok = ~np.isnan(block.latitude.data)
+        self.run(
+            block[self.spectral_dim].data,
+            block.rho_gc.transpose(..., 'bands').data,
+            ok,
+            block.air_mass.data,
+            block.latitude.data,
+            block.longitude.data,
+            block.flags.data,
+            self.datetime,
+        )
 
 
-class Gas_correction_CKDMIP:
+class Gas_correction_CKDMIP(BlockProcessor):
     def __init__(self, ds: xr.Dataset, bands_sel: list | slice):
         self.coeffs = get_transmission_coeffs((ds.platform, ds.sensor)).sel(
             bands=bands_sel
         )
 
         self.nbands = len(self.coeffs.bands)
-
+    
     def run(
         self, bands, Rtoa_gc, ok, air_mass, ozone, tcwv, sea_surface_pressure
     ):
@@ -481,8 +550,33 @@ class Gas_correction_CKDMIP:
             T = np.exp(-c.a.values * x[:,None]**c.n.values)
             
             Rtoa_gc[ok,:] /= T
-        
 
+    def input_vars(self) -> list[Var]:
+        return [
+            Var("latitude"),
+            Var("longitude"),
+            Var("air_mass"),
+            Var("total_column_water_vapour"),
+            Var("total_column_ozone"),
+            Var("sea_level_pressure"),
+        ]
+    def modified_vars(self) -> list[Var]:
+        return [Var('rho_gc')]
+        
+    def process_block(self, block: xr.Dataset):
+        ok = ~np.isnan(block.latitude.data)
+        ozone_dobson = convert(block['total_column_ozone'], 'Dobson')
+        tcwv = convert(block['total_column_water_vapour'], 'g/cm²')
+        ssp_hPa = convert(block['sea_level_pressure'], 'hPa')
+        self.run(
+            block['bands'].data,
+            block.rho_gc.transpose(..., 'bands').data,
+            ok,
+            block.air_mass.data,
+            ozone_dobson.data,
+            tcwv.data,
+            ssp_hPa.data,
+        )
 
 
 

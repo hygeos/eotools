@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 import xarray as xr
-from core.process.blockwise import CompoundProcessor
 from core.tests import conftest
 from eoread import msi
 from eoread.ancillary_nasa import Ancillary_NASA
@@ -14,11 +13,8 @@ from eoread.eo import init_geometry
 from luts import Idx
 from matplotlib import pyplot as plt
 
-from eotools.apply_ancillary import ApplyAncillary, apply_ancillary
+from eotools.apply_ancillary import apply_ancillary
 from eotools.bodhaine import rod
-from eotools.dem import InitAltitude
-from eotools.geometry import InitGeometry
-from eotools.rayleigh import RayleighCorrection
 from eotools.rayleigh_legacy import Rayleigh_correction
 from eotools.srf import get_SRF, integrate_srf, rename
 from tests import samples
@@ -49,8 +45,11 @@ def test_plot_rho_ray(level1_msi, request):
 
 @pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
 def test_rayleigh_correction(level1_msi: Path, method, request):
+    """
+    This test should be deprecated in favour of test_gaseous_rayleigh
+    """
     ds = msi.Level1_MSI(level1_msi, v1_compat=True)
-    ds = ds.drop(['x', 'y']).unify_chunks()  # TODO shall be removed for v2 compat
+    ds = ds.drop(['x', 'y']).unify_chunks()
     ds = ds.chunk(bands=-1)
     init_geometry(ds)
     apply_ancillary(
@@ -78,27 +77,3 @@ def test_rayleigh_correction(level1_msi: Path, method, request):
     plt.legend()
     conftest.savefig(request)
 
-
-
-@pytest.mark.parametrize('mode', ['srf', 'wav'])
-def test_rayleigh_correction_new(level1_msi: Path, mode: str, request):
-    ds = msi.Level1_MSI(level1_msi).isel(x=slice(1000, 1500), y=slice(1000, 1500))
-
-    ds = ds.chunk(bands=-1)
-    srf = get_SRF(ds) if mode == "srf" else None
-    compound = CompoundProcessor(
-        [
-            InitGeometry(ds),
-            InitAltitude(),
-            ApplyAncillary(ds, Ancillary_NASA()),
-            RayleighCorrection(srf=srf),
-        ]
-    )
-    ds['rho_gc'] = ds['Rtoa']
-    res = compound.map_blocks(ds)
-    res = res.compute()
-
-    res.rho_rc.sel(bands='B8A').plot()
-    conftest.savefig(request)
-
-    

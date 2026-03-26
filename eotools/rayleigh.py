@@ -349,13 +349,43 @@ class RayleighCorrection(BlockProcessor):
         return ivars
     
     def created_vars(self) -> list[Var]:
-        # self.interpolator.created_vars()
         return [
-            Var("rho_r", dtype='float64', dims_like="rho_gc"),
-            Var("rho_rg", dtype='float64', dims_like="rho_gc"),
-            Var("t_d", dtype='float64', dims_like="rho_gc"),
-            Var("rho_rc", dtype="float64", dims_like="rho_gc"),
+            Var(
+                "rho_r",
+                dtype="float64",
+                dims_like="rho_gc",
+                attrs={"desc": "Rayleigh reflectance"},
+            ),
+            Var(
+                "rho_rg",
+                dtype="float64",
+                dims_like="rho_gc",
+                attrs={"desc": "Rayleigh + sun glint reflectance"},
+            ),
+            Var(
+                "t_d",
+                dtype="float64",
+                dims_like="rho_gc",
+                attrs={
+                    "desc": "Total transmittance (upward, downward, direct and diffuse)"
+                },
+            ),
+            Var(
+                "rho_rc",
+                dtype="float64",
+                dims_like="rho_gc",
+                attrs={"desc": "Rayleigh corrected reflectance"},
+            ),
         ]
+    
+    def check(self, ds: xr.Dataset) -> None:
+        """
+        Check that srf bands are identical to ds.bands
+        """
+        if self.srf is not None:
+            ds_bands = [str(x) for x in ds.bands.values]
+            srf_bands = [str(x) for x in self.srf]
+            assert ds_bands == srf_bands
     
     def process_block(self, block: xr.Dataset):
         check_units(block['horizontal_wind'], 'm/s')

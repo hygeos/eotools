@@ -104,6 +104,9 @@ class Brovey(BlockProcessor):
     def created_vars(self):
         return [Var('upsample')]
     
+    def auto_template(self) -> bool:
+        return True
+    
     def process_block(self, block):
          
         multi = block[self.var_ms]
@@ -182,6 +185,9 @@ class IHS(BlockProcessor):
     
     def created_vars(self):
         return [Var('upsample')]
+    
+    def auto_template(self) -> bool:
+        return True
     
     def process_block(self, block):
          
@@ -269,6 +275,9 @@ class HPF(BlockProcessor):
     
     def created_vars(self):
         return [Var('upsample')]
+    
+    def auto_template(self) -> bool:
+        return True
     
     def process_block(self, block):
          

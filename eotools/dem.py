@@ -23,6 +23,9 @@ class InitAltitude(BlockProcessor):
 
     def created_vars(self) -> list[Var]:
         return [Var("altitude", attrs={"units": "m"})]
+    
+    def auto_template(self) -> bool:
+        return True
 
     def process_block(self, block: Dataset) -> None:
         block["altitude"] = xr.zeros_like(block[str(names.lat)])
@@ -84,6 +87,9 @@ class GTOPO30(BlockProcessor):
 
     def created_vars(self) -> list[Var]:
         return [Var("altitude", attrs={"units": "m"})]
+    
+    def auto_template(self) -> bool:
+        return True
     
     def process_block(self, block):
         assert hasattr(self, 'dem'), 'Provide LatLon constraints in constructor'

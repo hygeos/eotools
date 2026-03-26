@@ -55,6 +55,9 @@ class InitGeometry(BlockProcessor):
         if self.calc_air_mass:
             cvars.append(Var("air_mass"))
         return cvars
+    
+    def auto_template(self) -> bool:
+        return True
 
     def process_block(self, block: xr.Dataset):
         # calculate mus and muv

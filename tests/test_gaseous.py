@@ -7,7 +7,7 @@ from typing import Dict
 import numpy as np
 import pytest
 import xarray as xr
-from core.conftest import savefig
+from core.tests.conftest import savefig
 from core.pytest_utils import parametrize_dict
 from eoread import msi
 from eoread.ancillary_nasa import Ancillary_NASA
@@ -58,11 +58,14 @@ def test_integrate_srf(platform, sensor, gas, integration_function):
 
 
 
-@pytest.mark.parametrize('method', ['apply_ufunc', 'map_blocks'])
+@pytest.mark.parametrize('method', ['map_blocks', 'blockwise'])
 @pytest.mark.parametrize('gas_correction', ['o3_legacy', 'ckdmip'])
 def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
+    """
+    This test should be deprecated in favour of test_gaseous_rayleigh
+    """
     ds = msi.Level1_MSI(level1, v1_compat=True).chunk(bands=-1)
-    ds = ds.drop(['x', 'y'])  # TODO shall be removed for v2 compat
+    ds = ds.drop(['x', 'y'])
     init_geometry(ds)
     apply_ancillary(
         ds,
@@ -74,7 +77,7 @@ def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
             "total_column_water_vapour": "g/cm²",
         },
     )
-    ds.attrs.update(platform='Sentinel-2A')   # FIXME: should be integrated in Level1_MSI
+    ds.attrs.update(platform='Sentinel-2A')
     srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
     with timeit('Init'):
         Gaseous_correction(
@@ -189,8 +192,8 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
 
         a = coeffs.a.isel({"bands": iband}).values
         n = coeffs.n.isel({"bands": iband}).values
-        a1 = coeffs1.a.isel({"bands": iband}).values
-        n1 = coeffs1.n.isel({"bands": iband}).values
+        # a1 = coeffs1.a.isel({"bands": iband}).values
+        # n1 = coeffs1.n.isel({"bands": iband}).values
 
         # Create side-by-side plots
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
@@ -200,7 +203,7 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
         X = np.log(M * U / U0)
         ax1.plot(X, np.log(-np.log(T)), 'b+')
         ax1.plot(X, np.log(a) + n * X, 'r--')
-        ax1.plot(X, np.log(a1) + n1 * X, 'y--')
+        # ax1.plot(X, np.log(a1) + n1 * X, 'y--')
         ax1.set_xlabel('ln(M * U)')
         ax1.set_ylabel(f'ln(-ln(T({gas})))')
         ax1.grid(True)
@@ -210,7 +213,7 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
         X_lin = np.linspace(np.amin(M * U / U0), np.amax(M * U / U0), 100)
         ax2.plot(M * U / U0, T, 'b+')
         ax2.plot(X_lin, trans_func(X_lin, a, n), "r--", label=f"a={a:.3g}, n={n:.3g}")
-        ax2.plot(X_lin, trans_func(X_lin, -a1, n1), "y--", label=f"a={-a1:.3g}, n={n1:.3g}")
+        # ax2.plot(X_lin, trans_func(X_lin, -a1, n1), "y--", label=f"a={-a1:.3g}, n={n1:.3g}")
         ax2.set_xlabel('M * U')
         ax2.set_ylabel(f'T({gas})')
         ax2.grid(True)
