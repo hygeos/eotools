@@ -127,7 +127,6 @@ class Gaseous_correction(CompoundProcessor):
                 air_mass,
                 latitude,
                 longitude,
-                flags,
                 datetime,
             )
 
@@ -390,7 +389,6 @@ class Gas_correction_NO2(BlockProcessor):
         air_mass,
         latitude,
         longitude,
-        flags,
         datetime,
     ):
         """
@@ -398,7 +396,7 @@ class Gas_correction_NO2(BlockProcessor):
         """
 
         # NO2 correction
-        no2_frac, no2_tropo, no2_strat = self.get_no2(latitude, longitude, datetime, flags)
+        no2_frac, no2_tropo, no2_strat = self.get_no2(latitude, longitude, datetime)
         no2_tr200 = no2_frac * no2_tropo
         no2_tr200[no2_tr200 < 0] = 0
 
@@ -451,13 +449,12 @@ class Gas_correction_NO2(BlockProcessor):
         hdf1.end()
         hdf2.end()
 
-    def get_no2(self, latitude, longitude, datetime, flags):
+    def get_no2(self, latitude, longitude, datetime):
         """
         returns no2_frac, no2_tropo, no2_strat at the pixels coordinates
         (latitude, longitude)
         """
-        ok = ((flags) == 0)
-        ok &= ~np.isnan(latitude) & ~np.isnan(longitude)
+        ok = ~np.isnan(latitude) & ~np.isnan(longitude)
 
         # get month
         if not hasattr(datetime, "month"):
@@ -498,7 +495,6 @@ class Gas_correction_NO2(BlockProcessor):
             Var('latitude'),
             Var('longitude'),
             Var('air_mass'),
-            Var('flags'),
         ]
         
     def modified_vars(self) -> list[Var]:
@@ -513,7 +509,6 @@ class Gas_correction_NO2(BlockProcessor):
             block.air_mass.data,
             block.latitude.data,
             block.longitude.data,
-            block.flags.data,
             self.datetime,
         )
 
