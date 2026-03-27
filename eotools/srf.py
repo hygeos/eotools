@@ -547,6 +547,8 @@ def integrate_srf(
             dims=[x for x in srf_band.dims if x != integration_dimension]
 
         integrated[band] = xr.DataArray(integrate / normalize, dims=dims)
+        if isinstance(x, xr.DataArray):
+            integrated[band].attrs.update(x.attrs)
 
     # reassign input coordinates if needed
     if integration_dimension is None:

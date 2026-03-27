@@ -93,6 +93,7 @@ def test_srf_multidim(platform, sensor):
     x = xr.DataArray(data, dims=['wav'])
     x = x.assign_coords(wav=data)
     x.wav.attrs['units'] = 'nm'
+    x.attrs['test_attr'] = 'test_value'
 
     for kwargs in [
         {"x": lambda x: x},
@@ -100,6 +101,9 @@ def test_srf_multidim(platform, sensor):
         {"x": x, "resample": "srf"},
     ]:
         integrated = integrate_srf(srf, integration_dimension="wavelength", **kwargs)
+        if isinstance(kwargs['x'], xr.DataArray):
+            for band in integrated.data_vars:
+                assert integrated[band].attrs.get('test_attr') == 'test_value'
         print(integrated)
 
 
