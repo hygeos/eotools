@@ -116,6 +116,12 @@ def get_SRF(
         return srf
     elif rename_method == 'bands':
         assert isinstance(platform_sensor, xr.Dataset)
+        if len(platform_sensor.bands) == len(srf) - 1:
+            # remove panchromatic bands for renaming, because panchro bands are not
+            # expected to be in bands
+            if sum(['panchro' in x.lower() for x in srf]) == 1:
+                srf = srf[[x for x in srf if 'panchro' not in x.lower()]]
+        assert len(platform_sensor.bands) == len(srf)
         return rename(srf, platform_sensor.bands.values)
     elif rename_method == 'cwav':
         return rename(srf, "cwav")
