@@ -304,6 +304,7 @@ class RayleighCorrection(BlockProcessor):
         pressure_kind: Literal[
             "surface_pressure", "sea_level_pressure"
         ] = "sea_level_pressure",
+        sun_glint_corr: bool = True,
         **cfg,
     ):
         """
@@ -316,7 +317,11 @@ class RayleighCorrection(BlockProcessor):
         version : Literal["polymer_legacy"], default="polymer_legacy"
             LUT version to use.
         pressure_kind : Literal["surface_pressure", "sea_level_pressure"], default="sea_level_pressure"
-            Pressure data type.
+            Pressure data type used at input.
+        sun_glint_corr : bool, default=True
+            Whether to include sun glint correction in the Rayleigh correction.
+            If True, corrects for both Rayleigh scattering and sun glint.
+            If False, corrects only for Rayleigh scattering.
         **cfg : dict
             Additional configuration.
         """
@@ -324,6 +329,7 @@ class RayleighCorrection(BlockProcessor):
         if version == 'polymer_legacy':
             self.rayleigh_lut = read_lut_polymer_legacy()
         self.srf = srf
+        self.sun_glint_corr = sun_glint_corr
         self.interpolator = Interpolator(
             self.rayleigh_lut,
             odr=Linear("odr"),
@@ -386,11 +392,16 @@ class RayleighCorrection(BlockProcessor):
             ds_bands = [str(x) for x in ds.bands.values]
             srf_bands = [str(x) for x in self.srf]
             assert ds_bands == srf_bands
+        check_units(ds['horizontal_wind'], 'm/s')
     
     def process_block(self, block: xr.Dataset):
-        check_units(block['horizontal_wind'], 'm/s')
-
         block['odr'] = calc_odr(block, self.srf).transpose(*block.rho_gc.dims)
 
         self.interpolator.process_block(block)
-        block['rho_rc'] = block['rho_gc'] - block['rho_rg']
+
+        if self.sun_glint_corr:
+            # Rayleigh + glint correction
+            block['rho_rc'] = block['rho_gc'] - block['rho_rg']
+        else:
+            # Rayleigh only correction
+            block['rho_rc'] = block['rho_gc'] - block['rho_r']
