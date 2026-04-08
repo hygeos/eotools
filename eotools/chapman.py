@@ -2,7 +2,7 @@ import numpy as np
 from scipy.special import erfc
 
 
-def chapman(mu, X=6730.0 / 8.0, method="d"):
+def chapman(mu, X=6371. / 8.0, method="d"):
     """
     Chapman function
 
@@ -12,7 +12,7 @@ def chapman(mu, X=6730.0 / 8.0, method="d"):
     Arguments:
         mu : cos of the Zenith angle at the point of interest
         X : ratio of altitude at the point of interest (from Earths centre, default
-            RTER=6730km) to scale height of the atmospheric absorber (default H0=8km,
+            RTER=6371km) to scale height of the atmospheric absorber (default H0=8km,
             Rayleigh scale height)
     """
 
