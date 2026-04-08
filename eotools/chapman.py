@@ -5,11 +5,8 @@ from math import pi
 
 def chapman(mu, X=6371. / 8.0, method="f"):
     """
-    Compute the Chapman function for atmospheric absorption calculations.
-
-    The Chapman function represents the ratio of the slant path to the vertical path
-    through a stratified atmosphere. Two methods are available for computation, each
-    with different theoretical bases.
+    Compute the optical slant air mass accounting for the earth's curvature
+    using the Chapman function.
 
     Parameters
     ----------
