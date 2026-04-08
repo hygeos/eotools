@@ -47,6 +47,10 @@ def chapman(mu, X=6371. / 8.0, method="d"):
            function model. Radio Science, 47, RS5003.
     """
 
+    methods_ok = ["d", "e"]
+    if method not in methods_ok:
+        raise ValueError(f"Invalid method '{method}'. Valid options are {methods_ok}.")
+
     if method == "e":
         ct2 = mu**2
         st2 = 1.0 - ct2
