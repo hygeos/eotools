@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.special import erfc
+from scipy.special import erfc, erfcx
+from math import pi
 
 
-def chapman(mu, X=6371. / 8.0, method="d"):
+def chapman(mu, X=6371. / 8.0, method="f"):
     """
     Compute the Chapman function for atmospheric absorption calculations.
 
@@ -18,11 +19,12 @@ def chapman(mu, X=6371. / 8.0, method="d"):
         Ratio of altitude at the point of interest (from Earth's centre) to the
         scale height of the atmospheric absorber. Default is 6371/8 ≈ 796.375,
         corresponding to Earth's mean radius (6371 km) and Rayleigh scale height (8 km).
-    method : {'d', 'e'}, optional
-        Method for computation. Default is 'd'.
+    method : {'d', 'e', 'f'}, optional
+        Method for computation. Default is 'f'.
         
         - 'd': Titheridge (1988, 2000) method
         - 'e': Kocifaj (1996) and Schüler (2012) method
+        - 'f': Huestis(2001) method (the most accurate)
 
     Returns
     -------
@@ -36,21 +38,25 @@ def chapman(mu, X=6371. / 8.0, method="d"):
     .. [1] Vasylyev, D. (2021). Accurate analytic approximation for the Chapman
            grazing incidence function. Earth Planets Space, 73, 112.
            https://doi.org/10.1186/s40623-021-01435-y
-    .. [2] Titheridge, J. E. (1988). A non-linear theory of the Chapman graticule.
+    .. [2] Huestis, D. L. (2001). Accurate evaluation of the Chapman function for
+           atmospheric attenuation. Journal of Quantitative Spectroscopy and Radiative
+           Transfer, 69(6), 709–721. https://doi.org/10.1016/S0022-4073(00)00107-2
+    .. [3] Titheridge, J. E. (1988). A non-linear theory of the Chapman graticule.
            Journal of Atmospheric and Solar-Terrestrial Physics, 50(3), 209-219.
-    .. [3] Titheridge, J. E. (2000). Modelling of the basic mechanisms controlling the
+    .. [4] Titheridge, J. E. (2000). Modelling of the basic mechanisms controlling the
            pre-reversal enhancement of equatorial spread F. Journal of Atmospheric
            and Solar-Terrestrial Physics, 62(17), 1521-1531.
-    .. [4] Kocifaj, M. (1996). On the Chapman graticule computation revisited.
+    .. [5] Kocifaj, M. (1996). On the Chapman graticule computation revisited.
            Journal of Atmospheric and Solar-Terrestrial Physics, 58(16), 1819-1823.
-    .. [5] Schüler, T. (2012). On the use of ionospheric scale heights in the Chapman
+    .. [6] Schüler, T. (2012). On the use of ionospheric scale heights in the Chapman
            function model. Radio Science, 47, RS5003.
     """
 
-    methods_ok = ["d", "e"]
+    methods_ok = ['d', 'e', 'f']
+
     if method not in methods_ok:
         raise ValueError(f"Invalid method '{method}'. Valid options are {methods_ok}.")
-
+    
     if method == "e":
         ct2 = mu**2
         st2 = 1.0 - ct2
@@ -69,3 +75,9 @@ def chapman(mu, X=6371. / 8.0, method="d"):
         A = 1.0123 - 1.454 / np.sqrt(X)
         d = 3.88 * X ** (-1.143) * (1.0 / np.cos(A * dzeta) - 0.834)
         return 1.0 / np.cos(dzeta - d)
+
+    elif method == "f":
+        sin_th = np.sqrt(1.0 - mu**2)
+        arg = np.sqrt(X*(1-sin_th))
+        return np.sqrt((pi*X)/(1+sin_th)) * erfcx(arg)
+
