@@ -115,7 +115,7 @@ class TestGSWTile:
         assert tile.agg == 8
         assert tile.dtype == 'uint8'
         assert "v1_4_2021" in tile.tile_name
-        assert tile.shape == (5000/8, 5000/8)
+        assert tile.shape == (40000/8, 40000/8)
         assert tile.directory == temp_dir
     
     def test_gsw_tile_shape_calculation(self, temp_dir):
@@ -124,9 +124,9 @@ class TestGSWTile:
         tile_agg4 = _GSW_tile("10E_20N", agg=4, directory=temp_dir)
         tile_agg8 = _GSW_tile("10E_20N", agg=8, directory=temp_dir)
         
-        assert tile_agg1.shape == (5000, 5000)
-        assert tile_agg4.shape == (5000/4, 5000/4)
-        assert tile_agg8.shape == (5000/8, 5000/8)
+        assert tile_agg1.shape == (40000, 40000)
+        assert tile_agg4.shape == (40000/4, 40000/4)
+        assert tile_agg8.shape == (40000/8, 40000/8)
     
     def test_gsw_tile_directory_not_exists(self):
         """Test that _GSW_tile raises error if directory doesn't exist"""
@@ -175,12 +175,15 @@ class TestReadTile:
         result = read_tile("10E_20N", agg=8, directory=temp_dir)
         
         # Shape should match _GSW_tile shape
-        assert result.shape == (5000/8, 5000/8)
+        assert result.shape == (40000/8, 40000/8)
     
     @pytest.mark.parametrize('tilename', ['10W_50S','10W_10N'])
     def test_read_tile_compute(self, temp_dir, tilename):
         """Test that read_tile creates array with correct shape"""
-        result = read_tile(tilename, agg=8, directory=temp_dir).compute()
+        tile = read_tile(tilename, agg=8, directory=temp_dir).compute()
+        search = list(Path(temp_dir).glob(f'occurrence_{tilename}*_{8}.nc'))
+        assert len(search) == 1
+        
 
 
 class TestGSWCompute:
@@ -212,3 +215,28 @@ class TestGSWCompute:
         assert ds["water"].shape == lat.shape
         assert "units" in ds["water"].attrs
         assert ds["water"].attrs["units"] == "%"
+    
+    def test_GSW_compute_chunked(self, tmpdir):
+        """
+        Test that GSW processor can process chunked data with multiple chunks
+        """
+        # Create a larger dataset that will be split into multiple chunks
+        lat_vals = np.linspace(45.0, 47.0, 10)
+        lon_vals = np.linspace(5.0, 7.0, 10)
+        lon_grid, lat_grid = np.meshgrid(lon_vals, lat_vals)
+        
+        lat = xr.DataArray(lat_grid, dims=['y', 'x'])
+        lon = xr.DataArray(lon_grid, dims=['y', 'x'])
+        ds = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
+        
+        # Process block using GSW with small chunks to ensure multiple chunks
+        gsw_processor = GSW(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=tmpdir, agg=16)
+        ds_chunked = ds.chunk({'y': 3, 'x': 3})
+        result = gsw_processor.map_blocks(ds_chunked)
+        result = result.compute()
+        
+        # Verify that water variable was added and has correct shape
+        assert "water" in result
+        assert result["water"].shape == lat.shape
+        assert "units" in result["water"].attrs
+        assert result["water"].attrs["units"] == "%"

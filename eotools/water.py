@@ -27,6 +27,7 @@ from core.tools import drop_unused_dims, Var, xrcrop
 from core.interpolate import Nearest, Interpolator
 from core.process.blockwise import BlockProcessor
 from core.network.download import download_url
+from core.save import to_netcdf
 from core.files import mdir
 
 
@@ -44,6 +45,7 @@ class GSW(BlockProcessor):
     lat: tuple of (min, max) latitude bounds
     lon: tuple of (min, max) longitude bounds
     directory: directory for tile storage
+    agg: Factor of aggregation
 
     Returns:
     -------
@@ -54,7 +56,8 @@ class GSW(BlockProcessor):
     def __init__(self, 
             l1: xr.Dataset = None,
             lat: Tuple[float] = None, lon: Tuple[float] = None,
-            directory: str|Path|None = None
+            directory: str|Path|None = None,
+            agg: int = 8
         ):
         
         if directory is None:
@@ -62,12 +65,8 @@ class GSW(BlockProcessor):
         else:
             directory = Path(directory)
         
-        lats, lons = list_tiles()
-        
-        # concat the delayed dask objects for all tiles
-        gsw = da.concatenate([da.concatenate([
-            read_tile(f'{lon}_{lat}', 1, directory) 
-        for lat in lats[::-1]], axis=0) for lon in lons], axis=1)
+        # create GSW mosaic
+        gsw = generate_full_gsw_mosaic(directory, agg)
         
         # FIXME: problem with coordinates
         dims = ('lat', 'lon')
@@ -88,6 +87,9 @@ class GSW(BlockProcessor):
             lon = xr.DataArray([lon]*2, dims=dims)
             lat = xr.DataArray([lat]*2, dims=dims).T
             self.water = xrcrop(raster, lat=lat, lon=lon)
+            
+        # Download needed GSW tiles
+        self.water.compute(scheduler="synchronous")
     
     def input_vars(self) -> list[Var]:
         return [names.lat, names.lon]
@@ -108,7 +110,7 @@ class _GSW_tile:
     
     def __init__(self, tile_name: str, agg: int, directory: Path):
         
-        N = 5000/agg
+        N = 40000/agg
         self.shape = (N, N)
         self.dtype = 'uint8'
         self.tile_name = tile_name + "v1_4_2021"
@@ -121,16 +123,8 @@ class _GSW_tile:
                 'It will be used to store GSW tiles. '
                 'Please create it or link it first.')
 
-    def __getitem__(self, key):
-        
-        A = xr.DataArray(self.fetch_gsw_tile(), name='occurrence')
-        A = A.thin({str(names.columns): self.agg, str(names.rows): self.agg})
-
-        # set attributes
-        A.attrs['aggregation factor'] = str(self.agg)
-        A.attrs['source_file'] = _url_tile(self.tile_name)
-            
-        return A[key].compute(scheduler='sync')
+    def __getitem__(self, key):     
+        return self.fetch_gsw_tile()[key].compute(scheduler='sync')
 
     def fetch_gsw_tile(self) -> xr.DataArray:
         """
@@ -139,12 +133,30 @@ class _GSW_tile:
         
         # Download tiles 
         url = _url_tile(self.tile_name)
-        p = download_url(url, self.directory, if_exists='skip')
-
-        # read geotiff data
-        data = xr.open_dataarray(p, engine='rasterio').squeeze()
-        data = data.rename(x=str(names.columns), y=str(names.rows))
-        data = drop_unused_dims(data.compute(scheduler='sync'))
+        netcdf_path = self._get_nc_path()
+        
+        # Branching to prevent memory usage peak
+        if not netcdf_path.exists():
+            
+            # Download and read geotiff data
+            p = download_url(url, self.directory, if_exists='skip', verbose=False)
+            data = xr.open_dataarray(p, engine='rasterio').squeeze()
+            data = data.rename(x=str(names.columns), y=str(names.rows))
+            data = drop_unused_dims(data)
+            data.name = 'occurrence'
+            
+            # Aggregate data
+            data = self._aggregate(data, self.agg)
+            data.attrs['aggregation factor'] = str(self.agg)
+            data.attrs['source_file'] = _url_tile(self.tile_name)
+            
+            # Save into netcdf to limit memory usage next time
+            to_netcdf(data.to_dataset(), filename=netcdf_path)
+            
+        else:
+            
+            # Read netcdf file
+            data = xr.open_dataarray(netcdf_path, engine='h5netcdf')
         
         # Fill missing values
         if self.convert_missing_data:
@@ -152,7 +164,19 @@ class _GSW_tile:
             data = data.where(data != val_nodata, 100)  # fill invalid data (assume water)
         
         return data.astype(self.dtype)
-
+    
+    def _get_nc_path(self) -> Path:
+        """Determine the path of netcdf file containing the appropriate tile"""
+        return self.directory/f'occurrence_{self.tile_name}_{self.agg}.nc'
+    
+    @staticmethod
+    def _aggregate(A: xr.DataArray, agg: int = 1) -> xr.DataArray:
+        """Aggregate array `A` by a factor `agg`"""    
+        assert agg > 0, f'aggregation factor should be positive, got {agg}'
+        if agg == 1: return A
+        
+        assert (agg & (agg-1)) == 0, f'agg should be a power of 2 ({agg})'
+        return A.coarsen({str(names.columns): agg, str(names.rows): agg}, boundary='trim').mean()
 
 def read_tile(tile_name: str, agg: int, directory: Path) -> xr.DataArray:
     '''
@@ -165,9 +189,25 @@ def read_tile(tile_name: str, agg: int, directory: Path) -> xr.DataArray:
 
 
 def list_tiles() -> Tuple[List]:
+    """Return list of latlon acronym"""
     lons = [str(w) + "W" for w in range(180, 0, -10)]
     lons.extend([str(e) + "E" for e in range(0, 180, 10)])
     lats = [str(s) + "S" for s in range(50, 0, -10)]
     lats.extend([str(n) + "N" for n in range(0, 90, 10)])
 
     return lats, lons
+
+def generate_full_gsw_mosaic(directory: str|Path, agg: int) -> xr.DataArray:
+    """Build a lazy dask array representing the full global surface water mosaic"""
+    
+    # Determines list of latlon acronyms
+    lats, lons = list_tiles()
+    
+    # concat the delayed dask objects for all tiles
+    return da.concatenate([
+        da.concatenate([
+            read_tile(f'{lon}_{lat}', agg, directory) 
+            for lat in lats[::-1]
+        ], axis=0) 
+        for lon in lons
+    ], axis=1)
