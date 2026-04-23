@@ -10,10 +10,13 @@ import xarray as xr
 import numpy as np
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from matplotlib.pyplot import subplots
 from dask import array as da
 
 from eotools.water import GSW, read_tile, list_tiles, _GSW_tile, _url_tile
 from core.geo.naming import names
+from core.tests import conftest
+from core.tools import only
 
 
 class TestGSWUtilities:
@@ -115,7 +118,7 @@ class TestGSWTile:
         assert tile.agg == 8
         assert tile.dtype == 'uint8'
         assert "v1_4_2021" in tile.tile_name
-        assert tile.shape == (5000/8, 5000/8)
+        assert tile.shape == (40000/8, 40000/8)
         assert tile.directory == temp_dir
     
     def test_gsw_tile_shape_calculation(self, temp_dir):
@@ -124,9 +127,9 @@ class TestGSWTile:
         tile_agg4 = _GSW_tile("10E_20N", agg=4, directory=temp_dir)
         tile_agg8 = _GSW_tile("10E_20N", agg=8, directory=temp_dir)
         
-        assert tile_agg1.shape == (5000, 5000)
-        assert tile_agg4.shape == (5000/4, 5000/4)
-        assert tile_agg8.shape == (5000/8, 5000/8)
+        assert tile_agg1.shape == (40000, 40000)
+        assert tile_agg4.shape == (40000/4, 40000/4)
+        assert tile_agg8.shape == (40000/8, 40000/8)
     
     def test_gsw_tile_directory_not_exists(self):
         """Test that _GSW_tile raises error if directory doesn't exist"""
@@ -175,22 +178,29 @@ class TestReadTile:
         result = read_tile("10E_20N", agg=8, directory=temp_dir)
         
         # Shape should match _GSW_tile shape
-        assert result.shape == (5000/8, 5000/8)
+        assert result.shape == (40000/8, 40000/8)
     
     @pytest.mark.parametrize('tilename', ['10W_50S','10W_10N'])
     def test_read_tile_compute(self, temp_dir, tilename):
         """Test that read_tile creates array with correct shape"""
-        result = read_tile(tilename, agg=8, directory=temp_dir).compute()
+        tile = read_tile(tilename, agg=8, directory=temp_dir).compute()
+        search = list(Path(temp_dir).glob(f'occurrence_{tilename}*_{8}.nc'))
+        assert len(search) == 1
+        
 
 
 class TestGSWCompute:
     """Tests for GSW compute functionality with workarounds"""
     
-    def test_GSW_init(self, tmpdir):
+    def test_GSW_init(self, tmpdir, request):
         """
-        Test that xarray DataArray works with dask arrays (validates GSW approach)
+        Test that GSW initialisation is correct
         """
-        GSW(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=tmpdir)
+        gsw = GSW(lat=(45, 55), lon=(-5, 5), directory=tmpdir)
+        assert only(list(Path(tmpdir).glob(f'occurrence_10W_50N*.tif')))
+        
+        gsw.water.plot.imshow()
+        conftest.savefig(request)
     
     def test_GSW_compute(self, tmpdir):
         """
@@ -205,10 +215,67 @@ class TestGSWCompute:
         # Process block using GSW
         gsw_processor = GSW(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=tmpdir)
         ds = gsw_processor.map_blocks(ds.chunk(-1))
-        ds.compute()
         
         # Verify that water variable was added to the block
         assert "water" in ds
         assert ds["water"].shape == lat.shape
         assert "units" in ds["water"].attrs
         assert ds["water"].attrs["units"] == "%"
+    
+    def test_GSW_compute_chunked(self, tmpdir):
+        """
+        Test that GSW processor can process chunked data with multiple chunks
+        """
+        # Create a larger dataset that will be split into multiple chunks
+        lat_vals = np.linspace(45.0, 47.0, 10)
+        lon_vals = np.linspace(5.0, 7.0, 10)
+        lon_grid, lat_grid = np.meshgrid(lon_vals, lat_vals)
+        
+        lat = xr.DataArray(lat_grid, dims=['y', 'x'])
+        lon = xr.DataArray(lon_grid, dims=['y', 'x'])
+        ds = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
+        
+        # Process block using GSW with small chunks to ensure multiple chunks
+        gsw_processor = GSW(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=tmpdir, agg=16)
+        ds_chunked = ds.chunk({'y': 3, 'x': 3})
+        result = gsw_processor.map_blocks(ds_chunked)
+        result = result.compute()
+        
+        # Verify that water variable was added and has correct shape
+        assert "water" in result
+        assert result["water"].shape == lat.shape
+        assert "units" in result["water"].attrs
+        assert result["water"].attrs["units"] == "%"
+    
+    def test_GSW_values(self, tmpdir):
+        """
+        Test that GSW processor retrieve the correct values
+        """
+        # Create a test dataset with latitude and longitude coordinates
+        # Use coordinates in the GSW data range (50S to 80N, 180W to 170E)
+        lat = xr.DataArray(np.array([[45.0, 46.0, 47.0]]*3).T, dims=['y','x'])
+        lon = xr.DataArray(np.array([[-7, 3, 7.0]]*3), dims=['y','x'])
+        ds = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
+        
+        # Process block using GSW
+        gsw_processor = GSW(lat=(45.0, 47.0), lon=(-7, 7.0), directory=tmpdir)
+        ds = gsw_processor.map_blocks(ds.chunk(-1))
+        ds = ds.compute()
+        
+        # Verify that water variable was added to the block
+        assert "water" in ds
+        assert ds["water"].shape == lat.shape
+        assert "units" in ds["water"].attrs
+        assert ds["water"].attrs["units"] == "%"
+        
+    def test_GSW_aggregation(self, tmpdir, request):
+        """
+        Test that GSW processor aggregation works properly
+        """
+        agg_factors = [8, 16, 32]
+        fig, ax = subplots(1, 3, figsize=(20,6))
+        for i, agg in enumerate(agg_factors):
+            gsw = GSW(lat=(45, 55), lon=(-5, 5), agg=agg, directory=tmpdir)  
+            gsw.water.plot.imshow(ax=ax[i])
+            ax[i].set_title(f'Factor {agg}')
+        conftest.savefig(request)

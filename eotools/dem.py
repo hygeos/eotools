@@ -86,7 +86,7 @@ class GTOPO30(BlockProcessor):
         return [names.lat, names.lon]
 
     def created_vars(self) -> list[Var]:
-        return [Var("altitude", attrs={"units": "m"})]
+        return [Var("altitude", dims_like=str(names.lat), attrs={"units": "m"})]
     
     def auto_template(self) -> bool:
         return True
