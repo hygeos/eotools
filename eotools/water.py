@@ -151,7 +151,7 @@ class _GSW_tile:
             data.attrs['source_file'] = _url_tile(self.tile_name)
             
             # Save into netcdf to limit memory usage next time
-            to_netcdf(data.to_dataset(), filename=netcdf_path)
+            to_netcdf(data.to_dataset(), filename=netcdf_path, verbose=False)
             
         else:
             
@@ -176,7 +176,8 @@ class _GSW_tile:
         if agg == 1: return A
         
         assert (agg & (agg-1)) == 0, f'agg should be a power of 2 ({agg})'
-        return A.coarsen({str(names.columns): agg, str(names.rows): agg}, boundary='trim').mean()
+        group = A.coarsen({str(names.columns): agg, str(names.rows): agg}, boundary='trim')
+        return group.mean().astype('uint8')
 
 def read_tile(tile_name: str, agg: int, directory: Path) -> xr.DataArray:
     '''
