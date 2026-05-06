@@ -80,14 +80,19 @@ class GTOPO30(BlockProcessor):
 
         # Crop it to avoid loading all the raster
         if l1:
-            self.dem = xrcrop(dem, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
+            dem = xrcrop(dem, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
 
         elif lat or lon:
             assert lat and lon, "Latitude and longitude constraints should be provided"
             dims = (str(names.rows), str(names.columns))
             lon = xr.DataArray([lon] * 2, dims=dims)
             lat = xr.DataArray([lat] * 2, dims=dims).T
-            self.dem = xrcrop(dem, lat=lat, lon=lon)
+            dem = xrcrop(dem, lat=lat, lon=lon)
+        
+        else:
+            raise ValueError('Provide latlon constraints to reduce memory usage')
+        
+        self.dem = dem.compute()
 
     def input_vars(self) -> list[Var]:
         return [names.lat, names.lon]

@@ -85,17 +85,20 @@ class GSW(BlockProcessor):
 
         # Crop it to avoid loading all the raster
         if l1:
-            self.water = xrcrop(raster, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
+            water = xrcrop(raster, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
 
         elif lat or lon:
             assert lat and lon, "Latitude and longitude constraints should be provided"
             dims = (names.rows, names.columns)
             lon = xr.DataArray([lon] * 2, dims=(names.rows, names.columns))
             lat = xr.DataArray([lat] * 2, dims=(names.columns, names.rows))
-            self.water = xrcrop(raster, lat=lat, lon=lon)
+            water = xrcrop(raster, lat=lat, lon=lon)
+        
+        else:
+            raise ValueError('Provide latlon constraints to reduce memory usage')
 
         # Download needed GSW tiles
-        self.water.compute(scheduler="synchronous")
+        self.water = water.compute(scheduler="synchronous")
 
     def input_vars(self) -> list[Var]:
         return [names.lat, names.lon]

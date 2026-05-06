@@ -132,20 +132,6 @@ class TestGTOPO30:
     
     def test_gtopo30_partial_initialise(self, temp_dir):
         """Test GTOPO30 constructor without latlon constraints"""
-        processor = GTOPO30(directory=str(temp_dir))
-        
-        # Display Block description
-        processor.describe()
-        
-        # Create test block with lat/lon
-        lat = xr.DataArray(np.array([[45.0, 46.0, 47.0]]*3), dims=['y','x'])
-        lon = xr.DataArray(np.array([[5.0, 6.0, 7.0]]*3), dims=['y','x'])
-        block = xr.Dataset({
-            str(names.lat): lat,
-            str(names.lon): lon
-        })
-        
         # Try to process without croping DEM raster
-        with pytest.raises(AssertionError):
-            processor.process_block(block)
-        
+        with pytest.raises(ValueError):
+            GTOPO30(directory=str(temp_dir))        
