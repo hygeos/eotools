@@ -478,6 +478,8 @@ def integrate_srf(
     x: Union[Callable, xr.DataArray],
     integration_function: Callable = simpson,
     integration_dimension: Optional[str] = None,
+    integration_dim_srf: Optional[str] = None,
+    integration_dim_x: Optional[str] = None,
     resample: Optional[Literal["x", "srf"]] = None,
 ) -> xr.Dataset:
     """
@@ -495,10 +497,20 @@ def integrate_srf(
         - scipy.integrate.simpson
     
     If the SRFs are defined over more than 1 dimension, the spectral dimension is
-    specified through the `integration_dimension` argument.
+    specified through the `integration_dim_srf` argument.
 
     Returns a Dataset of integrated values
     """
+    if integration_dimension is not None:
+        # backward compatibility
+        warn(
+            "The 'integration_dimension' parameter is deprecated. "
+            "Use 'integration_dim_srf' instead.",
+            FutureWarning,
+        )
+        assert integration_dim_srf is None
+        integration_dim_srf = integration_dimension
+
     integrated = xr.Dataset()
     for band, srf_band in srf.items():
         if band == "id":
@@ -514,6 +526,7 @@ def integrate_srf(
                 'When integrating multi dimensional datasets, please provide the integration dimension'
             srf_bandname = integration_dimension
 
+        # Get the SRF integration coordinate
         srf_wav = srf_band[srf_bandname]
 
         # Calculate quantity x over values `wav`
@@ -521,23 +534,30 @@ def integrate_srf(
         if callable(x):
             # Check that the input unit is consistent
             assert srf_wav.units == 'nm'
-            wav = srf_wav.values
+            assert integration_dim_x is None
+            wav = srf_wav
             xx = x(wav)
-            srf_values = np.nan_to_num(srf_band.values)
+            srf_values = srf_band
+            srf_values = srf_values.fillna(0.)
+
         elif isinstance(x, xr.DataArray):
             assert x.wav.units == srf_wav.units
             if resample == "srf":
-                wav = srf_wav.values
-                xx = x.interp(wav=wav).values
+                # Interpolate the x values to the SRF coordinates
+                wav = srf_wav
+                xx = x.interp(wav=wav)
                 if np.isnan(x).any():
                     raise ValueError('x contains NaNs after interpolation on SRF grid. '
                                      'Please check its domain of validity.')
-                srf_values = srf_band.values
+                srf_values = srf_band
             elif resample == "x":
-                wav = x.wav.values
-                xx = x.values
+                # Interpolate the SRF to the x values coordinates
+                wav = x.wav
+                xx = x
+                srf_values = srf_band.interp({srf_bandname: wav})
+
                 # NaNs are replaced by zeros
-                srf_values = np.nan_to_num(srf_band.interp({srf_bandname: wav}).values)
+                srf_values = srf_values.fillna(0.)
             else:
                 raise ValueError(
                     "When integrating numerical values, please specify either "
@@ -545,24 +565,22 @@ def integrate_srf(
         else:
             raise TypeError(f"Error, x is of type {x.__class__}")
 
-        integrate = integration_function(srf_values * xx, x=wav)
-        normalize = integration_function(srf_values, x=wav)
-        if integration_dimension is None:
-            dims = None
-        else:
-            dims=[x for x in srf_band.dims if x != integration_dimension]
+        def integrate_dataset(y: xr.DataArray, x: xr.DataArray) -> xr.DataArray:
+            """Wraps integration function for xarray datasets."""
+            axis = y.dims.index(only(x.dims))
+            result = integration_function(y, x=x, axis=axis)
+            dims = [d for d in y.dims if d not in x.dims]
+            coords = {d: y.coords[d] for d in dims}
+            return xr.DataArray(result, dims=dims, coords=coords)
 
-        integrated[band] = xr.DataArray(integrate / normalize, dims=dims)
+        integrate = integrate_dataset(srf_values * xx, x=wav)
+        normalize = integrate_dataset(srf_values, x=wav)
+
+        integrated[band] = integrate / normalize
         if isinstance(x, xr.DataArray):
             integrated[band].attrs.update(x.attrs)
 
-    # reassign input coordinates if needed
-    if integration_dimension is None:
-        return integrated
-    else:
-        return integrated.assign_coords(
-            {k: v for k, v in srf.coords.items() if k != integration_dimension}
-        )
+    return integrated
 
 
 def select(srf: xr.Dataset, **kwargs) -> xr.Dataset:

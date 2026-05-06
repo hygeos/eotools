@@ -11,6 +11,7 @@ from eoread import msi
 from eotools.srf import (filter_bands, get_SRF, get_SRF_eumetsat,
                          get_SRF_landsat8_oli, integrate_srf, plot_srf, rename,
                          select)
+from core.tests.pytest_utils import parametrize_dict
 from tests import samples
 
 from . import conftest
@@ -79,7 +80,15 @@ def test_rename_id(sensor: str):
     "platform,sensor",
     [("SPOT", "VGT1")],
 )
-def test_srf_multidim(platform, sensor):
+@pytest.mark.parametrize('srf_multidim', **parametrize_dict({'srf_1dim': False, 'srf_multidim': True}))
+@pytest.mark.parametrize('x_kind,resample', **parametrize_dict({
+    'x_callable': ('callable', None),
+    'x_1dim_srf': ('1dim', 'srf'),
+    'x_1dim_x': ('1dim', 'x'),
+    'x_multidim_srf': ('multidim', "srf"),
+    'x_multidim_x': ('multidim', "x"),
+}))
+def test_srf_multidim(platform, sensor, srf_multidim: bool, x_kind: str, resample):
     ds = xr.Dataset()
     ds.attrs.update(sensor=sensor, platform=platform)
     srf = get_SRF(ds)
@@ -89,22 +98,32 @@ def test_srf_multidim(platform, sensor):
     srf = srf.assign_coords(band=["BLUE", "RED", "NIR", "SWIR"])
 
     # test various integration options
-    data = np.linspace(400, 1000, 100)
-    x = xr.DataArray(data, dims=['wav'])
-    x = x.assign_coords(wav=data)
-    x.wav.attrs['units'] = 'nm'
-    x.attrs['test_attr'] = 'test_value'
+    if x_kind == 'callable':
+        x = lambda y: y  # noqa: E731
+    else:
+        data = np.linspace(400, 1000, 100)
+        x = xr.DataArray(data, dims=['wav'])
+        x = x.assign_coords(wav=data)
+        if x_kind == 'multidim':
+            x = np.stack([x.data] * 3)
+            x = xr.DataArray(x, dims=['extra', 'wav'], coords={'extra': [0, 1, 2], 'wav': data})
+        x.wav.attrs['units'] = 'nm'
+        x.attrs['test_attr'] = 'test_value'
 
-    for kwargs in [
-        {"x": lambda x: x},
-        {"x": x, "resample": "x"},
-        {"x": x, "resample": "srf"},
-    ]:
-        integrated = integrate_srf(srf, integration_dimension="wavelength", **kwargs)
-        if isinstance(kwargs['x'], xr.DataArray):
-            for band in integrated.data_vars:
-                assert integrated[band].attrs.get('test_attr') == 'test_value'
-        print(integrated)
+    srf_ = srf if srf_multidim else srf.isel(band=0)
+
+    integrated = integrate_srf(
+        srf=srf_,
+        x=x,
+        integration_dimension="wavelength" if srf_multidim else None,
+        resample=resample,
+    )
+    if isinstance(x, xr.DataArray):
+        for band in integrated.data_vars:
+            assert integrated[band].attrs.get('test_attr') == 'test_value'
+    for dim in integrated.dims:
+        assert dim in integrated.coords
+    print(integrated)
 
 
 def test_srf_from_l1(level1: Path):
