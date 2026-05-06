@@ -43,6 +43,7 @@ openpyxl = "*"
 pint-xarray = "*"
 cf-xarray = "*"
 xlrd = "*"  # used only for get_SRF_meris
+gatiab = "*"
 
 [tool.pixi.feature.gatiab.dependencies]
 gatiab = "*"

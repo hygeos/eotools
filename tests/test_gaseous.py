@@ -17,9 +17,17 @@ from matplotlib import pyplot as plt
 from scipy.integrate import simpson
 
 from eotools.apply_ancillary import apply_ancillary
-from eotools.gaseous_absorption import (abs_data_fit, gas_list_gatiab,
-                                        get_abs_data, get_absorption,
-                                        get_transmission_coeffs, trans_func)
+from eotools.gaseous_absorption import (
+    abs_data_fit,
+    gas_list_gatiab,
+    get_abs_data,
+    get_absorption,
+    get_gaseous_abs,
+    get_transmission_coeffs,
+    trans_func,
+    transmission_model,
+    transmission_model_eval,
+)
 from eotools.gaseous_correction import Gaseous_correction
 
 # Check if gatiab is available
@@ -57,6 +65,57 @@ def test_integrate_srf(platform, sensor, gas, integration_function):
         print(resample, integrated)
 
 
+def get_x_range(
+    gas: str, gabs: xr.DataTree, n_air_mass: int = 15, n_gas_content: int = 15
+) -> xr.DataArray:
+    """Generate a range of normalized optical path values (M * U / U0).
+
+    Creates a 2D grid of air mass and gas content values, then returns
+    the outer product flattened to 1D. The gas content range is chosen
+    so that U/U0 spans values below and above 1.0, ensuring the fit
+    coefficients are well-constrained around the reference column.
+
+    Parameters
+    ----------
+    gas : str
+        Gas species name (e.g. 'H2O', 'O3', 'CO2', 'CH4', 'NO2').
+    gabs : xr.DataTree
+        High-resolution gaseous absorption model DataTree (from
+        :func:`get_gaseous_abs`), providing the nominal gas content
+        U0 for the requested species.
+    n_air_mass : int, optional
+        Number of air mass samples (default 15, range 2.0-6.0).
+    n_gas_content : int, optional
+        Number of gas content samples (default 15).
+
+    Returns
+    -------
+    xr.DataArray
+        2D array with dimensions ``("air_mass", "gas_content")`` containing
+        the product M * (U / U0) for each combination.
+    """
+    
+    air_mass = xr.DataArray(
+        np.linspace(2.0, 6.0, n_air_mass),
+        dims=["air_mass"],
+    )
+    U0 = gabs[gas].U0
+
+    if gas == 'H2O':
+        U = np.linspace(0.5, 6.5, n_gas_content)
+        U_U0 = xr.DataArray(U, dims=["gas_content"])/U0
+    elif gas == 'O3':
+        U = np.linspace(100.0, 500.0, n_gas_content)
+        U_U0 = xr.DataArray(U, dims=["gas_content"])/U0
+    else:
+        U_U0 = xr.DataArray(
+            np.linspace(0.83909181, 1.0266535, n_gas_content),
+            dims=["gas_content"],
+        )
+    assert U_U0[0] < 1
+    assert U_U0[-1] > 1
+
+    return air_mass*U_U0
 
 @pytest.mark.parametrize('method', ['map_blocks', 'blockwise'])
 @pytest.mark.parametrize('gas_correction', ['o3_legacy', 'ckdmip'])
@@ -132,10 +191,17 @@ def test_all_gases(platform_sensor: str, sel: Dict, request):
     plt.yscale("function", functions=(lambda x: x**3, lambda x: x**(1/3)))
     air_mass = 3.
     iwav = np.argsort(cwav)
-    for gas in coeffs.gas:
+    tmodel = transmission_model(srf)
+    for igas, gas in enumerate(coeffs.gas):
         c = coeffs.sel(gas = gas)
         x = air_mass
-        plt.plot(cwav[iwav], np.exp(-c.a * x**c.n)[iwav], "+-", label=str(gas.values))
+        plt.plot(cwav[iwav], np.exp(-c.a * x**c.n)[iwav], f"C{igas}+-", label=str(gas.values))
+        plt.plot(
+            cwav[iwav],
+            transmission_model_eval(tmodel[str(gas.values)].isel(bands=iwav), x),
+            f"C{igas}o",
+            label=str(gas.values),
+        )
 
     # plot full transmission
     plt.plot(
@@ -221,3 +287,67 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
         
         plt.tight_layout()
         savefig(request)
+
+
+@pytest.mark.parametrize("gas", gas_list_gatiab)
+def test_get_all_gases(request, gas: str):
+    gabs = get_gaseous_abs()
+    plt.figure()
+    plt.plot(gabs[gas].wav, gabs[gas].T1, label='T1')
+    plt.legend()
+    plt.grid(True)
+    plt.title(f"{gas} transmission")
+    savefig(request)
+
+
+@pytest.mark.parametrize(
+    "platform_sensor", [
+        "SENTINEL-2A_MSI",
+        "MSG-1_SEVIRI",
+        "MTG-I1_FCI",
+    ])
+@pytest.mark.parametrize("gas", gas_list_gatiab)
+def test_absorption_model(request, platform_sensor: str, gas: str):
+    # Load gaseous absorption model
+    gabs = get_gaseous_abs()
+
+
+    # Load and plot the SRF
+    srf = get_SRF(platform_sensor, rename_method='cwav')
+    plot_srf(srf)
+    savefig(request)
+
+    x_range = get_x_range(gas, gabs, n_air_mass=3, n_gas_content=3)
+    x_vals = xr.DataArray(x_range.values.ravel(), dims=('x_vals'))
+    T = gabs[gas].T1**x_range
+    T_integrated = integrate_srf(srf, T, resample='x')
+
+    # Plot T_integrated for each band as a function of x = M*U/U0
+    # => model T = Teq ^ (x^n)
+    #    ln(T) = (x^n).ln(Teq)
+    #    ln(-ln(T)) = n.ln(x) + ln(-ln(Teq))
+    list_bands = get_bands(srf)
+    tmodel = transmission_model(srf, x0=5.)
+    for iband, band in enumerate(list_bands):
+        plt.figure(figsize=(4, 3))
+        T_vals = T_integrated[band].values.ravel()
+
+        # Linear scale
+        isrt = np.argsort(x_vals)
+        plt.plot(x_vals[isrt], T_vals[isrt], 'k+')
+        plt.plot(
+            x_vals[isrt],
+            transmission_model_eval(tmodel[gas].sel(bands=band), x_vals[isrt]),
+            "r-"
+        )
+        plt.xlabel('M · U / U₀')
+        plt.ylabel(f'T ({gas})')
+
+        plt.legend()
+        plt.title(f'{platform_sensor} - {gas} - {band}')
+        plt.grid(True)
+        plt.tight_layout()
+        savefig(request)
+
+
+

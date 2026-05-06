@@ -624,7 +624,7 @@ def plot_srf(srf: xr.Dataset):
     Plot a SRF Dataset
     """
     from matplotlib import pyplot as plt
-    plt.figure()
+    plt.figure(figsize=(9, 5))
     for iband in srf.data_vars:
         if iband == 'id':
             continue
