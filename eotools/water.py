@@ -70,7 +70,7 @@ class GSW(BlockProcessor):
         # create GSW mosaic
         gsw = generate_full_gsw_mosaic(directory, agg)
 
-        # FIXME: problem with coordinates
+        # Update raster with accurated coordinates
         dims = ("lat", "lon")
         step, off = 2.5e-4 * agg, 125e-6
         coords = dict(
@@ -159,7 +159,7 @@ class _GSW_tile:
             # Aggregate data
             data = self._aggregate(data, self.agg)
             data.attrs["aggregation factor"] = str(self.agg)
-            data.attrs["source_file"] = _url_tile(self.tile_name)
+            data.attrs["source_file"] = url
 
             # Save into netcdf to limit memory usage next time
             to_netcdf(data.to_dataset(), filename=netcdf_path, verbose=False)
