@@ -348,11 +348,11 @@ class Gas_correction_NO2(BlockProcessor):
 
         # Collect auxilary data
         self.no2_climatology = download_url(
-            'https://docs.hygeos.com/s/5oWmND4xjmbCBtf/download/no2_climatology.hdf',
+            'https://github.com/hygeos/eotools/releases/download/root/no2_climatology.hdf',
             dir_common, verbose=False,
         )
         self.no2_frac200m = download_url(
-            'https://docs.hygeos.com/s/4tzqH25SwK9iGMw/download/trop_f_no2_200m.hdf',
+            'https://github.com/hygeos/eotools/releases/download/root/trop_f_no2_200m.hdf',
             dir_common, verbose=False,
         )
 

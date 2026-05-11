@@ -22,7 +22,7 @@ class Rayleigh_correction:
         self.ds = ds
 
         lut_file = download_url(
-            "https://docs.hygeos.com/s/M7iK4eX4CbpYKj8/download/LUT.hdf",
+            "https://github.com/hygeos/eotools/releases/download/root/LUT.hdf",
             env.getdir('DIR_STATIC')/'rayleigh'
         )
         self.mlut = read_mlut_hdf(str(lut_file))

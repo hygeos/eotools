@@ -76,7 +76,7 @@ class GTOPO30(BlockProcessor):
             directory = Path(directory)
 
         # Download the GTOPO file
-        url = "http://download.hygeos.com/eoread/GTOPO30_DZ_MLUT.nc"
+        url = "https://github.com/hygeos/eotools/releases/download/root/GTOPO30_DZ_MLUT.nc"
         gtopo_file = download_url(url, directory, if_exists="skip", verbose=verbose)
         dem = xr.open_dataset(gtopo_file, engine="h5netcdf")
 

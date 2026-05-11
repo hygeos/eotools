@@ -240,7 +240,7 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
 
 def read_lut_polymer_legacy() -> xr.Dataset:
     lut_file = download_url(
-        "https://docs.hygeos.com/s/M7iK4eX4CbpYKj8/download/LUT.hdf",
+        "https://github.com/hygeos/eotools/releases/download/root/LUT.hdf",
         env.getdir('DIR_STATIC')/'rayleigh'
     )
 
