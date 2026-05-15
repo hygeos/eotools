@@ -17,7 +17,6 @@ from eotools.gaseous_absorption import (
     get_abs_data,
     get_absorption,
     get_gaseous_abs,
-    get_transmission_coeffs,
     trans_func,
     transmission_model,
     transmission_model_eval,
@@ -127,46 +126,43 @@ def test_all_gases(platform_sensor: str, sel: Dict, request):
     """
     Generate all coeffs for gatiab supported gases
     """
-    coeffs = get_transmission_coeffs(platform_sensor, create=True).sel(sel)
     srf = filter_bands(get_SRF(platform_sensor), 250., 2500.)
     srf = rename(srf, 'trim')
     srf = squeeze(select(srf, **sel))
     cwav = integrate_srf(srf, lambda x: x)
-    cwav = np.array([cwav[x].values for x in coeffs.bands.values])
+    cwav = np.array([cwav[x].values for x in cwav])
 
     plot_srf(srf)
     savefig(request)
 
-    print(coeffs)
-
     # plot the transmissions
     plt.figure()
     plt.yscale("function", functions=(lambda x: x**3, lambda x: x**(1/3)))
-    air_mass = 3.
+    air_mass = xr.DataArray(3.)
     iwav = np.argsort(cwav)
     tmodel = transmission_model(srf)
-    for igas, gas in enumerate(coeffs.gas):
-        c = coeffs.sel(gas = gas)
+    Ttot = np.array(1.)
+    for gas in gas_list_gatiab:
         x = air_mass
-        plt.plot(cwav[iwav], np.exp(-c.a * x**c.n)[iwav], f"C{igas}+-", label=str(gas.values))
+        T = transmission_model_eval(tmodel[gas].ds.isel(bands=iwav), x)
         plt.plot(
             cwav[iwav],
-            transmission_model_eval(tmodel[str(gas.values)].isel(bands=iwav), x),
-            f"C{igas}o",
-            label=str(gas.values),
+            T,
+            "o-",
+            label=gas,
         )
+        if Ttot is None:
+            Ttot = T
+        else:
+            Ttot = Ttot * T
 
     # plot full transmission
     plt.plot(
         cwav[iwav],
-        np.exp(-coeffs.a * x**coeffs.n).prod(dim="gas")[iwav],
+        Ttot,
         "k--",
         label="Total",
     )
-
-    # plot also the other implementation of O3 transmission
-    # tau_O3 = get_absorption("o3") * coeffs.U0.sel(gas="O3").values * 1e-3
-    # plt.plot(tau_O3['wav'], np.exp(-tau_O3*air_mass), color='gray', ls='--', label='O3 spectrum')
 
     plt.axis(ymin=0, ymax=1.01)
     plt.yticks([0, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0])
@@ -241,15 +237,41 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
         plt.tight_layout()
         savefig(request)
 
-
-@pytest.mark.parametrize("gas", gas_list_gatiab)
-def test_get_all_gases(request, gas: str):
+def plot_all_gases(wav_min=380, wav_max=1100):
     gabs = get_gaseous_abs()
-    plt.figure()
-    plt.plot(gabs[gas].wav, gabs[gas].T1, label='T1')
-    plt.legend()
-    plt.grid(True)
-    plt.title(f"{gas} transmission")
+    wav = gabs["CH4"].wav
+    mask = (wav_min <= wav) & (wav <= wav_max)
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    # Plot H2O in the background
+    for gas, color in [
+        ("H2O", "lightgray"),
+        ("CH4", None),
+        ("CO2", None),
+        ("N2", None),
+        ("N2O", None),
+        ("O2", None),
+        ("O3", None),
+    ]:
+        kwargs = {"label": gas}
+        if color is not None:
+            kwargs["color"] = color
+        ax.plot(gabs[gas].wav[mask], gabs[gas].T1[mask], **kwargs)
+
+    ax.set_yscale("function", functions=(lambda x: x**3, lambda x: x**(1/3)))
+    ax.set_ylim(0, 1.01)
+    ax.set_yticks([0, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0])
+    ax.set_xlabel("Wavelength (nm)")
+    ax.set_ylabel(r"Transmission $T_1(\lambda)$")
+    ax.legend()
+    ax.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+def test_plot_all_gases(request):
+    plot_all_gases()
     savefig(request)
 
 

@@ -1,0 +1,74 @@
+---
+title: "Correcting for gaseous absorption"
+author: "François Steinmetz"
+format:
+    html:
+        toc: true
+        number-sections: true
+bibliography: references.bib
+execute:
+    echo: false
+    warning: false
+---
+
+# High spectral resolution line-by-line dataset
+
+Gas optical depths per layer are obtained for each considered gas from the CKDMIP high-resolution line-by-line database [@hogan2022] via the [`gatiab`](https://github.com/hygeos/gatiab) interface, where the atmospheric profiles are provided by AFGL [@anderson1986]. By default the AFGL-US profile is used. These profiles are then integrated to obtain, for each gas, the total column optical depth at a high spectral resolution, $T_1(\lambda)$, for unit air mass and a nominal gas quantity $U = U_0$ (see @tbl-nominal-gas).
+
+
+
+: Nominal gas concentrations $U_0$ for each atmospheric gas. {#tbl-nominal-gas}
+
+| Gas |             $U_0$ |
+| :-- | ----------------: |
+| CH₄ | 9.46 × 10⁻⁴ g/cm² |
+| CO₂ |       0.519 g/cm² |
+| H₂O |        1.42 g/cm² |
+| N₂  |         782 g/cm² |
+| N₂O | 4.83 × 10⁻⁴ g/cm² |
+| O₂  |         239 g/cm² |
+| O₃  |        345 Dobson |
+
+
+The numerical values of $T_1(\lambda)$ are stored in the file `gaseous_absorption_model_gatiab_ckdmip_v1.nc` for each gas.
+
+```{python}
+#| label: fig-all-gases
+#| fig-cap: "High-resolution transmission $T_1$ for all gases (up to 800 nm)."
+from tests.test_gaseous import plot_all_gases
+plot_all_gases()
+```
+
+# Integrated transmission model
+
+The monochromatic transmission coefficient for an arbitrary air mass $M$ and gas content $U$ is obtained as $T_1(\lambda)^x$, where $T_1(\lambda)$ is given for each gas at $x=1$, with $x = M \cdot U/U_0$ (air mass × gas content / nominal gas content).
+
+For a given sensor band with SRF $S(\lambda)$, the integrated transmission is defined as:
+
+$$\bar{T}(x) = \frac{\int S(\lambda) T_1(\lambda)^x \, d\lambda}{\int S(\lambda) \, d\lambda}$$ {#eq-integ1}
+
+And its derivative is:
+
+$$\bar{T}'(x) = \frac{\int S(\lambda) T_1(\lambda)^x \ln T_1(\lambda) \, d\lambda}{\int S(\lambda) \, d\lambda}$$ {#eq-integ2}
+
+We model the integrated transmission as:
+
+$$\bar{T}(x) = T_\text{eq}^{(x^n)}$$ {#eq-model}
+
+Then, the derivative of $\bar{T}(x)$ at $x=x_0$ is:
+
+$${\bar{T}'}(x_0) = n T_\text{eq}^{x_0^n} \ln T_\text{eq} \cdot x_0^{n-1}$$
+
+Using $\bar{T}(x_0) = T_\text{eq}^{x_0^n}$ and $\ln \bar{T}(x_0) = x_0^n \ln T_\text{eq}$, this expression simplifies:
+
+$${\bar{T}'}(x_0) = n \cdot \frac{\bar{T}(x_0)\,\ln \bar{T}(x_0)}{x_0}$$
+
+Then $n$ can be solved by:
+
+$$n = \frac{{\bar{T}'}(x_0) \cdot x_0}{\bar{T}(x_0) \cdot \ln \bar{T}(x_0)}$$ {#eq-n-solution}
+
+The values of $\bar{T}(x_0)$ and $\bar{T'}(x_0)$ are calculated using equations [-@eq-integ1] and [-@eq-integ2].
+
+For $T_\text{eq}$, and having solved for $n$, @eq-model gives:
+
+$$T_\text{eq} = \bar{T}(x_0)^{\,x_0^{-n}}$$ {#eq-Teq-solution}

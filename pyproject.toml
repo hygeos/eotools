@@ -44,6 +44,9 @@ pint-xarray = "*"
 cf-xarray = "*"
 xlrd = "*"  # used only for get_SRF_meris
 gatiab = "*"
+nbformat = "*"
+nbclient = "*"
+jupyter = "*"
 
 [tool.pixi.feature.gatiab.dependencies]
 gatiab = "*"
