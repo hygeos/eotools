@@ -11,7 +11,6 @@ from core.network.download import download_url
 from eotools.gaseous_absorption import (
     get_absorption,
     transmission_model,
-    transmission_model_eval,
 )
 from eotools.srf import integrate_srf
 from eotools.units import convert
@@ -40,7 +39,7 @@ class Gaseous_correction(CompoundProcessor):
         Method for NO2 correction. Options: "legacy" (default, uses
         climatology-based NO2 correction) or any other value to skip.
     gas_correction: str
-        Method for gas (ozone) correction. Options: "o3_legacy" (default,
+        Method for gas correction. Options: "o3_legacy" (default,
         legacy O3 correction), "ckdmip" (CKDMIP transmission coefficients).
     K_NO2 : Dict | None
         Explicit NO2 absorption coefficients per band. If ``None``,
@@ -48,6 +47,12 @@ class Gaseous_correction(CompoundProcessor):
     K_OZ : Dict | None
         Explicit ozone absorption coefficients per band. If ``None``,
         coefficients are calculated from the SRF or central wavelengths.
+    list_gases : list of str, optional
+        Subset of gases to include in the CKDMIP correction (used when
+        ``gas_correction='ckdmip'``).  Valid gas names are
+        ``['CH4', 'CO2', 'H2O', 'N2', 'N2O', 'O2', 'O3']``.
+        If ``None`` (default), all gases available in the transmission model
+        are used.
 
     Example
     -------
@@ -65,6 +70,7 @@ class Gaseous_correction(CompoundProcessor):
                  K_OZ: Dict | None = None,
                  no2_correction: str = "legacy",
                  gas_correction: str = "o3_legacy",
+                 list_gases: list | None = None,
                  **kwargs
                  ):
 
@@ -101,7 +107,7 @@ class Gaseous_correction(CompoundProcessor):
             processors.append(self.corr_O3)
         elif gas_correction == 'ckdmip':
             assert srf is not None
-            self.corr_ckdmip = Gas_correction_CKDMIP(srf)
+            self.corr_ckdmip = Gas_correction_CKDMIP(srf, list_gases=list_gases)
             processors.append(self.corr_ckdmip)
         else:
             raise ValueError
@@ -527,10 +533,36 @@ class Gas_correction_NO2(BlockProcessor):
 
 
 class Gas_correction_CKDMIP(BlockProcessor):
-    def __init__(self, srf: xr.Dataset, thres_correction: float = 0.5):
+    """CKDMIP-based gaseous correction using transmission model coefficients.
+
+    Computes band-averaged transmission coefficients by integrating over the
+    sensor spectral response function (SRF).  Supports correction for multiple
+    absorbing gases (O3, H2O, CH4, CO2, N2, N2O, etc.) using a parametric
+    model ``T = Teq ** (x ** n)`` where ``x`` is the normalized column amount.
+
+    Parameters
+    ----------
+    srf : xr.Dataset
+        The sensor spectral response function.  Must contain all bands
+        present in the input dataset.
+    thres_correction : float, optional
+        Minimum transmission threshold.  Transmission values below this
+        threshold are replaced with ``NaN`` to avoid extreme reflectance
+        corrections.  Default is 0.5.
+    list_gases : list of str, optional
+        Gases to include in the correction.  Default is all available gases
+        in the transmission model: ``['CH4', 'CO2', 'H2O', 'N2', 'N2O', 'O2', 'O3']``.
+    """
+
+    def __init__(self, srf: xr.Dataset, thres_correction: float = 0.5, list_gases: list | None = None):
         # Determine the transmission model by integrating over the SRF for each gas
         self.tmod = transmission_model(srf)
         self.thres_correction = thres_correction
+
+        if list_gases is None:
+            self.list_gases = list(self.tmod)
+        else:
+            self.list_gases = list_gases
     
     def run(
         self, bands, Rtoa_gc, ok, air_mass, ozone, tcwv, sea_surface_pressure
@@ -541,7 +573,7 @@ class Gas_correction_CKDMIP(BlockProcessor):
         sea_surface_pressure in hPa
         """
 
-        for gas in self.tmod:
+        for gas in self.list_gases:
 
             U0 = self.tmod[gas]['U0']
             P0 = self.tmod[gas]['P0']
@@ -577,19 +609,49 @@ class Gas_correction_CKDMIP(BlockProcessor):
         return [Var('rho_gc')]
         
     def process_block(self, block: xr.Dataset):
-        ok = ~np.isnan(block.latitude.data)
-        ozone_dobson = convert(block['total_column_ozone'], 'Dobson')
-        tcwv = convert(block['total_column_water_vapour'], 'g/cm²')
-        ssp_hPa = convert(block['sea_level_pressure'], 'hPa')
-        self.run(
-            block['bands'].data,
-            block.rho_gc.transpose(..., 'bands').data,
-            ok,
-            block.air_mass.data,
-            ozone_dobson.data,
-            tcwv.data,
-            ssp_hPa.data,
-        )
+        """Apply CKDMIP gaseous correction to a single block.
+
+        Computes the combined transmission from all gases (O3, H2O, etc.)
+        using log-space accumulation for numerical stability:
+            prod(Teq^(x^n)) = exp(sum(x^n * log(Teq)))
+        then divides the reflectance by the total gas transmission.
+        """
+        Rtoa_gc = block.rho_gc.transpose(..., 'bands').values
+        air_mass = block.air_mass.values
+
+        ozone = convert(block.total_column_ozone, 'Dobson').values
+        sea_surface_pressure = convert(block.sea_level_pressure, 'hPa').values
+        tcwv = convert(block.total_column_water_vapour, 'g/cm²').values
+
+        ok = ~np.isnan(block.latitude.values)
+
+        n_bands = Rtoa_gc.shape[-1]
+        n_pixels = ok.sum()
+        log_T_total = np.zeros((n_pixels, n_bands), dtype=np.float64)
+
+        for gas in self.list_gases:
+            U0 = self.tmod[gas]['U0']
+            P0 = self.tmod[gas]['P0']
+            if gas == 'O3':
+                assert U0.units == "Dobson"
+                x = air_mass[ok] * ozone[ok] / U0.values
+            elif gas == 'H2O':
+                assert U0.units == "g/cm²"
+                x = air_mass[ok] * tcwv[ok] / U0.values
+            else:
+                assert P0.units == 'hPa'
+                x = air_mass[ok] * sea_surface_pressure[ok] / P0.values
+
+            n = np.nan_to_num(self.tmod[gas].n.values, nan=1.0)
+            log_Teq = np.log(self.tmod[gas].Teq.values)
+            log_T_total += (x[:, None] ** n[None, :]) * log_Teq[None, :]
+
+        T = np.exp(log_T_total)
+        T[T < self.thres_correction] = np.nan
+
+        Rtoa_gc[ok, :] /= T
+
+        
 
 
 

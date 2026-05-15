@@ -5,7 +5,6 @@
 from pathlib import Path
 
 import pytest
-import xarray as xr
 from core.process.blockwise import CompoundProcessor
 from core.tests.graphics import xrimshow
 from core.tests import conftest, pytest_utils
@@ -73,6 +72,16 @@ def test_gaseous_rayleigh_correction(level1_msi: Path, mode: str, gas_correction
     plt.plot(ds.cwav, pxdata.rho_rc, label='rho_rc')
     plt.xlabel('wavelength (nm)')
     plt.ylabel('reflectance')
+    plt.grid(True)
+    plt.legend()
+    conftest.savefig(request)
+
+    # Total gaseous transmission (rho_toa / rho_gc)
+    plt.figure(figsize=(4, 3))
+    transmission = pxdata.Rtoa / pxdata.rho_gc
+    plt.plot(ds.cwav, transmission, label='rho_toa / rho_gc')
+    plt.xlabel('wavelength (nm)')
+    plt.ylabel('transmission')
     plt.grid(True)
     plt.legend()
     conftest.savefig(request)

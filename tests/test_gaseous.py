@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from core.tests.conftest import savefig
+from core.tests import conftest
 from core.pytest_utils import parametrize_dict
 from eoread import msi
 from eoread.ancillary_nasa import Ancillary_NASA
@@ -29,16 +30,17 @@ from eotools.gaseous_absorption import (
     transmission_model_eval,
 )
 from eotools.gaseous_correction import Gaseous_correction
+from eotools.srf import (filter_bands, get_bands, get_SRF, integrate_srf,
+                         plot_srf, rename, select, squeeze)
+from tests import samples
 
 # Check if gatiab is available
 try:
     from gatiab import Gatiab  # noqa: F401
     GATIAB_AVAILABLE = True
 except ImportError:
-    GATIAB_AVAILABLE = False
-from eotools.srf import (filter_bands, get_bands, get_SRF, integrate_srf,
                          plot_srf, rename, select, squeeze)
-
+s.level1_msi
 level1 = pytest.fixture(msi.get_sample)
 
 
@@ -146,14 +148,12 @@ def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
     plt.plot()
     list_vars = ['Rtoa', 'rho_gc']
     with timeit('Compute'):
-        px = ds[list_vars].isel(x=1000, y=1000).compute()
+        px = ds[list_vars].isel(x=660, y=740).compute()
     for varname in list_vars:
         px[varname].plot(label=varname)
     plt.grid(True)
-    plt.axis(ymin=0, ymax=0.3)
     plt.legend()
-    savefig(request)
-    plt.close()
+    conftest.savefig(request)
 
 
 @pytest.mark.skipif(not GATIAB_AVAILABLE, reason="gatiab not installed")
