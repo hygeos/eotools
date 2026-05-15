@@ -114,118 +114,6 @@ class Gaseous_correction(CompoundProcessor):
 
         super().__init__(processors)
 
-    def run(self, bands, Rtoa, mus, muv,
-            ozone_dobson, tcwv_kgm2, ssp_hPa, latitude, longitude,
-            flags, 
-            datetime):
-        """
-        Apply gaseous correction to Rtoa (ozone, NO2)
-
-        ozone_dobson : total column in Dobson Unit (DU)
-        tcwv_kgm2: total column water vapour (kg/m2)
-        ssp_hPa : sea surface pressure (hPa)
-        """
-        Rtoa_gc = Rtoa.copy()
-        ok = ~np.isnan(latitude)
-
-        # TODO: nightpixels & invalid pixels
-        air_mass = 1/muv + 1/mus
-
-        # O3 correction
-        if self.gas_correction == 'o3_legacy':
-            self.corr_O3.run(bands, Rtoa_gc, ok, air_mass, ozone_dobson)
-        elif self.gas_correction == 'ckdmip':
-            self.corr_ckdmip.run(bands, Rtoa_gc, ok, air_mass, ozone_dobson, tcwv_kgm2, ssp_hPa)
-
-        # NO2 correction
-        if self.no2_correction == "legacy":
-            self.corr_NO2.run(
-                bands,
-                Rtoa_gc,
-                ok,
-                air_mass,
-                latitude,
-                longitude,
-                datetime,
-            )
-
-        return Rtoa_gc
-
-    def apply(self, method='map_blocks'):
-        """Apply gaseous to current dataset `ds`
-
-        This creates the variable `rho_gc` in the current dataset
-        """        
-        ds = self.ds
-        date = datetime(ds)
-
-        # TODO: use pint here
-        # TODO: move this to "map_blocks section"
-        if ds.total_column_ozone.units in ['Kg.m-2', 'kg m**-2', 'kg.m-2']:
-            total_ozone = ds.total_column_ozone / 2.1415e-5  # convert kg/m2 to DU
-        else:
-            total_ozone = ds.total_column_ozone
-            assert ds.total_column_ozone.units in ['DU','Dobsons', 'Dobson']
-        
-
-        if self.gas_correction == 'ckdmip':
-            tcwv = convert(ds['total_column_water_vapour'], 'g/cm²')
-            ssp_hPa = convert(ds['sea_level_pressure'], 'hPa')
-        else:
-            tcwv = None
-            ssp_hPa = None
-
-        rho_toa = ds[self.input_var].chunk({self.spectral_dim: -1})
-
-        if method == 'map_blocks':
-            ds_out = xr.map_blocks(
-                self.apply_block,
-                xr.Dataset(
-                    {
-                        'rho_toa': rho_toa,
-                        'mus': ds.mus,
-                        'muv': ds.muv,
-                        'total_ozone': total_ozone,
-                        'tcwv': tcwv,
-                        'ssp': ssp_hPa,
-                        'latitude': ds.latitude,
-                        'longitude': ds.longitude,
-                        'flags': ds.flags,
-                    }
-                ),
-                template=self.model.template(ds),
-                kwargs={'dt': date},
-            )
-            ds[self.output_var] = ds_out[self.output_var]
-
-        elif method == 'blockwise':
-            ds_out = self.map_blocks(ds)
-            for x in self.output_vars():
-                ds[x] = ds_out[x]
-        else:
-            raise ValueError(method)
-
-    def apply_block(self, ds: xr.Dataset, dt):
-        Rtoa_gc = self.run(
-            ds[self.spectral_dim].data,
-            ds.rho_toa.transpose(..., 'bands').data,
-            ds.mus.data,
-            ds.muv.data,
-            ds.total_ozone.data,
-            ds.tcwv.data,
-            ds.ssp.data,
-            ds.latitude.data,
-            ds.longitude.data,
-            ds.flags.data,
-            datetime=dt
-        ).astype('float32')
-        out = xr.Dataset()
-        out[self.output_var] = xr.DataArray(
-            Rtoa_gc,
-            dims=ds.latitude.dims + ("bands",),
-            coords={"bands": ds.bands},
-        )
-        return self.model.conform(out)
 
 class Init_rho_gc(BlockProcessor):
     def __init__(self, input_var: str):
@@ -324,7 +212,6 @@ class Gas_correction_O3(BlockProcessor):
             # ozone transmittance
             trans_O3 = np.exp(-tauO3 * air_mass[ok])
 
-            # TODO: check this
             Rtoa_gc[ok, i] /= trans_O3
 
         return Rtoa_gc.astype('float32')
@@ -564,38 +451,6 @@ class Gas_correction_CKDMIP(BlockProcessor):
         else:
             self.list_gases = list_gases
     
-    def run(
-        self, bands, Rtoa_gc, ok, air_mass, ozone, tcwv, sea_surface_pressure
-    ):
-        """
-        Ozone in Dobson
-        tcwv in g/cm2
-        sea_surface_pressure in hPa
-        """
-
-        for gas in self.list_gases:
-
-            U0 = self.tmod[gas]['U0']
-            P0 = self.tmod[gas]['P0']
-            if gas == 'O3':
-                assert U0.units == "Dobson"
-                x = air_mass[ok] * ozone[ok] / U0.values
-            elif gas == 'H2O':
-                assert U0.units == "g/cm²"
-                x = air_mass[ok] * tcwv[ok] / U0.values
-            else:
-                assert P0.units == 'hPa'
-                x = air_mass[ok] * sea_surface_pressure[ok] / P0.values
-
-            Teq = self.tmod[gas].Teq.values
-            n = self.tmod[gas].n.values
-            T = Teq[None,:] ** (x[:,None] ** n[None,:])
-
-            # Filter out very low transmission values to avoid extreme corrections
-            T[T<self.thres_correction] = np.nan
-            
-            Rtoa_gc[ok,:] /= T
-
     def input_vars(self) -> list[Var]:
         return [
             Var("latitude"),
@@ -605,6 +460,7 @@ class Gas_correction_CKDMIP(BlockProcessor):
             Var("total_column_ozone"),
             Var("sea_level_pressure"),
         ]
+
     def modified_vars(self) -> list[Var]:
         return [Var('rho_gc')]
         
@@ -644,14 +500,14 @@ class Gas_correction_CKDMIP(BlockProcessor):
 
             n = np.nan_to_num(self.tmod[gas].n.values, nan=1.0)
             log_Teq = np.log(self.tmod[gas].Teq.values)
-            log_T_total += (x[:, None] ** n[None, :]) * log_Teq[None, :]
+
+            # Skip bands with near-unity transmission (log_Teq ≈ 0)
+            mask = np.abs(log_Teq) > 1e-6
+            if mask.any():
+                log_T_total[:, mask] += (x[:, None] ** n[None, mask]) * log_Teq[None, mask]
 
         T = np.exp(log_T_total)
         T[T < self.thres_correction] = np.nan
 
         Rtoa_gc[ok, :] /= T
-
-        
-
-
 

@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
 from typing import Dict
 
 import numpy as np
 import pytest
 import xarray as xr
 from core.tests.conftest import savefig
-from core.tests import conftest
 from core.pytest_utils import parametrize_dict
-from eoread import msi
-from eoread.ancillary_nasa import Ancillary_NASA
-from eoread.common import timeit
-from eoread.eo import init_geometry
 from matplotlib import pyplot as plt
 from scipy.integrate import simpson
 
-from eotools.apply_ancillary import apply_ancillary
 from eotools.gaseous_absorption import (
     abs_data_fit,
     gas_list_gatiab,
@@ -29,19 +22,15 @@ from eotools.gaseous_absorption import (
     transmission_model,
     transmission_model_eval,
 )
-from eotools.gaseous_correction import Gaseous_correction
 from eotools.srf import (filter_bands, get_bands, get_SRF, integrate_srf,
                          plot_srf, rename, select, squeeze)
-from tests import samples
 
 # Check if gatiab is available
 try:
     from gatiab import Gatiab  # noqa: F401
     GATIAB_AVAILABLE = True
 except ImportError:
-                         plot_srf, rename, select, squeeze)
-s.level1_msi
-level1 = pytest.fixture(msi.get_sample)
+    GATIAB_AVAILABLE = False
 
 
 @pytest.mark.parametrize('platform,sensor', [
@@ -118,42 +107,6 @@ def get_x_range(
     assert U_U0[-1] > 1
 
     return air_mass*U_U0
-
-@pytest.mark.parametrize('method', ['map_blocks', 'blockwise'])
-@pytest.mark.parametrize('gas_correction', ['o3_legacy', 'ckdmip'])
-def test_gaseous_correction(level1: Path, method, gas_correction: str, request):
-    """
-    This test should be deprecated in favour of test_gaseous_rayleigh
-    """
-    ds = msi.Level1_MSI(level1, v1_compat=True).chunk(bands=-1)
-    ds = ds.drop(['x', 'y'])
-    init_geometry(ds)
-    apply_ancillary(
-        ds,
-        Ancillary_NASA(),
-        variables={
-            "horizontal_wind": "m/s",
-            "sea_level_pressure": "hectopascals",
-            "total_column_ozone": "Dobson",
-            "total_column_water_vapour": "g/cm²",
-        },
-    )
-    ds.attrs.update(platform='Sentinel-2A')
-    srf = rename(get_SRF(ds), ds.bands.values, thres_check=100)
-    with timeit('Init'):
-        Gaseous_correction(
-            ds, srf, input_var="Rtoa", gas_correction=gas_correction,
-            bands_sel_ckdmip=slice(None),
-        ).apply(method=method)
-    plt.plot()
-    list_vars = ['Rtoa', 'rho_gc']
-    with timeit('Compute'):
-        px = ds[list_vars].isel(x=660, y=740).compute()
-    for varname in list_vars:
-        px[varname].plot(label=varname)
-    plt.grid(True)
-    plt.legend()
-    conftest.savefig(request)
 
 
 @pytest.mark.skipif(not GATIAB_AVAILABLE, reason="gatiab not installed")
