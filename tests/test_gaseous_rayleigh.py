@@ -8,7 +8,7 @@ import pytest
 import xarray as xr
 from core.process.blockwise import CompoundProcessor
 from core.tests.graphics import xrimshow
-from core.tests import conftest
+from core.tests import conftest, pytest_utils
 from eoread import msi
 from eoread.ancillary_nasa import Ancillary_NASA
 from matplotlib import pyplot as plt
@@ -23,8 +23,17 @@ from tests import samples
 
 level1_msi = pytest.fixture(samples.level1_msi)
 
-@pytest.mark.parametrize('mode', ['srf', 'wav'])
-def test_gaseous_rayleigh_correction(level1_msi: Path, mode: str, request):
+@pytest.mark.parametrize(
+    "mode,gas_correction",
+    **pytest_utils.parametrize_dict(
+        {
+            "wav_legacy": ("wav", "o3_legacy"),
+            "srf_legacy": ("srf", "o3_legacy"),
+            "srf_ckdmip": ("srf", "ckdmip"),
+        }
+    ),
+)
+def test_gaseous_rayleigh_correction(level1_msi: Path, mode: str, gas_correction: str, request):
     ds = msi.Level1_MSI(level1_msi, resolution=60).isel(x=slice(600, 780), y=slice(680, 860))
 
     ds = ds.chunk(bands=-1)
@@ -38,7 +47,7 @@ def test_gaseous_rayleigh_correction(level1_msi: Path, mode: str, request):
             InitGeometry(ds),
             InitAltitude(),
             ApplyAncillary(ds, Ancillary_NASA()),
-            Gaseous_correction(ds, srf, input_var="Rtoa"),
+            Gaseous_correction(ds, srf, gas_correction=gas_correction, input_var="Rtoa"),
             RayleighCorrection(srf=srf),
         ],
         outputs="all",

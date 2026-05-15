@@ -534,6 +534,9 @@ def transmission_model(srf: xr.Dataset, x0: float = 5.) -> xr.DataTree:
             },
             coords={'bands': list_bands},
         )
+
+        ds_gas['U0'] = gabs[gas]['U0']
+        ds_gas['P0'] = gabs[gas]['P0']
         
         dt[gas] = ds_gas
     
