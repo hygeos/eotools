@@ -198,7 +198,7 @@ def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
             engine="python",
             dtype=float,
             index_col=False,
-            sep='\s+',
+            sep=r'\s+',
             names=["Wavelength", "Response"],
         )
         # Convert wavelength from cm-1 to nm
