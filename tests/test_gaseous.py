@@ -12,12 +12,9 @@ from matplotlib import pyplot as plt
 from scipy.integrate import simpson
 
 from eotools.gaseous_absorption import (
-    abs_data_fit,
     gas_list_gatiab,
-    get_abs_data,
     get_absorption,
     get_gaseous_abs,
-    trans_func,
     transmission_model,
     transmission_model_eval,
 )
@@ -191,45 +188,44 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
     cwav = integrate_srf(srf, lambda x: x)
     cwav = xr.concat([cwav[x] for x in cwav], dim='bands')
     
-    # load absorption data for fitting
-    ds_gas = get_abs_data(srf, gas)
+    # Load high-resolution gaseous absorption model
+    gabs = get_gaseous_abs()
 
-    coeffs = abs_data_fit(ds_gas)
-    coeffs1 = abs_data_fit(ds_gas, method="curve_fit")
+    # Build x = M * U / U0 grid and compute integrated transmission
+    x_range = get_x_range(gas, gabs)
+    T = gabs[gas].T1 ** x_range
+    T_integrated = integrate_srf(srf, T, resample='x')
+
+    tmodel = transmission_model(srf)
 
     list_bands = get_bands(srf)
     for iband in range(len(list_bands)):
 
-        U = ds_gas.U.broadcast_like(ds_gas.trans).isel({"bands": iband}).values.ravel()
-        M = ds_gas.M.broadcast_like(ds_gas.trans).isel({"bands": iband}).values.ravel()
-        T = ds_gas.trans.isel({"bands": iband}).values.ravel()
-        U0 = ds_gas.U0.values
+        x_vals = x_range.values.ravel()
+        T = T_integrated[list_bands[iband]].values.ravel()
 
-        a = coeffs.a.isel({"bands": iband}).values
-        n = coeffs.n.isel({"bands": iband}).values
-        # a1 = coeffs1.a.isel({"bands": iband}).values
-        # n1 = coeffs1.n.isel({"bands": iband}).values
+        Teq = tmodel[gas].Teq.isel({"bands": iband}).values
+        n = tmodel[gas].n.isel({"bands": iband}).values
+        a = -np.log(Teq)
 
         # Create side-by-side plots
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
         fig.suptitle(f'{gas}\nband = {list_bands[iband]} ({float(cwav.isel(bands=iband))})')
         
         # Plot regression (log scale)
-        X = np.log(M * U / U0)
+        X = np.log(x_vals)
         ax1.plot(X, np.log(-np.log(T)), 'b+')
         ax1.plot(X, np.log(a) + n * X, 'r--')
-        # ax1.plot(X, np.log(a1) + n1 * X, 'y--')
-        ax1.set_xlabel('ln(M * U)')
+        ax1.set_xlabel('ln(M · U / U₀)')
         ax1.set_ylabel(f'ln(-ln(T({gas})))')
         ax1.grid(True)
         ax1.legend()
 
         # Plot regression (linear scale)
-        X_lin = np.linspace(np.amin(M * U / U0), np.amax(M * U / U0), 100)
-        ax2.plot(M * U / U0, T, 'b+')
-        ax2.plot(X_lin, trans_func(X_lin, a, n), "r--", label=f"a={a:.3g}, n={n:.3g}")
-        # ax2.plot(X_lin, trans_func(X_lin, -a1, n1), "y--", label=f"a={-a1:.3g}, n={n1:.3g}")
-        ax2.set_xlabel('M * U')
+        X_lin = np.linspace(np.amin(x_vals), np.amax(x_vals), 100)
+        ax2.plot(x_vals, T, 'b+')
+        ax2.plot(X_lin, np.exp( -a*X_lin**n ), "r--", label=f"a={a:.3g}, n={n:.3g}")
+        ax2.set_xlabel('M · U / U₀')
         ax2.set_ylabel(f'T({gas})')
         ax2.grid(True)
         ax2.legend()
