@@ -42,6 +42,9 @@ class ApplyAncillary(Interpolator):
             dt = datetime_parse(dt)
         assert isinstance(dt, datetime)
         data = ancillary_provider.get(dt)
+        # Check if data is dask-backed and compute it if necessary
+        if data.chunks:
+            data = data.compute(scheduler='sync')
         super().__init__(
             data,
             latitude=Linear("latitude"),
