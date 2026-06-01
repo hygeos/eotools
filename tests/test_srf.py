@@ -20,20 +20,20 @@ level1 = pytest.fixture(samples.level1_msi)
   
 
 @pytest.mark.parametrize(
-    "platform,sensor,sel",
-    [
-        ("LANDSAT-8", "OLI", None),
-        ("sentinel2-A", "MSI", None),
-        ("sentinel3-A", "olci", {"camera": "FM7", "ccd_col": 374}),
-        ("MSG2", "seviri", None),
-        ("ENVISAT", "MERIS", None),
-        ("Proba-V", "Proba-V", {"camera": "CENTER"}),
-        ("SPOT", "VGT1", None),
-        ("SeaHawk", "HawkEye", None),
-    ],
+    "get_srf_kwargs,sel", 
+    **parametrize_dict({
+        'sentinel2a': ({'platform_sensor': ("sentinel2-A", "MSI")}, None),
+        's2a_eumetsat': ({'srf_getter': "eotools.srf.get_SRF_eumetsat", 'srf_getter_arg': "sentinel2_1_msi"}, None),
+        'landsat8': ({'platform_sensor': ("LANDSAT-8", "OLI")}, None),
+        'msg2': ({'platform_sensor': ("MSG2", "seviri")}, None),
+        'envisat': ({'platform_sensor': ("ENVISAT", "MERIS")}, None),
+        'probav': ({'platform_sensor': ("Proba-V", "Proba-V")}, {"camera": "CENTER"}),
+        'spot': ({'platform_sensor': ("SPOT", "VGT1")}, None),
+        'seahawk': ({'platform_sensor': ("SeaHawk", "HawkEye")}, None),
+    })
 )
-def test_get_srf(request, platform, sensor, sel):
-    srf = rename(get_SRF((platform, sensor)), "trim")
+def test_get_srf(request, get_srf_kwargs, sel):
+    srf = rename(get_SRF(**get_srf_kwargs), "trim")
     print(srf)
     if sel is not None:
         srf = select(srf, **sel)

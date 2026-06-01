@@ -984,35 +984,19 @@ def get_SRF_msi(platform : str) -> xr.Dataset:
         dir_SRFs,
     )
     data = pd.read_excel(fsrfs, sheet_name="Spectral Responses ({})".format(platform))
-    bands = ["B{:d}".format(i + 1) for i in range(8)] + [
-        "B8A",
-        "B9",
-        "B10",
-        "B11",
-        "B12",
-    ]
+    assert list(data)[0] == 'SR_WL'
+    bands = [str(x).split('_')[-1] for x in list(data)[1::]]
+    assert len(bands) == 13
 
     ds = xr.Dataset()
-    index = 1
 
-    np.set_printoptions(threshold=np.inf)
-    srf_wvl_ = np.array(data["SR_WL"].values).astype(np.float64)
+    srf_wvl_ = np.array(data["SR_WL"].values, dtype='float32')
     for band in bands:
-        srf_ = np.array(data["{}_SR_AV_{}".format(platform, band)].values).astype(
-            np.float64
-        )
-        dsb = xr.Dataset(
-            {
-                index: (
-                    ("wav"),
-                    srf_,
-                ),
-            },
+        srf_ = np.array(data["{}_SR_AV_{}".format(platform, band)].values, dtype='float32')
+        ds[band] = xr.DataArray(
+            srf_,
             coords={"wav": srf_wvl_},
         )
-        
-        ds = ds.merge(dsb)
-        index += 1
     ds["wav"].attrs["units"] = "nm"
     return ds
 

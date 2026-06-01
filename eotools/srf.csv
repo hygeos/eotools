@@ -12,6 +12,13 @@ Sentinel-3A,OLCI-FULL,eotools.srf.get_SRF_olci_full,SENTINEL3_1
 Sentinel-3B,OLCI-FULL,eotools.srf.get_SRF_olci_full,SENTINEL3_2
 SeaHawk,HawkEye,eotools.srf.get_SRF_NASA,seahawk1_hawkeye
 
+SENTINEL-2A,MSI,eotools.srf.get_SRF_msi,S2A
+SENTINEL-2B,MSI,eotools.srf.get_SRF_msi,S2B
+SENTINEL-2C,MSI,eotools.srf.get_SRF_msi,S2C
+S2A,MSI,eotools.srf.get_SRF_msi,S2A
+S2B,MSI,eotools.srf.get_SRF_msi,S2B
+S2C,MSI,eotools.srf.get_SRF_msi,S2C
+
 # From the EUMETSAT database
 # https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/
 # see function eotools.srf.get_SRF_eumetsat
@@ -131,10 +138,8 @@ MTG-I1,FCI,eotools.srf.get_SRF_eumetsat,mtg_1_fci
 ,,eotools.srf.get_SRF_eumetsat,nimbus_2_mrir
 ,,eotools.srf.get_SRF_eumetsat,nimbus_3_mrir
 ,,eotools.srf.get_SRF_eumetsat,earthcare_1_msi
-SENTINEL-2A,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_1_msi
-SENTINEL-2B,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
-S2A,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_1_msi
-S2B,MSI,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
+,,eotools.srf.get_SRF_eumetsat,sentinel2_1_msi
+,,eotools.srf.get_SRF_eumetsat,sentinel2_2_msi
 ,,eotools.srf.get_SRF_eumetsat,electro-l_2_msugs
 ,,eotools.srf.get_SRF_eumetsat,meteor-m_1_msumr
 ,,eotools.srf.get_SRF_eumetsat,meteor-m_2_msumr
