@@ -47,6 +47,14 @@ gatiab = "*"
 nbformat = "*"
 nbclient = "*"
 jupyter = "*"
+quartodoc = "*"
+griffe = "<2.0"   # Compatibility with quartodoc
+jupyter-cache = "*"
+
+[tool.pixi.tasks]
+quartodoc-build = "quartodoc build --config docs/_quarto.yml"
+quartodoc-render = {cmd = "quarto render", depends-on=['quartodoc-build'], cwd="docs"}
+clean = "rm -rf docs/_site docs/reference"
 
 [tool.pixi.feature.gatiab.dependencies]
 gatiab = "*"

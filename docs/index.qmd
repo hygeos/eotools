@@ -1,0 +1,46 @@
+---
+title: "eotools"
+sidebar: home
+---
+
+`eotools` is a collection of Python tools and modules for building Earth Observation atmospheric correction processing chains. It provides utilities for satellite data management, radiometric correction, and surface reflectance retrieval.
+
+## Getting started
+
+See the [Getting started](getting_started.qmd) page for installation instructions and a quick-start example.
+
+
+## Key capabilities
+
+### Atmospheric correction
+
+Correct satellite observations for atmospheric effects to retrieve accurate surface reflectance:
+
+- [Rayleigh scattering](rayleigh.qmd) — Generic correction for molecular scattering using precomputed LUTs (plane-parallel or spherical modes)
+- [Gaseous absorption](gaseous.qmd) — Generic correction for absorption by atmospheric gases (O₃, CO₂, H₂O, CH₄, N₂O, NO₂)
+- [Sun glint reflectance calculation](reference/glint.qmd) — Model specular reflection from wave roughened water surfaces
+
+### Spectral response functions
+
+Retrieve and work with sensor spectral response functions (SRFs) for a wide range of sensors.
+
+Integrate high-resolution spectral data (gas absorption, Rayleigh optical depth) into band-averaged values weighted by the SRF.
+
+### Geometry & solar
+
+- Compute viewing and illumination geometry (solar/viewing zenith and azimuth angles, scattering angle)
+- Solar irradiance from various sources (LISIRD, etc.)
+- Sun-earth distance correction for TOA reflectance
+- Earth radius and Chapman function for slant-path corrections
+
+### Surface & ancillary data
+
+- **DEM** - Retrieve and apply digital elevation models (GTOPO30, Copernicus DEM)
+- **Water masks** - Global Surface Water (GSW) classification from JRC dataset
+- **Ancillary data** - Apply atmospheric ancillary variables (pressure, ozone, wind) from NASA or other providers (rely on the `eoread` package)
+
+### Radiometry
+
+- Convert TOA radiance to TOA reflectance
+- Unit validation and conversion utilities
+

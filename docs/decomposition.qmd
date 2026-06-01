@@ -1,0 +1,32 @@
+---
+title: "Signal decomposition"
+sidebar: home
+---
+
+The Rayleigh-corrected reflectance is obtained from the TOA reflectance as:
+
+$$\rho_{\text{rc}} = \rho_{\text{TOA}} / t_g - \rho_r$$
+
+[Alternatively](reference/rayleigh.qmd), it can also be divided by the Rayleigh diffuse transmittance:
+
+$$\rho_{\text{rc}}^\prime = \frac{\rho_{\text{TOA}} / t_g - \rho_r}{t_r}$$
+
++---------------------+------------------------------------------------------------------------------+
+| Symbol              | Description                                                                  |
++=====================+==============================================================================+
+| $\rho_{\text{TOA}}$ | Top-of-atmosphere reflectance:                                               |
+|                     | $\rho_{\text{TOA}} = \pi \, L_{\text{TOA}} / (F_0 \, \mu_0)$                 |
++---------------------+------------------------------------------------------------------------------+
+| $L_{\text{TOA}}$    | TOA radiance                                                                 |
++---------------------+------------------------------------------------------------------------------+
+| $F_0$               | Extraterrestrial solar irradiance                                            |
++---------------------+------------------------------------------------------------------------------+
+| $\mu_0$             | Cosine of the solar zenith angle                                             |
++---------------------+------------------------------------------------------------------------------+
+| $\rho_r$            | [Rayleigh reflectance](rayleigh.qmd)                                         |
++---------------------+------------------------------------------------------------------------------+
+| $t_g$               | [Gaseous absorption transmittance](gaseous.qmd) along the downward + upward  |
+|                     | (solar and sensor) path                                                      |
++---------------------+------------------------------------------------------------------------------+
+| $t_r$               | Rayleigh diffuse transmittance along the solar+sensor view path              |
++---------------------+------------------------------------------------------------------------------+

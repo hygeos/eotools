@@ -1,26 +1,66 @@
 ---
-title: "Correcting for gaseous absorption"
-author: "François Steinmetz"
-format:
-    html:
-        toc: true
-        number-sections: true
-bibliography: references.bib
-execute:
-    echo: false
-    warning: false
+title: "Gaseous absorption correction"
+sidebar: home
 ---
 
-# High spectral resolution line-by-line dataset
+# Overview
+
+The correction for the gaseous absorption of various gases is applied before Rayleigh correction, thus the coupling between absorption and scattering is neglected. The gaseous-corrected reflectance is obtained from the TOA reflectance as:
+
+$$\rho_{\text{gc}} = \frac{\rho_{\text{TOA}}}{t_g}$$
+
+where $\rho_{\text{TOA}}$ is the top-of-atmosphere reflectance and $t_g$ is the gaseous absorption transmittance along the downward + upward (solar and sensor view) path.
+
+The `eotools.gaseous_correction` module provides several classes implementing a generic correction for gaseous absorption:
+
+| Gas | [`Gas_correction_CKDMIP`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_CKDMIP) | [`Gas_correction_O3`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_O3) | [`Gas_correction_NO2`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_NO2) |
+|:-----------------|:-----------------:|:----------------:|:----------------:|
+| **References** | [@hogan2022; @anderson1986] | [NASA O3](https://oceancolor.gsfc.nasa.gov/resources/docs/rsr/k_o3_anderson.txt) | [NASA NO2](https://oceancolor.gsfc.nasa.gov/resources/docs/rsr/k_no2.txt) |
+| CH₄ | ✓ |  |  |
+| CO₂ | ✓ |  |  |
+| H₂O | ✓ |  |  |
+| N₂ | ✓ |  |  |
+| N₂O | ✓ |  |  |
+| O₂ | ✓ |  |  |
+| O₃ | ✓ | ✓ |  |
+| NO₂ |  |  | ✓ |
+
+- [`Gas_correction_O3`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_O3) & [`Gas_correction_NO2`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_NO2): Legacy correction modules using absorption cross-section data integrated with the sensor SRF.
+- [`Gas_correction_CKDMIP`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_CKDMIP): Modern correction using the CKDMIP high-resolution line-by-line transmission model, supporting multiple absorbing gases simultaneously.
+
+[`Gas_correction`](reference/gaseous_correction.qmd#gaseous_correction-1) is a proxy to the above classes. By default, it uses `Gas_correction_O3` and `Gas_correction_NO2`, but `Gas_correction_O3` can be replaced by `Gas_correction_CKDMIP` via an option.
+
+## Gas_correction_O3
+
+The [`Gas_correction_O3`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_O3) class corrects for ozone (O₃) absorption using cross-section data from [NASA Ocean Color](https://oceancolor.gsfc.nasa.gov/resources/docs/rsr/k_o3_anderson.txt) (Anderson et al.). The absorption coefficient $K_{\text{O}_3}$ is computed per band by integrating the cross-section data with the sensor SRF, or by interpolation at central wavelengths when no SRF is available.
+
+The correction follows the Beer-Lambert law:
+
+$$T_{\text{O}_3} = \exp(-K_{\text{O}_3} \cdot U_{\text{O}_3} \cdot M)$$
+
+where $U_{\text{O}_3}$ is the total column ozone in Dobson Units and $M$ is the air mass factor. The TOA reflectance is then divided by the transmittance: $\rho_{\text{gc}} = \rho_{\text{TOA}} / T_{\text{O}_3}$.
+
+**Inputs required:** Total column ozone (Dobson Units), air mass.
+
+# Gas_correction_NO2
+
+The [`Gas_correction_NO2`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_NO2) class corrects for nitrogen dioxide (NO₂) absorption using cross-section data from [NASA Ocean Color](https://oceancolor.gsfc.nasa.gov/resources/docs/rsr/k_no2.txt) (Bogumil et al. 2003). The absorption coefficient $K_{\text{NO}_2}$ is computed per band by integrating with the sensor SRF or by interpolation at central wavelengths.
+
+NO₂ column amounts are derived from climatology data (HDF files) combined with a tropospheric NO₂ factor at 200 m resolution. The correction follows the same Beer-Lambert transmission model as O₃.
+
+**Inputs required:** Latitude, longitude, acquisition date (for climatology lookup), air mass.
+
+# CKDMIP
+
+The [`Gas_correction_CKDMIP`](reference/gaseous_correction.qmd#eotools.gaseous_correction.Gas_correction_CKDMIP) class provides modern gaseous correction using the CKDMIP high-resolution line-by-line transmission model.
+
+## High spectral resolution line-by-line dataset
 
 Gas optical depths per layer are obtained for each considered gas from the CKDMIP high-resolution line-by-line database [@hogan2022] via the [`gatiab`](https://github.com/hygeos/gatiab) interface, where the atmospheric profiles are provided by AFGL [@anderson1986]. By default the AFGL-US profile is used. These profiles are then integrated to obtain, for each gas, the total column optical depth at a high spectral resolution, $T_1(\lambda)$, for unit air mass and a nominal gas quantity $U = U_0$ (see @tbl-nominal-gas).
 
-
-
-: Nominal gas concentrations $U_0$ for each atmospheric gas. {#tbl-nominal-gas}
-
+::: {#tbl-nominal-gas style="max-width: 50%; margin: 0 auto;"}
 | Gas |             $U_0$ |
-| :-- | ----------------: |
+|:----|------------------:|
 | CH₄ | 9.46 × 10⁻⁴ g/cm² |
 | CO₂ |       0.519 g/cm² |
 | H₂O |        1.42 g/cm² |
@@ -29,25 +69,54 @@ Gas optical depths per layer are obtained for each considered gas from the CKDMI
 | O₂  |         239 g/cm² |
 | O₃  |        345 Dobson |
 
+: Nominal total column $U_0$ for each atmospheric gas.
+:::
 
 The numerical values of $T_1(\lambda)$ are stored in the file `gaseous_absorption_model_gatiab_ckdmip_v1.nc` for each gas.
 
 ```{python}
 #| label: fig-all-gases
-#| fig-cap: "High-resolution transmission $T_1$ for all gases (up to 800 nm)."
+#| fig-cap: "High-resolution transmission $T_1$ for all gases from 380 to 2200nm."
 from tests.test_gaseous import plot_all_gases
-plot_all_gases()
+plot_all_gases(wav_min=380, wav_max=2200)
 ```
 
-# Integrated transmission model
+## Integrated transmission model
 
-The monochromatic transmission coefficient for an arbitrary air mass $M$ and gas content $U$ is obtained as $T_1(\lambda)^x$, where $T_1(\lambda)$ is given for each gas at $x=1$, with $x = M \cdot U/U_0$ (air mass × gas content / nominal gas content).
+### Model description
+
+The monochromatic transmission coefficient for an arbitrary air mass $M$ and gas content $U$ follows the Beer-Lambert law: and can be expressed as $T_1(\lambda)^x$, where $T_1(\lambda)$ is given for each gas at $x=1$, with $x = M \cdot U/U_0$ (air mass × gas content / nominal gas content). This expression is used for numerical reasons instead of the classical exponential law, so that $T_1(\lambda) \in [0, 1]$.
 
 For a given sensor band with SRF $S(\lambda)$, the integrated transmission is defined as:
 
 $$\bar{T}(x) = \frac{\int S(\lambda) T_1(\lambda)^x \, d\lambda}{\int S(\lambda) \, d\lambda}$$ {#eq-integ1}
 
-And its derivative is:
+This integrated transmission does not necessarily follow the Beer-Lambert law, thus we propose a model in the form of $\bar{T}(x) = T_\text{eq}^{x^n}$. On @fig-absorption-o3-b3 the model closely follows the Beer-Lambert law ($n \approx 1$), but not on @fig-absorption-h2o-b8 ($n=0.633$).
+
+The following plots illustrate the fitted transmission model $\bar{T}(x) = T_\text{eq}^{x^n}$ for selected Sentinel-2A bands and gases.
+
+::: {#fig-absorption-subplots layout-ncol="2"}
+```{python}
+#| label: fig-absorption-o3-b3
+#| fig-cap: "O₃, band B3 (559.8 nm)."
+from tests.test_gaseous import plot_absorption_model
+plot_absorption_model("SENTINEL-2A_MSI", "O3", "B3")
+```
+
+```{python}
+#| label: fig-absorption-h2o-b8
+#| fig-cap: "H₂O, band B8 (832.8 nm)."
+plot_absorption_model("SENTINEL-2A_MSI", "H2O", "B8")
+```
+
+Transmission data for two combinations of MSI bands and gases, and the corresponding model $T_\text{eq}^{(x^n)}$ (with numerical solving as detailed in next section). The ordinate axis is in log scale, thus n=1 corresponds to a straight line.
+:::
+
+### Numerical integration method
+
+This section provides a method to calculate on the fly (the values of \$T_eq\$ and \$n\$ are not stored), for a given sensor band (SRF), the parameters of the model ($T_\text{eq}$ and $n$). This method consists in calculating $\bar{T}(x)$ and its derivative, for a single value of $x = x_0$. This requires only two integrations of the SRF, and avoids integrating the SRF over many values of $x$ for linear regression.
+
+The derivative of the integrated transmission is:
 
 $$\bar{T}'(x) = \frac{\int S(\lambda) T_1(\lambda)^x \ln T_1(\lambda) \, d\lambda}{\int S(\lambda) \, d\lambda}$$ {#eq-integ2}
 
@@ -72,3 +141,5 @@ The values of $\bar{T}(x_0)$ and $\bar{T'}(x_0)$ are calculated using equations 
 For $T_\text{eq}$, and having solved for $n$, @eq-model gives:
 
 $$T_\text{eq} = \bar{T}(x_0)^{\,x_0^{-n}}$$ {#eq-Teq-solution}
+
+In practice, this method is implemented in [`transmission_model_single`](reference/gaseous_absorption.qmd#transmission_model_single) with a default value of $x_0 = 5$.

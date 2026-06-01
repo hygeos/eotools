@@ -1,0 +1,107 @@
+---
+title: "Getting started"
+sidebar: home
+---
+
+This page provides a quick introduction to using `eotools` for atmospheric correction of satellite imagery.
+
+## Installation
+
+Install directly from [Hygeos GitHub](https://github.com/hygeos/eotools):
+
+```bash
+pip install git+https://github.com/hygeos/eotools.git
+```
+
+`eotools` relies on auxiliary data (data files, meteo files, etc.) that are fetched automatically.
+
+Set the `DIR_DATA` environment variable to point to your data directory. Other paths (`static`, `ancillary`, `sample_products`) default to subdirectories under it.
+
+```bash
+export DIR_DATA="$HOME/eo_data"
+```
+
+You can also set it in a `.env` file in your working directory. If undefined, data defaults to `./data`.
+
+
+## Quick example: Gaseous & Rayleigh correction
+
+### From command line
+
+Process a level1 product with the `eoread.planetscope.Level1_Planetscope` reader, and write it to netcdf:
+
+```bash
+python -m eotools.rayleigh \
+    /path/to/level1_product \
+    eoread.planetscope.Level1_Planetscope \
+    /path/to/output.nc
+```
+
+Available readers include all sensors available in `eoread`:
+
+- `eoread.msi.Level1_MSI`
+- `eoread.olci.Level1_OLCI`
+- `eoread.oli.Level1_OLI`
+- `eoread.planetscope.Level1_Planetscope`
+- `eoread.pleiades.Level1_Pleiades`
+- `eoread.pleiades_neo.Level1_PNEO`
+- `eoread.geosat.Level1_GEOSAT`
+
+### With `process_rayleigh`
+
+For programmatic use, `process_rayleigh` handles file I/O and applies the full correction pipeline:
+
+```python
+from pathlib import Path
+from eotools.rayleigh import process_rayleigh
+from core.files.save import to_netcdf
+
+process_rayleigh(
+    input_product=Path("/path/to/level1_product"),
+    reader="eoread.planetscope.Level1_Planetscope",
+    output_product=Path("/path/to/output.nc"),
+    dem="eotools.dem.CopernicusDEM",
+)
+```
+
+### With `process_rayleigh_dataset`
+
+To work with an `xarray.Dataset` directly (e.g., for further custom processing), use `process_rayleigh_dataset`:
+
+```python
+import eoread.planetscope as planetscope
+from eotools.rayleigh import process_rayleigh_dataset
+
+# Load a Level-1 dataset
+ds = planetscope.Level1_Planetscope("/path/to/level1_product")
+
+# Apply the full Rayleigh correction pipeline
+result = process_rayleigh_dataset(
+    ds,
+    dem="eotools.dem.GTOPO30",
+    transmittance_corr=True,
+)
+
+# Access corrected reflectance
+rho_rc = result["rho_rc"]
+
+# Write the full corrected dataset to a NetCDF file
+to_netcdf(result, filename="/path/to/output.nc")
+```
+
+
+## Output variables
+
+| Variable | Description |
+|----------|-------------|
+| `rho_gc` | Gaseous-corrected reflectance |
+| `rho_rc` | Rayleigh-corrected surface reflectance |
+| `rho_r` | Rayleigh reflectance (without glint) |
+| `rho_rg` | Rayleigh + sun glint reflectance |
+| `t_d` | Total atmospheric transmittance |
+| `odr` | Rayleigh optical depth |
+
+## Next steps
+
+- [Rayleigh scattering](rayleigh.qmd) — Detailed documentation on Rayleigh correction
+- [Gaseous absorption](gaseous.qmd) — Detailed documentation on gaseous correction

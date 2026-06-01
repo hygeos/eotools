@@ -1,0 +1,44 @@
+---
+title: "Rayleigh scattering correction"
+sidebar: home
+---
+
+## Overview
+
+The `eotools.rayleigh` module provides a generic look-up table (LUT) based Rayleigh correction method. The correction LUT, instead of being calculated for each sensor, relies on a generic "Rayleigh optical depth" dimension. The Rayleigh optical depth is calculated dynamically, for each pixel and each sensor band (characterized either by a spectral response function (SRF) or by a central wavelength), using the [`rod()`](reference/bodhaine.qmd#eotools.bodhaine.rod) function based on the analytical formula from [@bodhaine1999]. Then, the Rayleigh LUT is interpolated pixel by pixel based on the observation geometry, wind speed, and Rayleigh optical depth.
+
+The correction is implemented in the [`RayleighCorrection`](reference/rayleigh.qmd#rayleighcorrection) class.
+
+## LUT structure (`"polymer_legacy"`)
+
+The lookup table used by [`RayleighCorrection`](reference/rayleigh.qmd#rayleighcorrection) is  `"polymer_legacy"`, a LUT calculated with the SOS (successive order of scattering) code. It contains the following data variables:
+
+| Variable | Dimensions | Description |
+|----------|------------|-------------|
+| `rho_r` | `(mu_s, raa, mu_v, odr)` | Rayleigh reflectance (no glint, black surface) |
+| `rho_rg` | `(mu_s, raa, mu_v, odr, wind_speed)` | Rayleigh reflectance with sun glint |
+| `t_d` | `(mu_s, odr, wind_speed, mu_v)` | Total Rayleigh transmittance (downward × upward, direct + diffuse) |
+
+It has the following grid structure:
+
+| Dimension | Size | Min | Max | Description |
+|---------------|-------------|-------------|-------------|------------------|
+| `odr` | 201 | 0.000 | 0.400 | Rayleigh optical depth. odr=0.4 allows covering $\lambda > 390nm$ |
+| `mu_s` | 25 | 0.032 | 1.000 | Solar zenith cosine (0-88°) |
+| `mu_v` | 25 | 0.032 | 1.000 | Viewing zenith cosine (0-88°) |
+| `raa` | 37 | 0° | 180° | Relative azimuth angle (5° spacing) |
+| `wind_speed` | 5 | 0 m/s | 16 m/s | Horizontal wind speed (values: 0, 2, 4, 8, 16 m/s) |
+
+The RAA convention follows the standard definition: $\text{raa} = \text{saa} - \text{vaa}$ (solar azimuth minus viewing azimuth).
+
+## Output variables
+
+After Rayleigh correction, the following variables are added to the dataset:
+
+| Variable | Description |
+|-------------------------------|----------------------------------------|
+| `rho_rc` | Rayleigh-corrected reflectance (depending on options: with or without glint correction, with or without Rayleigh transmittance correction) |
+| `rho_r` | Rayleigh reflectance (without glint) |
+| `rho_rg` | Rayleigh + sun glint reflectance |
+| `t_d` | Total atmospheric transmittance (downward × upward, direct + diffuse) |
+| `odr` | Rayleigh optical depth (computed intermediate) |

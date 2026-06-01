@@ -1,0 +1,88 @@
+project:
+  type: website
+
+# tell quarto to read the generated sidebar and styles
+metadata-files:
+  - reference/_sidebar.yml
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    number-sections: true
+    css:
+      - reference/_styles-quartodoc.css
+
+bibliography: references.bib
+execute:
+  echo: false
+  cache: true
+  warning: false
+
+website:
+  title: "eotools"
+  description: "Python tools for Earth observation atmospheric correction"
+  site-url: https://github.com/hygeos/eotools
+  repo-url: https://github.com/hygeos/eotools
+  search:
+    location: navbar
+  navbar:
+    background: primary
+    left:
+      - text: "Home"
+        file: index.qmd
+      - text: "API Reference"
+        file: reference/index.qmd
+  sidebar:
+    - id: home
+      style: floating
+      init: collapse
+      contents:
+        - text: Overview
+          file: index.qmd
+        - text: Getting started
+          file: getting_started.qmd
+        - section: Atmospheric correction modules
+          contents:
+            - decomposition.qmd
+            - gaseous.qmd
+            - rayleigh.qmd
+
+
+quartodoc:
+  package: eotools
+  dir: reference
+  title: API Reference
+
+  # write sidebar and style data
+  sidebar: reference/_sidebar.yml
+  css: reference/_styles-quartodoc.css
+
+  sections:
+    - title: Atmospheric correction
+      desc: Rayleigh and gaseous correction utilities
+      contents:
+        - rayleigh
+        - gaseous_absorption
+        - gaseous_correction
+        - bodhaine
+        - chapman
+    - title: Geometry & Solar
+      desc: Geometry and solar irradiance
+      contents:
+        - geometry
+        - solar_irradiance
+        - earth_radius
+    - title: Surface & Ancillary
+      desc: Surface data and ancillary inputs
+      contents:
+        - dem
+        - water
+        - glint
+        - apply_ancillary
+    - title: Radiometry
+      desc: TOA reflectance, SRF, and units
+      contents:
+        - toa_reflectance
+        - srf
+        - units
