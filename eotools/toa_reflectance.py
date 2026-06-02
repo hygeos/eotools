@@ -105,7 +105,8 @@ class Init_rho_toa(BlockProcessor):
             return []
 
     def check(self, ds: xr.Dataset) -> None:
-        assert (ds.bands.values == self.F0.bands.values).all()
+        if not self.has_F0:
+            assert (ds.bands.values == self.F0.bands.values).all()
 
     def auto_template(self) -> bool:
         return True

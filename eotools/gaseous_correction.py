@@ -15,7 +15,6 @@ from eotools.gaseous_absorption import (
 from eotools.srf import integrate_srf
 from eotools.units import convert
 from core import env
-from core.tools import MapBlocksOutput
 from core.process.blockwise import BlockProcessor, CompoundProcessor, Var
 
 
@@ -81,9 +80,6 @@ class Gaseous_correction(CompoundProcessor):
         self.bands = list(ds[spectral_dim].data)
         self.input_var = input_var
         self.output_var = ouput_var
-        self.model = MapBlocksOutput([
-            Var(ouput_var, dtype='float32', dims=('y', 'x', 'bands'))
-        ])
 
         try:
             # image mode: single date for the whole image
