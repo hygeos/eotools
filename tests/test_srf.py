@@ -61,6 +61,7 @@ def test_select(sensor: str):
                 #  band_id=8,
                  camera='FM7',
                  ccd_col=730)
+    rename(sub, band_ids='cwav')
     assert 'id' in sub
 
 

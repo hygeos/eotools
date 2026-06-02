@@ -423,7 +423,7 @@ def rename(
     if isinstance(band_ids, str):
         if band_ids == "cwav":
             cwav = integrate_srf(srf, lambda x: x)
-            band_ids_ = [int(cwav[x].values) for x in cwav]
+            band_ids_ = [int(get_band(cwav, x).values) for x in get_bands(cwav)]
             # check that there are no duplicates
         elif band_ids == "enum":
             band_ids_ = list(range(1, len(original_vars)+1))
