@@ -1,17 +1,13 @@
 from pathlib import Path
-from typing import Literal, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from core import env
 from core.env import getdir
-from core.files.cache import cache_dataset
-from core.files.fileutils import filegen, mdir
+from core.files.fileutils import filegen
 from core.network.download import download_url
-from core.pseudoinverse import pseudoinverse
-from numpy import dot
-from scipy.optimize import curve_fit
 from core.tools import only
 
 # Optional import for gatiab
@@ -22,7 +18,7 @@ except ImportError:
     GATIAB_AVAILABLE = False
     Gatiab = None
 
-from eotools.srf import filter_bands, get_SRF, get_bands, rename
+from eotools.srf import get_bands, get_band
 
 
 gas_list_gatiab = ["CH4", "CO2", "H2O", "N2", "N2O", "O2", "O3"]
@@ -345,7 +341,7 @@ def transmission_model(srf: xr.Dataset, x0: float = 5.) -> xr.DataTree:
         n_list = []
         
         for band in list_bands:
-            srf_band = srf[band]
+            srf_band = get_band(srf, band)
             Teq, n = transmission_model_single(T, srf_band, x0=x0)
             teq_list.append(Teq)
             n_list.append(n)

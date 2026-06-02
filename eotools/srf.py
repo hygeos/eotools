@@ -273,6 +273,34 @@ def get_bands(srf: xr.Dataset) -> list:
         return list(srf)
 
 
+def get_band(srf: xr.Dataset, band_id: str) -> xr.DataArray:
+    """
+    Returns the SRF DataArray for a given band identifier.
+
+    Parameters
+    ----------
+    srf : xr.Dataset
+        Spectral response functions dataset.
+    band_id : str
+        Band identifier (as returned by :func:`get_bands`).
+
+    Returns
+    -------
+    xr.DataArray
+        The SRF DataArray for the requested band.
+    """
+    if "id" in srf:
+        # Find the variable name corresponding to the band_id
+        band_ids = list(srf.id.band_id)
+        var_names = list(srf.id.values)
+        idx = band_ids.index(band_id)
+        var_name = var_names[idx]
+        return srf[var_name]
+    else:
+        # No "id" variable — band_id is the variable name directly
+        return srf[band_id]
+
+
 def nbands(srf: xr.Dataset) -> int:
     """
     Returns the number of bands of a SRF object
@@ -579,6 +607,9 @@ def integrate_srf(
         integrated[band] = integrate / normalize
         if isinstance(x, xr.DataArray):
             integrated[band].attrs.update(x.attrs)
+
+    if "id" in srf:
+        integrated["id"] = srf["id"]
 
     return integrated
 

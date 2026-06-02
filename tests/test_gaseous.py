@@ -18,7 +18,7 @@ from eotools.gaseous_absorption import (
     transmission_model,
     transmission_model_eval,
 )
-from eotools.srf import (filter_bands, get_bands, get_SRF, integrate_srf,
+from eotools.srf import (filter_bands, get_band, get_bands, get_SRF, integrate_srf,
                          plot_srf, rename, select, squeeze)
 
 # Check if gatiab is available
@@ -186,7 +186,6 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
     srf = rename(srf, 'trim')
     srf = select(srf, **sel)
     cwav = integrate_srf(srf, lambda x: x)
-    cwav = xr.concat([cwav[x] for x in cwav], dim='bands')
     
     # Load high-resolution gaseous absorption model
     gabs = get_gaseous_abs()
@@ -202,7 +201,7 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
     for iband in range(len(list_bands)):
 
         x_vals = x_range.values.ravel()
-        T = T_integrated[list_bands[iband]].values.ravel()
+        T = get_band(T_integrated, list_bands[iband]).values.ravel()
 
         Teq = tmodel[gas].Teq.isel({"bands": iband}).values
         n = tmodel[gas].n.isel({"bands": iband}).values
@@ -210,7 +209,9 @@ def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
 
         # Create side-by-side plots
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
-        fig.suptitle(f'{gas}\nband = {list_bands[iband]} ({float(cwav.isel(bands=iband))})')
+        fig.suptitle(
+            f"{gas}\nband = {list_bands[iband]} ({float(get_band(cwav, list_bands[iband]))})"
+        )
         
         # Plot regression (log scale)
         X = np.log(x_vals)
