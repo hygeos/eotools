@@ -11,17 +11,17 @@ import numpy as np
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from eotools.dem import GTOPO30, InitAltitude, CopernicusDEM
+from eotools.dem import GTOPO30, ZeroAltitude, CopernicusDEM
 from core.geo.naming import names
 from core.tests import conftest
 
 
-class TestInitAltitude:
-    """Tests for InitAltitude processor"""
+class TestZeroAltitude:
+    """Tests for ZeroAltitude processor"""
 
     def test_init_altitude_process_block(self):
-        """Test that InitAltitude sets altitude to zero"""
-        processor = InitAltitude()
+        """Test that ZeroAltitude sets altitude to zero"""
+        processor = ZeroAltitude()
 
         # Create test dataset
         lat = xr.DataArray(

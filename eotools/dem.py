@@ -14,11 +14,9 @@ from xarray import Dataset
 from pathlib import Path
 
 
-class InitAltitude(BlockProcessor):
+class ZeroAltitude(BlockProcessor):
     """
-    Altitude initialization
-
-    Currently sets altitude to zero.
+    Bypasses DEM, by setting all altitudes to zero
     """
 
     def input_vars(self) -> list[Var]:

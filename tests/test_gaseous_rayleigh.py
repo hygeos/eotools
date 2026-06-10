@@ -13,7 +13,7 @@ from eoread.ancillary_nasa import Ancillary_NASA
 from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import ApplyAncillary
-from eotools.dem import InitAltitude
+from eotools.dem import ZeroAltitude
 from eotools.gaseous_correction import Gaseous_correction
 from eotools.geometry import InitGeometry
 from eotools.rayleigh import RayleighCorrection
@@ -44,7 +44,7 @@ def test_gaseous_rayleigh_correction(level1_msi: Path, mode: str, gas_correction
     compound = CompoundProcessor(
         [
             InitGeometry(ds),
-            InitAltitude(),
+            ZeroAltitude(),
             ApplyAncillary(ds, Ancillary_NASA()),
             Gaseous_correction(ds, srf, gas_correction=gas_correction, input_var="Rtoa"),
             RayleighCorrection(srf=srf),
