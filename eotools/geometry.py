@@ -40,16 +40,17 @@ class InitGeometry(BlockProcessor):
     def input_vars(self) -> list[Var]:
         ivars = [Var("sza"), Var("vza")]
         if self.calc_raa:
-            ivars.append( Var("vaa"))
-            ivars.append( Var("saa"))
+            ivars.append(Var("vaa"))
+            ivars.append(Var("saa"))
         return ivars
 
     def created_vars(self) -> list[Var]:
         cvars = [
             Var(str(n.mus)),
             Var(str(n.muv)),
-            Var(str(n.raa)),
         ]
+        if self.calc_raa:
+            cvars.append(Var(str(n.raa)))
         if self.calc_scat_angle:
             cvars.append(Var("scat_angle"))
         if self.calc_air_mass:
@@ -67,11 +68,12 @@ class InitGeometry(BlockProcessor):
         block[str(n.muv)].attrs['description'] = n.muv.desc
 
         # relative azimuth angle
-        raa = block[str(n.saa)] - block[str(n.vaa)]
-        raa = raa % 360
-        block[str(n.raa)] = raa.where(raa < 180, 360 - raa)
-        block[str(n.raa)].attrs['description'] = n.raa.desc
-        block[str(n.raa)].attrs['units'] = n.raa.unit
+        if self.calc_raa:
+            raa = block[str(n.saa)] - block[str(n.vaa)]
+            raa = raa % 360
+            block[str(n.raa)] = raa.where(raa < 180, 360 - raa)
+            block[str(n.raa)].attrs['description'] = n.raa.desc
+            block[str(n.raa)].attrs['units'] = n.raa.unit
 
         # scattering angle
         if self.calc_scat_angle:
