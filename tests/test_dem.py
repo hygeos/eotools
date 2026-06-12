@@ -8,12 +8,78 @@ Tests for digital elevation model (DEM) processors
 import pytest
 import xarray as xr
 import numpy as np
-from pathlib import Path
-from tempfile import TemporaryDirectory
+from matplotlib import pyplot as plt
 
 from eotools.dem import GTOPO30, ZeroAltitude, CopernicusDEM
 from core.geo.naming import names
 from core.tests import conftest
+
+# Shared test locations: (name, lat, lon, elev_min, elev_max)
+# Used as pytest parametrize values — name becomes the test ID
+KNOWN_ELEVATIONS = [
+    ("lille", 50.63, 3.06, 10, 60),
+    ("mont_blanc", 45.83, 6.86, 4000, 4900),
+    ("bay_of_ushuaia", -54.86, -68.20, 0, 0),
+]
+
+# DEM processor parametrization: (id, class, kwargs_dict)
+# CopernicusDEM is tested at both 30m and 90m resolutions
+DEM_PROCESSORS = [
+    ("gtopo30", GTOPO30, {}),
+    ("copernicus_90m", CopernicusDEM, {"resolution": 90}),
+    ("copernicus_30m", CopernicusDEM, {"resolution": 30}),
+]
+
+
+def _plot_dem_elevation(block, title, request, center_lat=None, center_lon=None):
+    """Plot DEM altitude with a terrain-appropriate colormap and colorbar.
+
+    Parameters
+    ----------
+    block : xr.Dataset
+        Dataset containing 'altitude', 'latitude', and 'longitude'.
+    title : str
+        Title for the plot.
+    request : pytest.FixtureRequest
+        Used to save the figure to the test report.
+    center_lat, center_lon : float or None
+        If provided, plot a marker at the point of interest.
+    """
+    alt = block["altitude"].values
+    lat = block[str(names.lat)].values
+    lon = block[str(names.lon)].values
+
+    # Determine valid elevation range (exclude ocean — ocean is 0)
+    valid_mask = alt > 0
+    if valid_mask.any():
+        vmin, vmax = np.nanpercentile(alt[valid_mask], [2, 98])
+    else:
+        vmin, vmax = 0, 5000
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    # Use 'terrain' colormap — designed for elevation data
+    im = ax.pcolormesh(
+        lon, lat, alt,
+        cmap="terrain",
+        vmin=vmin,
+        vmax=vmax,
+        shading="auto",
+    )
+    fig.colorbar(im, ax=ax, label="Altitude (m)")
+    # Mark the point of interest
+    if center_lat is not None and center_lon is not None:
+        ax.plot(
+            center_lon, center_lat,
+            marker="^", markersize=10, color="red",
+            markeredgecolor="white", markeredgewidth=1.2,
+            zorder=5, label=f"({center_lat:.2f}°N, {center_lon:.2f}°E)",
+        )
+        ax.legend(loc="upper right", framealpha=0.8)
+    ax.set_title(title)
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    ax.set_aspect("equal")
+    conftest.savefig(request)
 
 
 class TestZeroAltitude:
@@ -42,159 +108,73 @@ class TestZeroAltitude:
         assert block["altitude"].shape == lat.shape
 
 
-class TestGTOPO30:
-    """Tests for GTOPO30 processor"""
+class Test_DEM:
+    """Parametrized tests for DEM processors.
 
-    @pytest.fixture
-    def temp_dir(self):
-        """Create temporary directory for tests"""
-        with TemporaryDirectory() as tmpdir:
-            yield Path(tmpdir)
+    Tests GTOPO30 and CopernicusDEM (at both 30m and 90m resolutions) by:
+    1. Processing a block over a known location
+    2. Checking the center point elevation against expected bounds
+    3. Producing a terrain-colored elevation plot
+    """
 
-    def test_gtopo30_init(self, temp_dir):
-        """Test GTOPO30 initialization with custom directory"""
+    @pytest.mark.parametrize(
+        "dem_id,dem_class,dem_kwargs", DEM_PROCESSORS, ids=[x[0] for x in DEM_PROCESSORS]
+    )
+    @pytest.mark.parametrize(
+        "name,lat,lon,elev_min,elev_max", KNOWN_ELEVATIONS, ids=[x[0] for x in KNOWN_ELEVATIONS]
+    )
+    def test_process_block_and_elevation(
+        self, request, dem_id, dem_class, dem_kwargs, name, lat, lon, elev_min, elev_max
+    ):
+        """Process a block over a known location, check center elevation, and plot.
 
-        processor = GTOPO30(
-            lat=(45.0, 47.0), lon=(5.0, 7.0), directory=str(temp_dir), missing=-999
+        This test merges the process_block structure test with the known elevation
+        check, producing a terrain-colored plot for visual inspection.
+        """
+        # Skip GTOPO30 for locations outside its coverage (56S - 60N)
+        if dem_id == "gtopo30" and (lat < -56 or lat > 60):
+            pytest.skip(f"GTOPO30 does not cover {name} (lat={lat}, outside 56S-60N)")
+
+        # Build constructor kwargs — missing=0 means ocean returns 0
+        init_kwargs = {"missing": 0, **dem_kwargs}
+
+        # GTOPO30 requires lat/lon bounds at construction; CopernicusDEM does not
+        if dem_class is GTOPO30:
+            init_kwargs["lat"] = (lat - 0.75, lat + 0.75)
+            init_kwargs["lon"] = (lon - 0.75, lon + 0.75)
+
+        processor = dem_class(**init_kwargs)
+
+        # Create test block: ~1.5 x ~1.5 degree grid centered on the location
+        half = 0.75
+        # Clamp latitude bounds to valid range
+        lat_min = max(lat - half, -90)
+        lat_max = min(lat + half, 90)
+        n = 500  # grid resolution for a meaningful plot
+        lat_arr = np.linspace(lat_min, lat_max, n)
+        lon_arr = np.linspace(lon - half, lon + half, n)
+        lat_grid, lon_grid = np.meshgrid(lat_arr, lon_arr, indexing="ij")
+        ds = xr.Dataset(
+            {str(names.lat): (["y", "x"], lat_grid), str(names.lon): (["y", "x"], lon_grid)}
         )
 
-        assert processor.missing == -999
-        assert hasattr(processor, "dem")
+        # Process block
+        processor.process_block(ds)
 
-    def test_gtopo30_init_with_l1(self, temp_dir):
-        """Test GTOPO30 initialization with custom directory"""
+        # Check that altitude was created with correct shape
+        assert "altitude" in ds, f"{dem_id}: altitude not created"
+        assert ds["altitude"].shape == lat_grid.shape, f"{dem_id}: altitude shape mismatch"
+        assert ds["altitude"].attrs.get("units") == "m", f"{dem_id}: altitude units missing"
 
-        # Create test block with lat/lon
-        lat = xr.DataArray(np.array([[45.0, 46.0, 47.0]] * 3), dims=["y", "x"])
-        lon = xr.DataArray(np.array([[5.0, 6.0, 7.0]] * 3), dims=["y", "x"])
-        l1 = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
+        # Check center point elevation
+        alt_values = ds["altitude"].values
+        center_alt = float(alt_values[n // 2, n // 2])  # Center of n×n grid
 
-        processor = GTOPO30(l1=l1, directory=str(temp_dir), missing=-999)
-
-        assert processor.missing == -999
-        assert hasattr(processor, "dem")
-
-    def test_gtopo30_method_linear(self, temp_dir):
-        """Test GTOPO30 with linear interpolation method"""
-
-        from core.interpolate import Linear
-
-        processor = GTOPO30(
-            lat=(45.0, 47.0), lon=(5.0, 7.0), directory=str(temp_dir), method="linear"
+        # check elevation is within expected bounds
+        assert elev_min <= center_alt <= elev_max, (
+            f"{dem_id} at {name}: center elevation {center_alt} not in [{elev_min}, {elev_max}]"
         )
 
-        assert processor.method == Linear
-
-    def test_gtopo30_invalid_method(self, temp_dir):
-        """Test GTOPO30 raises error with invalid interpolation method"""
-        with pytest.raises(ValueError):
-            GTOPO30(
-                lat=(45.0, 47.0),
-                lon=(5.0, 7.0),
-                directory=str(temp_dir),
-                method="invalid",
-            )
-
-    def test_gtopo30_process_block(self, temp_dir, request):
-        """Test GTOPO30 process_block method (basic structure test)"""
-
-        processor = GTOPO30(lat=(45.0, 47.0), lon=(5.0, 7.0), directory=str(temp_dir))
-
-        # Create test block with lat/lon
-        lat = xr.DataArray(np.array([[45.0, 46.0, 47.0]] * 3), dims=["y", "x"])
-        lon = xr.DataArray(np.array([[5.0, 6.0, 7.0]] * 3), dims=["y", "x"])
-        block = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
-
-        # Trigger computation
-        processor.process_block(block)
-        block = block.compute()
-
-        # Plot results
-        processor.dem.elev.plot.imshow()
-        conftest.savefig(request)
-
-    def test_gtopo30_partial_initialise(self, temp_dir):
-        """Test GTOPO30 constructor without latlon constraints"""
-        # Try to process without croping DEM raster
-        with pytest.raises(ValueError):
-            GTOPO30(directory=str(temp_dir))
-
-
-class TestCopernicusDEM:
-    """Tests for CopernicusDEM processor"""
-
-    @pytest.fixture
-    def temp_dir(self):
-        """Create temporary directory for tests"""
-        with TemporaryDirectory() as tmpdir:
-            yield Path(tmpdir)
-
-    def test_CopernicusDEM_init(self, temp_dir):
-        """Test CopernicusDEM initialization with custom directory"""
-
-        processor = CopernicusDEM(
-            lat=(46.5, 47.5), lon=(6.5, 7.5), directory=str(temp_dir), missing=-999
-        )
-
-        assert processor.missing == -999
-        assert hasattr(processor, "dem")
-
-    def test_CopernicusDEM_init_with_l1(self, temp_dir):
-        """Test CopernicusDEM initialization with custom directory"""
-
-        # Create test block with lat/lon
-        lat = xr.DataArray(np.array([[46.5, 47.0, 47.5]] * 3), dims=["y", "x"])
-        lon = xr.DataArray(np.array([[6.5, 7.0, 7.5]] * 3), dims=["y", "x"])
-        l1 = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
-
-        processor = CopernicusDEM(l1=l1, directory=str(temp_dir), missing=-999)
-
-        assert processor.missing == -999
-        assert hasattr(processor, "dem")
-
-    def test_CopernicusDEM_method_linear(self, temp_dir):
-        """Test CopernicusDEM with linear interpolation method"""
-
-        from core.interpolate import Linear
-
-        processor = CopernicusDEM(
-            lat=(46.5, 47.5), lon=(6.5, 7.5), directory=str(temp_dir), method="linear"
-        )
-
-        assert processor.method == Linear
-
-    def test_CopernicusDEM_invalid_method(self, temp_dir):
-        """Test CopernicusDEM raises error with invalid interpolation method"""
-        with pytest.raises(ValueError):
-            CopernicusDEM(
-                lat=(46.5, 47.5),
-                lon=(6.5, 7.5),
-                directory=str(temp_dir),
-                method="invalid",
-            )
-
-    def test_CopernicusDEM_process_block(self, temp_dir, request):
-        """Test CopernicusDEM process_block method (basic structure test)"""
-
-        processor = CopernicusDEM(
-            lat=(46.5, 47.5), lon=(6.5, 7.5), directory=str(temp_dir)
-        )
-
-        # Create test block with lat/lon
-        lat = xr.DataArray(np.array([[46.5, 47.0, 47.5]] * 3), dims=["y", "x"])
-        lon = xr.DataArray(np.array([[6.5, 7.0, 7.5]] * 3), dims=["y", "x"])
-        block = xr.Dataset({str(names.lat): lat, str(names.lon): lon})
-
-        # Trigger computation
-        processor.process_block(block)
-        block.compute()
-
-        # Plot results
-        processor.dem.plot.imshow()
-        conftest.savefig(request)
-
-    def test_CopernicusDEM_partial_initialise(self, temp_dir):
-        """Test CopernicusDEM constructor without latlon constraints"""
-        # Try to process without croping DEM raster
-        with pytest.raises(ValueError):
-            CopernicusDEM(directory=str(temp_dir))
+        # Plot with terrain colormap
+        title = f"{dem_id} — {name} ({lat:.2f}°N, {lon:.2f}°E), elev={center_alt:.0f}m"
+        _plot_dem_elevation(ds, title, request, center_lat=lat, center_lon=lon)

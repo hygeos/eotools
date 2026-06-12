@@ -1,3 +1,6 @@
+from shutil import copy2
+from tempfile import TemporaryDirectory
+
 import xarray as xr
 import numpy as np
 
@@ -5,11 +8,11 @@ from core.geo.naming import names
 from core.network.download import download_url
 from core.process.blockwise import BlockProcessor
 from core.interpolate import Interpolator, Linear, Nearest
-from core.tools import Var, xrcrop, drop_unused_dims
+from core.tools import Var, xrcrop
 from core import env, mdir
+from core.files.fileutils import filegen
 
-from dask.array import concatenate, from_array, zeros
-from typing import Any, Literal, Tuple, List
+from typing import Any, Literal, Tuple
 from xarray import Dataset
 from pathlib import Path
 
@@ -51,9 +54,9 @@ class GTOPO30(BlockProcessor):
 
     def __init__(
         self,
-        l1: xr.Dataset = None,
-        lat: Tuple[float] = None,
-        lon: Tuple[float] = None,
+        l1: xr.Dataset | None = None,
+        lat: Tuple[float, float] | None = None,
+        lon: Tuple[float, float] | None = None,
         directory: str | Path | None = None,
         missing: Any = 0,
         method: Literal["nearest", "linear"] = "linear",
@@ -105,14 +108,88 @@ class GTOPO30(BlockProcessor):
 
     def process_block(self, block):
         assert hasattr(self, "dem"), "Provide LatLon constraints in constructor"
-        params = dict(lat=self.method(str(names.lat)), lon=self.method(str(names.lon)))
-        Interpolator(self.dem, **params).process_block(block)
-        block["altitude"] = xr.where(block.elev > 0, block.elev, self.missing)
+        Interpolator(
+            self.dem,
+            lat=self.method(str(names.lat)),
+            lon=self.method(str(names.lon)),
+        ).process_block(block)
+        block["altitude"] = xr.where(block.elev >= 0, block.elev, self.missing)
+        block["altitude"].attrs["units"] = "m"
 
 
 def _copdem_url_prefix(resolution: Literal[30, 90]) -> str:
     """Return the address of Copernicus DEM API server based on resolution"""
     return f"https://copernicus-dem-{resolution}m.s3.eu-central-1.amazonaws.com"
+
+
+def _copdem_tile_width(abs_lat_degree: int, resolution: int) -> int:
+    """
+    Return the number of columns in a Copernicus DEM tile for a given
+    absolute latitude degree and resolution.
+
+    The DEM uses variable longitude spacing to maintain near constant ground
+    resolution at higher latitudes:
+
+      | Latitude band | Columns (90m) | Columns (30m) |
+      |---------------|---------------|---------------|
+      | 0 - 49        | 1200          | 3600          |
+      | 50 - 59       | 800           | 2400          |
+      | 60 - 69       | 600           | 1800          |
+      | 70 - 79       | 400           | 1200          |
+      | 80 - 84       | 240           | 720           |
+      | 85 - 89       | 120           | 360           |
+    """
+    base = 1200 * 90 // resolution  # rows per tile (also max cols at equator)
+    if abs_lat_degree < 50:
+        return base
+    elif abs_lat_degree < 60:
+        return base * 2 // 3
+    elif abs_lat_degree < 70:
+        return base // 2
+    elif abs_lat_degree < 80:
+        return base // 3
+    elif abs_lat_degree < 85:
+        return base // 5
+    else:
+        return base // 10
+
+
+def _copdem_tile_name(row: int, col: int, resolution: int) -> str:
+    """
+    Build the Copernicus DEM tile filename stem (without .tif).
+
+    Naming convention: Copernicus_DSM_COG_{res_arcsec}_{lat}{dir}_00_{lon}{dir}_00_DEM
+    e.g. Copernicus_DSM_COG_30_N54_00_E009_00_DEM
+
+    The name denotes the lower-left corner of the 1° tile.
+    """
+    arcsec = resolution // 3
+    lat_dir = "N" if row >= 0 else "S"
+    lon_dir = "E" if col >= 0 else "W"
+    return f"Copernicus_DSM_COG_{arcsec}_{lat_dir}{abs(row):02d}_00_{lon_dir}{abs(col):03d}_00_DEM"
+
+
+def _list_available_tiles(
+        directory: Path, resolution: Literal[30, 90], verbose: bool = True
+    ) -> set[str]:
+    """
+    Query and cache the list of available Copernicus DEM tile names.
+
+    Returns a set of tile name stems (without .tif extension) for fast lookup.
+    """
+    list_filename = "tileList.txt"
+    local_list_path = directory / f"tileList_{resolution}.txt"
+    url = f"{_copdem_url_prefix(resolution)}/{list_filename}"
+
+    @filegen(if_exists='skip')
+    def download_tile_list(target: Path):
+        with TemporaryDirectory() as tmpdir:
+            tilelist = download_url(url, Path(tmpdir), if_exists="skip", verbose=verbose)
+            copy2(tilelist, target)
+    
+    download_tile_list(local_list_path)
+
+    return set(np.loadtxt(local_list_path, dtype="str"))
 
 
 class CopernicusDEM(BlockProcessor):
@@ -121,195 +198,212 @@ class CopernicusDEM(BlockProcessor):
     to get the altitude for a lat-lon grid and to download on demand DEM tiles
     via internet.
 
+    Uses per-pixel tile lookup: for each (lat, lon) point, determines which
+    1° tile covers that point, downloads the tile on demand, and indexes
+    into it using the tile's actual dimensions.
+
+    The DEM is a grid of tie points, not of pixels. The altitude is given for
+    the degree line. There are 1200 rows per degree. The number of columns
+    depends on the latitude band (fewer columns at higher latitudes, each
+    spanning wider longitude).
+
     Args:
     -----
-    lat: tuple of (min, max) latitude bounds
-    lon: tuple of (min, max) longitude bounds
+    l1: optional Xarray Dataset from an eoread reader (used to extract lat/lon bounds)
+    lat: optional tuple (min, max) latitude bounds for pre-downloading tiles
+    lon: optional tuple (min, max) longitude bounds for pre-downloading tiles
     directory: directory for tile storage
-    agg: Factor of aggregation
-
-    Returns:
-    -------
-
-    A xarray.DataArray of the water occurrence between 0 and 100
+    resolution: 90 or 30, default 90
+    missing: value to use for missing (ocean) elevation data (default: 0)
+    verbose: with trace output
     """
 
     def __init__(
         self,
-        l1: xr.Dataset = None,
-        lat: Tuple[float] = None,
-        lon: Tuple[float] = None,
+        l1: xr.Dataset | None = None,
+        lat: Tuple[float, float] | None = None,
+        lon: Tuple[float, float] | None = None,
         directory: str | Path | None = None,
         resolution: Literal[30, 90] = 90,
         missing: Any = 0,
-        method: Literal["nearest", "linear"] = "linear",
         verbose: bool = True,
     ):
-
         if directory is None:
             directory = mdir(env.getdir("DIR_ANCILLARY") / "COPDEM")
         else:
             directory = Path(directory)
 
-        # Determine method to use for interpolation
+        self.resolution = resolution
         self.missing = missing
-        if method == "linear":
-            self.method = Linear
-        elif method == "nearest":
-            self.method = Nearest
-        else:
-            raise ValueError
+        self.verbose = verbose
+        self.cache_directory = directory
+        self.tile_height = int(1200 * 90 / resolution)
 
-        # create GSW mosaic
-        mosaic = generate_full_gsw_mosaic(directory, resolution, verbose)
+        # Cache for downloaded tiles: (row, col) -> numpy array
+        self._tile_cache: dict[tuple[int, int], np.ndarray] = {}
 
-        # Update raster with accurated coordinates
-        dims = ("lat", "lon")
-        coords = dict(
-            lon=np.linspace(-180, 180, mosaic.shape[1]),
-            lat=np.linspace(-90, 90, mosaic.shape[0]),
-        )
-        raster = xr.DataArray(mosaic, name="altitude", dims=dims, coords=coords)
+        # Fetch list of available tiles
+        self.available = _list_available_tiles(directory, resolution, verbose)
+        if self.verbose:
+            print(f"{len(self.available)} remote DEM tiles available")
 
-        # Crop it to avoid loading all the raster
-        if l1:
-            dem = xrcrop(raster, lat=l1[str(names.lat)], lon=l1[str(names.lon)])
-
-        elif lat or lon:
-            assert lat and lon, "Latitude and longitude constraints should be provided"
-            dims = (names.rows, names.columns)
-            lon = xr.DataArray([lon] * 2, dims=(names.rows, names.columns))
-            lat = xr.DataArray([lat] * 2, dims=(names.columns, names.rows))
-            dem = xrcrop(raster, lat=lat, lon=lon)
-
-        else:
-            raise ValueError("Provide latlon constraints to reduce memory usage")
-
-        # Download needed GSW tiles
-        self.dem = dem.compute(scheduler="synchronous")
+        # Determine lat/lon bounds for pre-downloading tiles.
+        # Priority: l1 > explicit lat/lon tuples.
+        # Pre-downloading ensures concurrent processes won't interfere
+        # with each other during process_block.
+        if l1 is not None:
+            lat_bounds = (
+                float(l1[str(names.lat)].min()),
+                float(l1[str(names.lat)].max()),
+            )
+            lon_bounds = (
+                float(l1[str(names.lon)].min()),
+                float(l1[str(names.lon)].max()),
+            )
+            self._pre_download_tiles(lat_bounds, lon_bounds)
+        elif lat is not None and lon is not None:
+            self._pre_download_tiles(lat, lon)
 
     def input_vars(self) -> list[Var]:
         return [names.lat, names.lon]
 
     def created_vars(self) -> list[Var]:
         return [Var("altitude", dims_like=str(names.lat), attrs={"units": "m"})]
+    
+    def auto_template(self) -> bool:
+        return True
+
+    def _pre_download_tiles(self, lat: Tuple[float, float], lon: Tuple[float, float]) -> None:
+        """
+        Pre-download all DEM tiles that cover the given lat/lon bounds.
+
+        This ensures that concurrent processes calling process_block won't
+        interfere with each other during tile downloads.
+        """
+        # Determine the set of tile rows and columns that cover the bounds
+        half_pixel_height = 0.5 / self.tile_height
+        row_min = int(np.floor(lat[0] - half_pixel_height))
+        row_max = int(np.floor(lat[1] - half_pixel_height))
+
+        # Tile width varies by latitude; compute for each row
+        for row in range(row_min, row_max + 1):
+            tw = _copdem_tile_width(abs(row), self.resolution)
+            half_pixel_width = 0.5 / tw
+            col_min = int(np.floor((lon[0] + half_pixel_width + 180.0) % 360.0 - 180.0))
+            col_max = int(np.floor((lon[1] + half_pixel_width + 180.0) % 360.0 - 180.0))
+
+            for col in range(col_min, col_max + 1):
+                self._get_tile(row, col)
+
+    def _get_tile(self, row: int, col: int) -> np.ndarray | None:
+        """
+        Get or download a single DEM tile.
+
+        Returns the tile data as a 2D numpy array (rows x cols), or None
+        if the tile is not available.
+        """
+        if (row, col) in self._tile_cache:
+            return self._tile_cache[(row, col)]
+
+        tile_name = _copdem_tile_name(row, col, self.resolution)
+
+        # Check availability
+        if tile_name not in self.available:
+            return None
+
+        # Build download URL
+        prefix = _copdem_url_prefix(self.resolution)
+        url = f"{prefix}/{tile_name}/{tile_name}.tif"
+        local_path = self.cache_directory / f"{tile_name}.tif"
+
+        # Download if needed
+        if not local_path.exists():
+            download_url(url, self.cache_directory, if_exists="skip", verbose=False)
+
+        # Read tile data
+        if self.verbose:
+            print(f"reading DEM tile {local_path}")
+        with xr.open_dataset(str(local_path), engine="rasterio") as ds:
+            dem = ds.band_data.values[0]
+
+        # DEM rows are ordered from North to South (first line is North-most).
+        # The formula (row + 1) - lat already accounts for this, so no flip needed.
+        self._tile_cache[(row, col)] = dem
+        return dem
+
+    def _get_altitude(self, lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
+        """
+        Get altitude for arrays of lat/lon coordinates.
+
+        Follows the reference implementation: for each point, determines
+        which tile covers it, then indexes into that tile using the
+        tile's actual dimensions.
+        """
+        altitude = np.empty(lat.shape, dtype=np.float32)
+        altitude[:] = np.nan
+
+        # Determine tile row for each point
+        # (A pixel center less than half a pixel above the degree line is covered by this tile)
+        half_pixel_height = 0.5 / self.tile_height
+        rows = np.floor(lat - half_pixel_height).astype(np.int32)
+
+        # Determine tile width for each point (varies by latitude band)
+        tile_width = np.empty(lat.shape, dtype=np.int32)
+        tile_width[:] = self.tile_height
+        tile_width[(rows >= 50) | (rows <= -50)] = self.tile_height * 2 // 3
+        tile_width[(rows >= 60) | (rows <= -60)] = self.tile_height // 2
+        tile_width[(rows >= 70) | (rows <= -70)] = self.tile_height // 3
+        tile_width[(rows >= 80) | (rows <= -80)] = self.tile_height // 5
+        tile_width[(rows >= 85) | (rows <= -85)] = self.tile_height // 10
+
+        # Determine tile col for each point
+        # (A pixel center less than half a pixel left of the degree line is covered by this tile)
+        half_pixel_width = 0.5 / tile_width
+        cols = np.floor((lon + half_pixel_width + 180.0) % 360.0 - 180.0).astype(np.int32)
+
+        # Encode as unique bin index per tile
+        bin_index = (rows + 90) * 360 + cols + 180
+
+        # Process each unique tile
+        bin_set = np.unique(bin_index)
+        for bin_val in bin_set:
+            row = bin_val // 360 - 90
+            col = bin_val % 360 - 180
+
+            # Get tile data
+            dem = self._get_tile(row, col)
+            if dem is None:
+                continue
+
+            # Mask for points in this tile
+            is_inside_tile = bin_index == bin_val
+            if not is_inside_tile.any():
+                continue
+
+            # Compute within-tile indices
+            dem_row = (((row + 1) - lat[is_inside_tile] + half_pixel_height) * self.tile_height).astype(np.int32)
+            dem_col = (((lon[is_inside_tile] - col + half_pixel_width[is_inside_tile]) % 360.0) * tile_width[is_inside_tile]).astype(np.int32)
+
+            # Clamp indices to valid range
+            dem_row = np.clip(dem_row, 0, dem.shape[0] - 1)
+            dem_col = np.clip(dem_col, 0, dem.shape[1] - 1)
+
+            altitude[is_inside_tile] = dem[dem_row, dem_col]
+
+        # Fill missing values
+        if self.missing is not None:
+            altitude[np.isnan(altitude)] = self.missing
+
+        return altitude
 
     def process_block(self, block: xr.Dataset) -> None:
-        assert hasattr(self, "dem"), "Provide LatLon constraints in constructor"
-        params = dict(lat=self.method(str(names.lat)), lon=self.method(str(names.lon)))
-        Interpolator(self.dem.to_dataset(), **params).process_block(block)
-        block["altitude"] = xr.where(
-            ~block.altitude.isnull(), block.altitude, self.missing
+        lat = np.asarray(block[str(names.lat)])
+        lon = np.asarray(block[str(names.lon)])
+
+        altitude = self._get_altitude(lat, lon)
+
+        block["altitude"] = xr.DataArray(
+            altitude,
+            dims=block[str(names.lat)].dims,
+            attrs={"units": "m"},
         )
-
-
-class _CopDEM_tile:
-    pattern = "Copernicus_DSM_COG_{}_{}_00_{}_00_DEM"
-
-    def __init__(self, lat: str, lon: str, resolution: int, directory: Path):
-
-        N = int(1200 * 90 / resolution)
-        self.empty = False
-        self.shape = (N, N)
-        self.dtype = "float32"
-        self.tile_name = self.pattern.format(resolution // 3, lat, lon)
-        self.resolution = resolution
-        self.directory = directory
-
-        if not directory.exists():
-            raise IOError(
-                f"Directory {directory} does not exist. "
-                "It will be used to store GSW tiles. "
-                "Please create it or link it first."
-            )
-
-    def set_as_empty(self):
-        self.empty = True
-
-    def __getitem__(self, key):
-        return self.fetch_gsw_tile()[key].compute(scheduler="sync").values
-
-    def fetch_gsw_tile(self) -> xr.DataArray:
-        """
-        Read remote file and returns its content as a numpy array
-        """
-
-        if self.empty:
-            return xr.DataArray(zeros(self.shape, dtype=self.dtype) + np.nan)
-
-        # Download tiles
-        prefix = _copdem_url_prefix(self.resolution)
-        url = "/".join([prefix, self.tile_name, self.tile_name + ".tif"])
-
-        # Download and read geotiff data
-        p = download_url(url, self.directory, if_exists="skip", verbose=False)
-        data = xr.open_dataarray(p, engine="rasterio").squeeze()
-        data = data.isel(y=slice(None, None, -1))  # Flip values along y-axis
-        data = data.rename(x=str(names.columns), y=str(names.rows))
-        data = drop_unused_dims(data)
-
-        # Add relevant information
-        data.attrs["source_file"] = url
-        data.name = "altitude"
-
-        return data.astype(self.dtype)
-
-
-def _list_available_tiles(
-        directory: Path, resolution: int, verbose: bool = True
-    ) -> np.ndarray:
-    """Query the list of available tiles"""
-    list_filename = "tileList.txt"
-    local_list_path = directory / f"tileList_{resolution}.txt"
-    url = "{}/{}".format(_copdem_url_prefix(resolution), list_filename)
-    if not local_list_path.exists():
-        p = download_url(url, directory, if_exists="overwrite", verbose=verbose)
-        p.replace(local_list_path)
-    return np.loadtxt(local_list_path, dtype="str")
-
-
-def read_tile(
-        lat: str, lon: str, resolution: int, directory: Path, available: list = None
-    ):
-    """
-    Read a single tile as a dask array
-
-    Data is accessed on demand
-    """
-    tile = _CopDEM_tile(lat, lon, resolution, directory)
-    if available is not None and tile.tile_name not in available:
-        tile.set_as_empty()
-    return from_array(tile, meta=np.array([], tile.dtype))
-
-
-def list_tiles() -> Tuple[List]:
-    """Return list of latlon acronym"""
-    lons = [f"W{w:03d}" for w in range(180, 0, -1)]
-    lons.extend([f"E{e:03d}" for e in range(0, 180)])
-    lats = [f"S{s:02d}" for s in range(90, 0, -1)]
-    lats.extend([f"N{n:02d}" for n in range(0, 90)])
-    return lats, lons
-
-
-def generate_full_gsw_mosaic(
-        directory: str | Path, resolution: int, verbose: bool = True
-    ) -> xr.DataArray:
-    """Build a lazy dask array representing the full global surface water mosaic"""
-
-    # Determines list of latlon acronyms
-    available = _list_available_tiles(directory, resolution, verbose)
-    lats, lons = list_tiles()
-
-    # concat the delayed dask objects for all tiles
-    return concatenate([
-        concatenate([
-            read_tile(
-                lat, lon,
-                resolution=resolution,
-                directory=directory,
-                available=available,
-            )
-            for lat in lats
-        ], axis=0)
-        for lon in lons
-    ], axis=1)
