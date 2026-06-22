@@ -42,23 +42,35 @@ class Init_rho_toa(BlockProcessor):
         rho_toa = pi * L_toa * d^2 / (mu_s * F0)
 
     where d is the sun-earth distance in AU, mu_s = cos(SZA), and F0 is the
-    extraterrestrial solar irradiance at 1 AU.
+    extraterrestrial solar irradiance.
 
-    The processor is a no-op if ``rtoa`` is already present in the dataset.
+    The processor is a no-op if `rtoa` is already present in the dataset.
     F0 can come from two sources (in order of priority):
-    1. As a per-pixel band variable in the dataset (``names.F0``).
-    2. Integrated from ``srf`` using a solar spectrum: either the
-       ``solar_irradiance`` argument or, by default, the LISIRD p1nm spectrum.
+    1. As a per-pixel band variable in the dataset (`F0`).
+    2. Integrated from `srf` using a solar spectrum: either the
+       `solar_irradiance` argument or, by default, the LISIRD p1nm
+       spectrum. In this case F0 represents the irradiance at 1 AU.
+
+    The sun-earth distance correction (d²) can be controlled via
+    `correct_sun_earth_distance`:
+    - `None` (default): apply d² only when F0 is integrated from SRF
+      (i.e., assume dataset-provided F0 already includes the correction).
+    - `True`: always apply d² regardless of F0 source.
+    - `False`: never apply d².
 
     Args:
         ds: Input dataset used to determine which variables are already present
             and to parse the acquisition datetime.
         srf: Per-band spectral response functions used to integrate F0 when it
-            is not available in ``ds``.  Required when ``names.F0`` is absent
-            from ``ds``.
+            is not available in `ds`.  Required when `names.F0` is absent
+            from `ds`.
         solar_irradiance: Solar spectrum DataArray (wavelength axis named
-            ``"wav"``) to integrate over ``srf``.  Defaults to the LISIRD
-            p1nm spectrum when ``None``.
+            `"wav"`) to integrate over `srf`.  Defaults to the LISIRD
+            p1nm spectrum when `None`.
+        correct_sun_earth_distance: Whether to apply the sun-earth distance
+            correction.  If `None` (default), the correction is applied only
+            when F0 is integrated from SRF.  If `True`, always applied.  If
+            `False`, never applied.
     """
 
     def __init__(
@@ -66,13 +78,24 @@ class Init_rho_toa(BlockProcessor):
         ds: xr.Dataset,
         srf: xr.Dataset | None = None,
         solar_irradiance: xr.DataArray | None = None,
+        correct_sun_earth_distance: bool | None = None,
     ):
         self.enable = names.rtoa not in ds
         if self.enable:
             self.has_F0 = names.F0 in ds
+            self.correct_sun_earth_distance = correct_sun_earth_distance
 
-            dt = datetime_parse(ds)
-            self.d = sun_earth_distance(dt)
+            # Determine whether the distance correction will be applied
+            if correct_sun_earth_distance is None:
+                apply_d = not self.has_F0
+            else:
+                apply_d = correct_sun_earth_distance
+
+            if apply_d:
+                dt = datetime_parse(ds)
+                self.d = sun_earth_distance(dt)
+            else:
+                self.d = 1.0
 
             if not self.has_F0:
                 # Solar irradiance is not provided: calculate it from srf
