@@ -1084,3 +1084,36 @@ def get_SRF_olci(sensor: str):
     )
 
     return srf
+
+
+def get_SRF_olci_single(sensor: str) -> xr.DataArray:
+    """
+    Get the OLCI Spectral Response Function for a single (central) detector.
+
+    Selects the central detector element (camera FM7, CCD column 374) and
+    removes single-valued coordinates and the 'id' field from the result.
+
+    Parameters
+    ----------
+    sensor : str
+        OLCI sensor identifier. One of:
+        - 'sentinel3_1_olci'
+        - 'sentinel3_2_olci'
+
+    Returns
+    -------
+    xr.DataArray
+        The SRF data array for the central detector, with single-valued
+        coordinates and the 'id' field removed.
+    """
+    srf = get_SRF_olci(sensor)
+
+    sub = select(
+        srf,
+        camera="FM7",
+        ccd_col=374,
+    )
+
+    # Remove 'id' and coords with single values
+    single_val_coords = [c for c in sub.coords if sub[c].size == 1]
+    return sub[[x for x in sub if x != 'id']].drop_vars(single_val_coords)
