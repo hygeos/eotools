@@ -7,7 +7,9 @@ import numpy as np
 import pytest
 import xarray as xr
 from eoread import msi
+from scipy.integrate import simpson
 
+from eotools.gaseous_absorption import get_absorption
 from eotools.srf import (filter_bands, get_SRF, get_SRF_eumetsat,
                          get_SRF_landsat8_oli, integrate_srf, plot_srf, rename,
                          select)
@@ -17,7 +19,30 @@ from tests import samples
 from . import conftest
 
 level1 = pytest.fixture(samples.level1_msi)
-  
+
+
+@pytest.mark.parametrize('platform,sensor', [
+    ('landsat-8', 'oli'),
+    ('landsat-9', 'oli'),
+])
+@pytest.mark.parametrize('gas', ['o3', 'no2'])
+@pytest.mark.parametrize('integration_function', **parametrize_dict({
+    'simpson': simpson,
+    'trapz': np.trapz,
+}))
+def test_integrate_srf(platform, sensor, gas, integration_function):
+    srf = get_SRF((platform, sensor))
+    k = get_absorption(gas)
+
+    for resample in ["x", "srf"]:
+        integrated = integrate_srf(
+            srf,
+            k,
+            integration_function=integration_function,
+            resample=resample,
+        )
+        print(resample, integrated)
+
 
 @pytest.mark.parametrize(
     "get_srf_kwargs,sel", 

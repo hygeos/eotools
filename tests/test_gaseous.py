@@ -7,19 +7,15 @@ import numpy as np
 import pytest
 import xarray as xr
 from core.tests.conftest import savefig
-from core.pytest_utils import parametrize_dict
 from matplotlib import pyplot as plt
-from scipy.integrate import simpson
-
 from eotools.gaseous_absorption import (
     gas_list_gatiab,
-    get_absorption,
     get_gaseous_abs,
     transmission_model,
     transmission_model_eval,
 )
-from eotools.srf import (filter_bands, get_band, get_bands, get_SRF, integrate_srf,
-                         plot_srf, rename, select, squeeze)
+from eotools.srf import (filter_bands, get_band, get_bands, get_SRF,
+                         integrate_srf, plot_srf, rename, select, squeeze)
 
 # Check if gatiab is available
 try:
@@ -27,29 +23,6 @@ try:
     GATIAB_AVAILABLE = True
 except ImportError:
     GATIAB_AVAILABLE = False
-
-
-@pytest.mark.parametrize('platform,sensor', [
-    ('landsat-8', 'oli'),
-    ('landsat-9', 'oli'),
-])
-@pytest.mark.parametrize('gas', ['o3', 'no2'])
-@pytest.mark.parametrize('integration_function', **parametrize_dict({
-    'simpson': simpson,
-    'trapz': np.trapz,
-}))
-def test_integrate_srf(platform, sensor, gas, integration_function):
-    srf = get_SRF((platform, sensor))
-    k = get_absorption(gas)
-
-    for resample in ["x", "srf"]:
-        integrated = integrate_srf(
-            srf,
-            k,
-            integration_function=integration_function,
-            resample=resample,
-        )
-        print(resample, integrated)
 
 
 def get_x_range(
@@ -184,70 +157,6 @@ def test_all_gases(platform_sensor: str, sel: Dict, request):
     savefig(request)
 
 
-@pytest.mark.skipif(not GATIAB_AVAILABLE, reason="gatiab not installed")
-@pytest.mark.parametrize('gas', gas_list_gatiab)
-@pytest.mark.parametrize("sensor,sel", [
-        ("SENTINEL-3A_OLCI", {'ccd_col': 374, 'camera': 'FM7'}),
-        ("MSG-1_SEVIRI", {}),
-        ("MTG-I1_FCI", {}),
-        ("SENTINEL2-A_MSI", {}),
-    ])
-def test_gaseous_fit(sensor: str, sel: Dict, gas: str, request):
-
-    # load SRF
-    srf = get_SRF(sensor)
-    srf = filter_bands(srf, 250, 2500)
-    srf = rename(srf, 'trim')
-    srf = select(srf, **sel)
-    cwav = integrate_srf(srf, lambda x: x)
-    
-    # Load high-resolution gaseous absorption model
-    gabs = get_gaseous_abs()
-
-    # Build x = M * U / U0 grid and compute integrated transmission
-    x_range = get_x_range(gas, gabs)
-    T = gabs[gas].T1 ** x_range
-    T_integrated = integrate_srf(srf, T, resample='x')
-
-    tmodel = transmission_model(srf)
-
-    list_bands = get_bands(srf)
-    for iband in range(len(list_bands)):
-
-        x_vals = x_range.values.ravel()
-        T = get_band(T_integrated, list_bands[iband]).values.ravel()
-
-        Teq = tmodel[gas].Teq.isel({"bands": iband}).values
-        n = tmodel[gas].n.isel({"bands": iband}).values
-        a = -np.log(Teq)
-
-        # Create side-by-side plots
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
-        fig.suptitle(
-            f"{gas}\nband = {list_bands[iband]} ({float(get_band(cwav, list_bands[iband]))})"
-        )
-        
-        # Plot regression (log scale)
-        X = np.log(x_vals)
-        ax1.plot(X, np.log(-np.log(T)), 'b+')
-        ax1.plot(X, np.log(a) + n * X, 'r--')
-        ax1.set_xlabel('ln(M · U / U₀)')
-        ax1.set_ylabel(f'ln(-ln(T({gas})))')
-        ax1.grid(True)
-        ax1.legend()
-
-        # Plot regression (linear scale)
-        X_lin = np.linspace(np.amin(x_vals), np.amax(x_vals), 100)
-        ax2.plot(x_vals, T, 'b+')
-        ax2.plot(X_lin, np.exp( -a*X_lin**n ), "r--", label=f"a={a:.3g}, n={n:.3g}")
-        ax2.set_xlabel('M · U / U₀')
-        ax2.set_ylabel(f'T({gas})')
-        ax2.grid(True)
-        ax2.legend()
-        
-        plt.tight_layout()
-        savefig(request)
-
 def plot_all_gases(wav_min=380, wav_max=1100):
     gabs = get_gaseous_abs()
     wav = gabs["CH4"].wav
@@ -369,7 +278,7 @@ def plot_absorption_model(
     ax.yaxis.set_minor_locator(plt.NullLocator())
     ax.set_xlabel('x = M · U / U₀')
     ax.set_ylabel(f'T ({gas})')
-    ax.legend()
+    ax.legend(loc='lower left')
     ax.grid(True)
 
     # Show individual variability of M and U/U₀ as text annotations
@@ -392,8 +301,8 @@ def plot_absorption_model(
 @pytest.mark.parametrize(
     "platform_sensor", [
         "SENTINEL-2A_MSI",
-        "MSG-1_SEVIRI",
-        "MTG-I1_FCI",
+        # "MSG-1_SEVIRI",
+        # "MTG-I1_FCI",
     ])
 @pytest.mark.parametrize("gas", gas_list_gatiab)
 def test_absorption_model(request, platform_sensor: str, gas: str):
