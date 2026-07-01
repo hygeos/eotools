@@ -189,6 +189,8 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
     -------
     xr.Dataset
         The input dataset with added variables: rho_rc, rho_mol_gli, rho_mol, t_d.
+    
+    Note: this function shoud be deprecated in favour of the class RayleighCorrection
     """
 
     lut = load_rayleigh_lut(**cfg)
@@ -305,6 +307,7 @@ class RayleighCorrection(BlockProcessor):
             "surface_pressure", "sea_level_pressure"
         ] = "sea_level_pressure",
         sun_glint_corr: bool = True,
+        transmittance_corr: bool = False,
         **cfg,
     ):
         """
@@ -316,12 +319,24 @@ class RayleighCorrection(BlockProcessor):
             Sensor spectral response function.
         version : Literal["polymer_legacy"], default="polymer_legacy"
             LUT version to use.
-        pressure_kind : Literal["surface_pressure", "sea_level_pressure"], default="sea_level_pressure"
+            "polymer_legacy": legacy Rayleigh correction implemented in Polymer.
+            Relies on radiative transfer simulations using the SOS (successive order of
+            scattering) code.
+        pressure_kind : Literal["surface_pressure", "sea_level_pressure"]
+            default="sea_level_pressure"
             Pressure data type used at input.
         sun_glint_corr : bool, default=True
             Whether to include sun glint correction in the Rayleigh correction.
             If True, corrects for both Rayleigh scattering and sun glint.
             If False, corrects only for Rayleigh scattering.
+        transmittance_corr : bool, default=False
+            Whether to apply the Rayleigh diffuse transmittance correction to
+            the Rayleigh-corrected reflectance. If True, `rho_rc` is divided by
+            the total (downward × upward) Rayleigh diffuse transmittance `t_d`,
+            which accounts for both direct and diffuse attenuation along the
+            solar and sensor view paths. The resulting `rho_rc` effectively
+            compensates for the remaining gaseous and Rayleigh scattering
+            effects not removed by the reflectance subtraction.
         **cfg : dict
             Additional configuration.
         """
@@ -330,6 +345,7 @@ class RayleighCorrection(BlockProcessor):
             self.rayleigh_lut = read_lut_polymer_legacy()
         self.srf = srf
         self.sun_glint_corr = sun_glint_corr
+        self.transmittance_corr = transmittance_corr
         self.interpolator = Interpolator(
             self.rayleigh_lut,
             odr=Linear("odr"),
@@ -355,6 +371,10 @@ class RayleighCorrection(BlockProcessor):
         return ivars
     
     def created_vars(self) -> list[Var]:
+        if self.transmittance_corr:
+            rho_rc_desc = "Rayleigh corrected reflectance (incl. transmittance)"
+        else:
+            rho_rc_desc = "Rayleigh corrected reflectance"
         return [
             Var(
                 "rho_r",
@@ -380,7 +400,7 @@ class RayleighCorrection(BlockProcessor):
                 "rho_rc",
                 dtype="float64",
                 dims_like="rho_gc",
-                attrs={"desc": "Rayleigh corrected reflectance"},
+                attrs={"desc": rho_rc_desc},
             ),
         ]
     
@@ -405,3 +425,7 @@ class RayleighCorrection(BlockProcessor):
         else:
             # Rayleigh only correction
             block['rho_rc'] = block['rho_gc'] - block['rho_r']
+
+        if self.transmittance_corr:
+            # Apply diffuse transmittance correction
+            block['rho_rc'] = block['rho_rc'] / block['t_d']
