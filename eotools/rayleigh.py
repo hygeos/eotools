@@ -1,20 +1,31 @@
+import warnings
 from pathlib import Path
 from typing import Literal
-from core.tools import Var
+
 import numpy as np
 import xarray as xr
-from eotools.srf import integrate_srf
-from eotools.bodhaine import rod, raycrs, column_number_density
-from eotools.chapman import chapman
-from core.process.blockwise import BlockProcessor
-from core.interpolate import Interpolator
+
+from core.tools import Var
+from core.process.blockwise import BlockProcessor, CompoundProcessor
+from core.interpolate import Interpolator, interp, Linear
 from core.download import download_url
 from core import env
+from core.files.save import to_netcdf
+from core.import_utils import import_module
+from eotools.srf import get_SRF, integrate_srf
+from eotools.bodhaine import rod, raycrs, column_number_density
+from eotools.chapman import chapman
 from eotools.units import check_units, convert
 from eotools.utils.tools import deduplicate_dims
+from eotools.apply_ancillary import ApplyAncillary
+from eotools.gaseous_correction import Gaseous_correction
+from eotools.geometry import InitGeometry
+from eotools.toa_reflectance import Init_rho_toa
 from luts import read_mlut_hdf
 
-from core.interpolate import interp, Linear
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", UserWarning)
+    from eoread.ancillary_nasa import Ancillary_NASA
 
 
 
@@ -429,3 +440,175 @@ class RayleighCorrection(BlockProcessor):
         if self.transmittance_corr:
             # Apply diffuse transmittance correction
             block['rho_rc'] = block['rho_rc'] / block['t_d']
+
+
+def process_rayleigh(
+    input_product: Path, reader: str, output_product: Path, dem: str = "eotools.dem.GTOPO30"
+):
+    """
+    Run the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.
+
+    Loads the input product using the specified reader class, applies the Rayleigh correction
+    via :func:`process_rayleigh_dataset`, and saves the result as a NetCDF file.
+
+    Parameters
+    ----------
+    input_product : Path
+        Path to the Level-1 input product.
+    reader : str
+        Dotted path of the reader class to use
+        (e.g. `eoread.planetscope.Level1_Planetscope`).
+        The class must be callable with a path and return an `xr.Dataset`.
+    output_product : Path
+        Destination path for the output NetCDF file.
+    dem : str, optional
+        Dotted path of the DEM class to use
+        (e.g. 'eotools.dem.GTOPO30' or 'eotools.dem.CopernicusDEM').
+        Default is 'eotools.dem.GTOPO30'.
+    """
+    # Import the reader
+    rd = import_module(reader)
+
+    # Read input data
+    l1 = rd(input_product)
+
+    # Apply the processor on the xr.Dataset
+    result = process_rayleigh_dataset(l1, dem=dem)
+
+    # Write output
+    to_netcdf(result, filename=output_product)
+
+
+def process_rayleigh_dataset(
+    input_dataset: xr.Dataset, dem: str = "eotools.dem.GTOPO30"
+) -> xr.Dataset:
+    """
+    Apply the full Rayleigh correction pipeline to a Level-1 dataset.
+
+    Runs TOA reflectance initialisation, geometry, altitude, NASA ancillary data,
+    gaseous absorption, and Rayleigh scattering correction in sequence.
+
+    Parameters
+    ----------
+    input_dataset : xr.Dataset
+        Level-1 dataset as returned by a reader module.
+    dem : str, optional
+        Dotted path of the DEM class to use
+        (e.g. `'eotools.dem.GTOPO30'` or `'eotools.dem.CopernicusDEM'`).
+        Default is `'eotools.dem.GTOPO30'`.
+
+    Returns
+    -------
+    xr.Dataset
+        Rayleigh-corrected dataset containing the following variables:
+        - `rho_gc` : Gaseous corrected reflectances
+        - `rho_r` : Rayleigh reflectance
+        - `rho_rg` : Rayleigh + glint reflectance
+        - `t_d` : Diffuse transmittance (upward + downward)
+        - `rho_rc` : Rayleigh-corrected reflectance
+        Other input and ancillary variables:
+        - `Rtoa` : Top-of-atmosphere reflectance
+        - `cwav` : Central wavelengths (nm)
+        - `altitude` : Surface altitude (m)
+        - `horizontal_wind` : Horizontal wind speed
+        - `sea_level_pressure` : Sea level pressure
+        - `total_column_ozone` : Total column ozone
+        - `total_column_water_vapour` : Total column water vapour
+    """
+    l1 = input_dataset
+
+    l1 = l1.chunk(bands=-1)
+    l1 = l1.transpose('y', 'x', ...)  # reorder dimensions
+
+    # Get sensor specific configuration
+    # Use getattr to safely access attributes that may not exist
+    platform = getattr(l1, "platform", None)
+    sensor = getattr(l1, "sensor", None)
+    cfg = config.cfg.get((platform, sensor), {}) # type: ignore
+
+    if "bands_group" in l1 and "bands_vnir" in l1.bands_group:
+        # Avoid IR bands
+        l1 = l1.sel(bands=l1.bands_group == 'bands_vnir')
+
+    srf = get_SRF(l1, rename_method="bands", **cfg)
+
+    # Import the DEM class dynamically
+    DEMClass = import_module(dem)
+
+    # Define the compound processor
+    compoundprocessor = CompoundProcessor(
+        [
+            Init_rho_toa(l1, srf),
+            InitGeometry(l1),
+            DEMClass(l1),
+            ApplyAncillary(l1, Ancillary_NASA()),
+            Gaseous_correction(l1, srf=srf, gas_correction='ckdmip', input_var="Rtoa"),
+            RayleighCorrection(srf),
+        ]
+    )
+
+    # Apply the compound processor to the level1 Dataset
+    res = compoundprocessor.map_blocks(l1)
+
+    # Ensure Rtoa is in the result
+    if 'Rtoa' not in res:
+        res['Rtoa'] = l1['Rtoa']
+
+    # Compute cwav from SRF (weighted mean wavelength)
+    cwav_ds = integrate_srf(srf, lambda x: x)
+    cwav_values = [float(cwav_ds[band].values) for band in l1.bands.values]
+    res['cwav'] = xr.DataArray(
+        cwav_values, dims=['bands'], coords={'bands': l1.bands}
+    )
+
+    return res
+
+
+def main():
+    """Command-line interface for Rayleigh correction processing."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="jrc-rayleigh-processor",
+        description="Apply Rayleigh correction to a Level-1 satellite product.",
+    )
+    parser.add_argument(
+        "input_product",
+        type=Path,
+        help="Path to the Level-1 input product.",
+    )
+    parser.add_argument(
+        "reader",
+        type=str,
+        help=(
+            "Dotted path of the reader class. "
+            "Available readers: "
+            "eoread.msi.Level1_MSI, "
+            "eoread.olci.Level1_OLCI, "
+            "eoread.oli.Level1_OLI, "
+            "eoread.planetscope.Level1_Planetscope, "
+            "eoread.pleiades.Level1_Pleiades, "
+            "eoread.pleiades_neo.Level1_PNEO, "
+            "eoread.geosat.Level1_GEOSAT."
+        ),
+    )
+    parser.add_argument(
+        "output_product",
+        type=Path,
+        help="Destination path for the output NetCDF file.",
+    )
+
+    args = parser.parse_args()
+
+    if not args.input_product.exists():
+        parser.error(f"Input product '{args.input_product}' does not exist.")
+
+    process_rayleigh(
+        input_product=args.input_product,
+        reader=args.reader,
+        output_product=args.output_product,
+    )
+
+
+if __name__ == "__main__":
+    main()
