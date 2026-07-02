@@ -23,6 +23,13 @@ from eotools.geometry import InitGeometry
 from eotools.toa_reflectance import Init_rho_toa
 from luts import read_mlut_hdf
 
+cfg_rayleigh_processor = {  # (platform, sensor) -> config
+    ("Sentinel-3A", "OLCI"): {
+        "srf_getter": "eotools.srf.get_SRF_olci_single",
+        "srf_getter_arg": "sentinel3_1_olci",
+    },
+}
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
     from eoread.ancillary_nasa import Ancillary_NASA
@@ -426,6 +433,7 @@ def process_rayleigh(
     output_product: Path,
     dem: str = "eotools.dem.GTOPO30",
     transmittance_corr: bool = True,
+    **cfg
 ):
     """
     Run the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.
@@ -462,7 +470,7 @@ def process_rayleigh(
 
     # Apply the processor on the xr.Dataset
     result = process_rayleigh_dataset(
-        l1, dem=dem, transmittance_corr=transmittance_corr
+        l1, dem=dem, transmittance_corr=transmittance_corr, **cfg
     )
 
     # Write output
@@ -471,7 +479,7 @@ def process_rayleigh(
 
 def process_rayleigh_dataset(
     input_dataset: xr.Dataset,
-    dem: str = "eotools.dem.GTOPO30",
+    dem: str = "eotools.dem.CopernicusDEM",
     transmittance_corr: bool = True,
 ) -> xr.Dataset:
     """
@@ -522,13 +530,13 @@ def process_rayleigh_dataset(
     # Use getattr to safely access attributes that may not exist
     platform = getattr(l1, "platform", None)
     sensor = getattr(l1, "sensor", None)
-    cfg = config.cfg.get((platform, sensor), {}) # type: ignore
+    sensor_cfg = cfg_rayleigh_processor.get((platform, sensor), {})  # type: ignore[arg-type]
 
     if "bands_group" in l1 and "bands_vnir" in l1.bands_group:
         # Avoid IR bands
         l1 = l1.sel(bands=l1.bands_group == 'bands_vnir')
 
-    srf = get_SRF(l1, rename_method="bands", **cfg)
+    srf = get_SRF(l1, rename_method="bands", **sensor_cfg)
 
     # Import the DEM class dynamically
     DEMClass = import_module(dem)
