@@ -297,8 +297,16 @@ class RayleighCorrection(BlockProcessor):
     pressure_kind : Literal["surface_pressure", "sea_level_pressure"], default="sea_level_pressure"
         Type of pressure data to use. "sea_level_pressure" uses sea-level
         pressure, "surface_pressure" uses surface pressure.
-    **cfg : dict
-        Additional configuration parameters passed to `load_rayleigh_lut`.
+    sun_glint_corr : bool, default=True
+        Whether to include sun glint correction. If True, subtracts
+        Rayleigh + glint reflectance (`rho_rg`); otherwise subtracts
+        Rayleigh reflectance only (`rho_r`).
+    transmittance_corr : bool, default=False
+        Whether to apply the Rayleigh diffuse transmittance correction.
+        If True, the corrected reflectance `rho_rc` is divided by the total
+        diffuse transmittance `t_d` (downward x upward), effectively
+        compensating for remaining Rayleigh and gaseous attenuation along
+        both the solar and sensor view paths.
 
     Attributes
     ----------
@@ -321,36 +329,6 @@ class RayleighCorrection(BlockProcessor):
         transmittance_corr: bool = False,
         **cfg,
     ):
-        """
-        Initialize the Rayleigh correction processor.
-
-        Parameters
-        ----------
-        srf : xr.Dataset | None, optional
-            Sensor spectral response function.
-        version : Literal["polymer_legacy"], default="polymer_legacy"
-            LUT version to use.
-            "polymer_legacy": legacy Rayleigh correction implemented in Polymer.
-            Relies on radiative transfer simulations using the SOS (successive order of
-            scattering) code.
-        pressure_kind : Literal["surface_pressure", "sea_level_pressure"]
-            default="sea_level_pressure"
-            Pressure data type used at input.
-        sun_glint_corr : bool, default=True
-            Whether to include sun glint correction in the Rayleigh correction.
-            If True, corrects for both Rayleigh scattering and sun glint.
-            If False, corrects only for Rayleigh scattering.
-        transmittance_corr : bool, default=False
-            Whether to apply the Rayleigh diffuse transmittance correction to
-            the Rayleigh-corrected reflectance. If True, `rho_rc` is divided by
-            the total (downward × upward) Rayleigh diffuse transmittance `t_d`,
-            which accounts for both direct and diffuse attenuation along the
-            solar and sensor view paths. The resulting `rho_rc` effectively
-            compensates for the remaining gaseous and Rayleigh scattering
-            effects not removed by the reflectance subtraction.
-        **cfg : dict
-            Additional configuration.
-        """
         # todo: bitmask invalid
         if version == 'polymer_legacy':
             self.rayleigh_lut = read_lut_polymer_legacy()
@@ -443,7 +421,11 @@ class RayleighCorrection(BlockProcessor):
 
 
 def process_rayleigh(
-    input_product: Path, reader: str, output_product: Path, dem: str = "eotools.dem.GTOPO30"
+    input_product: Path,
+    reader: str,
+    output_product: Path,
+    dem: str = "eotools.dem.GTOPO30",
+    transmittance_corr: bool = True,
 ):
     """
     Run the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.
@@ -465,6 +447,12 @@ def process_rayleigh(
         Dotted path of the DEM class to use
         (e.g. 'eotools.dem.GTOPO30' or 'eotools.dem.CopernicusDEM').
         Default is 'eotools.dem.GTOPO30'.
+    transmittance_corr : bool, optional
+        Whether to apply the Rayleigh diffuse transmittance correction to
+        the Rayleigh-corrected reflectance. If `True`, `rho_rc` is divided
+        by the total (downward x upward) Rayleigh diffuse transmittance `t_d`,
+        which accounts for both direct and diffuse Rayleigh attenuation along the solar
+        and sensor view paths.  Default is `True`.
     """
     # Import the reader
     rd = import_module(reader)
@@ -473,14 +461,18 @@ def process_rayleigh(
     l1 = rd(input_product)
 
     # Apply the processor on the xr.Dataset
-    result = process_rayleigh_dataset(l1, dem=dem)
+    result = process_rayleigh_dataset(
+        l1, dem=dem, transmittance_corr=transmittance_corr
+    )
 
     # Write output
     to_netcdf(result, filename=output_product)
 
 
 def process_rayleigh_dataset(
-    input_dataset: xr.Dataset, dem: str = "eotools.dem.GTOPO30"
+    input_dataset: xr.Dataset,
+    dem: str = "eotools.dem.GTOPO30",
+    transmittance_corr: bool = True,
 ) -> xr.Dataset:
     """
     Apply the full Rayleigh correction pipeline to a Level-1 dataset.
@@ -496,6 +488,12 @@ def process_rayleigh_dataset(
         Dotted path of the DEM class to use
         (e.g. `'eotools.dem.GTOPO30'` or `'eotools.dem.CopernicusDEM'`).
         Default is `'eotools.dem.GTOPO30'`.
+    transmittance_corr : bool, optional
+        Whether to apply the Rayleigh diffuse transmittance correction to
+        the Rayleigh-corrected reflectance. If `True`, `rho_rc` is divided
+        by the total (downward x upward) Rayleigh diffuse transmittance `t_d`,
+        which accounts for both direct and diffuse Rayleigh attenuation along the solar
+        and sensor view paths. Default is `True`.
 
     Returns
     -------
@@ -543,7 +541,7 @@ def process_rayleigh_dataset(
             DEMClass(l1),
             ApplyAncillary(l1, Ancillary_NASA()),
             Gaseous_correction(l1, srf=srf, gas_correction='ckdmip', input_var="Rtoa"),
-            RayleighCorrection(srf),
+            RayleighCorrection(srf, transmittance_corr=transmittance_corr),
         ]
     )
 
