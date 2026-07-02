@@ -270,7 +270,7 @@ def get_gaseous_abs() -> xr.DataTree:
 
 
 def transmission_model_single(
-    T: xr.DataArray, srf_band: xr.DataArray, x0: float = 2.0
+    T: xr.DataArray, srf_band: xr.DataArray, x0: float = 5.0
 ) -> tuple:
     """
     Determine transmission model (Teq, n) for a given srf (for a single band)
