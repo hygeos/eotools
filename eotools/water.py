@@ -23,7 +23,7 @@ from typing import Tuple, List
 
 from core import env
 from core.geo.naming import names
-from core.tools import drop_unused_dims, Var, xrcrop
+from core.tools import drop_unused_dims, Var, xrcrop, raiseflag
 from core.interpolate import Nearest, Interpolator
 from core.process.blockwise import BlockProcessor
 from core.network.download import download_url
@@ -55,9 +55,9 @@ class GSW(BlockProcessor):
 
     def __init__(
         self,
-        l1: xr.Dataset = None,
-        lat: Tuple[float] = None,
-        lon: Tuple[float] = None,
+        l1: xr.Dataset | None = None,
+        lat: Tuple[float] | None = None,
+        lon: Tuple[float] | None = None,
         directory: str | Path | None = None,
         agg: int = 8,
     ):
@@ -113,6 +113,55 @@ class GSW(BlockProcessor):
         params = dict(lat=Nearest(str(names.lat)), lon=Nearest(str(names.lon)))
         Interpolator(self.water.to_dataset(), **params).process_block(block)
         block["water"] = xr.where(block.occurrence >= 0, block.occurrence, 0)
+
+
+class GSWLandMask(BlockProcessor):
+    """
+    BlockProcessor that adds GSW water occurrence data and raises a flag
+    where water occurrence is below threshold.
+
+    Arguments:
+        l1: Level-1 dataset for cropping GSW data (passed to GSW)
+        lat: latitude bounds tuple (passed to GSW)
+        lon: longitude bounds tuple (passed to GSW)
+        directory: directory for GSW tile storage (passed to GSW)
+        agg: GSW aggregation factor (passed to GSW)
+        threshold: water occurrence threshold in % (default: 50)
+        flag_var: name of the flags variable to modify (default: "flags")
+        flag_name: name of the flag to raise (default: "LAND")
+        flag_value: bitmask value for the flag (default: 1)
+    """
+    def __init__(
+        self,
+        l1: xr.Dataset | None = None,
+        lat: Tuple[float] | None = None,
+        lon: Tuple[float] | None = None,
+        directory: str | Path | None = None,
+        agg: int = 8,
+        threshold: float = 50,
+        flag_var: str = "flags",
+        flag_name: str = "LAND",
+        flag_value: int = 1,
+    ):
+        self.gsw = GSW(l1=l1, lat=lat, lon=lon, directory=directory, agg=agg)
+        self.threshold = threshold
+        self.flag_var = flag_var
+        self.flag_name = flag_name
+        self.flag_value = flag_value
+
+    def input_vars(self) -> list[Var]:
+        return self.gsw.input_vars() + [Var(self.flag_var)]
+
+    def created_vars(self) -> list[Var]:
+        return self.gsw.created_vars()
+
+    def modified_vars(self) -> list[Var]:
+        return [Var(self.flag_var)]
+
+    def process_block(self, block: xr.Dataset) -> None:
+        self.gsw.process_block(block)
+        flags = block[self.flag_var]
+        raiseflag(flags, self.flag_name, self.flag_value, block.water < self.threshold)
 
 
 class _GSW_tile:
