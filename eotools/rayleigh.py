@@ -575,7 +575,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        prog="jrc-rayleigh-processor",
+        prog="rayleigh-processor",
         description="Apply Rayleigh correction to a Level-1 satellite product.",
     )
     parser.add_argument(
