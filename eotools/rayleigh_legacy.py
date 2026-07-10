@@ -33,12 +33,12 @@ class Rayleigh_correction:
             Var('Tmol', dtype='float32', dims=('y', 'x', 'bands')),
         ])
 
-    def run(self, wav, mus, muv, raa, altitude, surf_press, wind_speed, flags):
+    def run(self, cwav, mus, muv, raa, altitude, surf_press, wind_speed, flags):
         '''
         Rayleigh correction
         + transmission interpolation
         '''
-        nbands = wav.shape[-1]
+        nbands = cwav.shape[-1]
         dim3 = mus.shape + (nbands,)
         Rmol = np.zeros(dim3, dtype='float32') + np.nan
         Rmolgli = np.zeros(dim3, dtype='float32') + np.nan
@@ -65,7 +65,7 @@ class Rayleigh_correction:
         for i in range(nbands):
 
             # calculate Rayleigh optical thickness on the fly
-            tau_ray = rod((wav[i] if wav.ndim == 1 else wav[ok, i])/1000.,
+            tau_ray = rod((cwav[i] if cwav.ndim == 1 else cwav[ok, i])/1000.,
                           400.,
                           45.,
                           altitude[ok],
@@ -96,7 +96,7 @@ class Rayleigh_correction:
 
     def apply_block(self, ds: xr.Dataset):
         Rmol, Rmolgli, Tmol = self.run(
-            ds.wav.transpose(..., "bands").data,
+            ds.cwav.transpose(..., "bands").data,
             ds.mus.data,
             ds.muv.data,
             ds.raa.data,
@@ -115,14 +115,14 @@ class Rayleigh_correction:
 
     def apply(self, method='apply_ufunc'):
         ds = self.ds
-        # wav, _ = xr.broadcast(ds.wav, ds.Rtoa)    # TODO: necessary with apply_ufunc ?
+        # cwav, _ = xr.broadcast(ds.cwav, ds.Rtoa)    # TODO: necessary with apply_ufunc ?
         # if ds.Rtoa.chunks:
-        #     wav = wav.chunk(ds.Rtoa.chunks)      # TODO: necessary ?
+        #     cwav = cwav.chunk(ds.Rtoa.chunks)      # TODO: necessary ?
 
         if method == 'apply_ufunc':
             Rmol, Rmolgli, Tmol = xr.apply_ufunc(
                 self.run,
-                ds.wav, ds.mus, ds.muv, ds.raa,
+                ds.cwav, ds.mus, ds.muv, ds.raa,
                 ds.altitude, ds.sea_level_pressure, ds.horizontal_wind, ds.flags,
                 dask='parallelized',
                 input_core_dims=[
@@ -136,7 +136,7 @@ class Rayleigh_correction:
             ds_out = xr.map_blocks(
                 self.apply_block,
                 xr.Dataset({
-                    "wav": ds.wav,
+                    "cwav": ds.cwav,
                     "mus": ds.mus,
                     "muv": ds.muv,
                     "raa": ds.raa,
