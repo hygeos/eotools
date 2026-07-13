@@ -1,7 +1,9 @@
+from typing import Any
+
 import numpy as np
 import xarray as xr
-from core.tools import raiseflag
-from core.tools import MapBlocksOutput, Var
+from core.process.blockwise import BlockProcessor
+from core.tools import Var
 
 from eotools.utils.stats import stdNxN
 
@@ -10,89 +12,64 @@ Basic cloud mask, as implemented in Polymer
 """
 
 
-class Cloud_mask:
+class Cloud_mask(BlockProcessor):
     """
-    Cloud masking module
+    Cloud masking using NIR reflectance threshold and spatial variability.
 
-    Cloud_mask(ds).apply()
+    Two criteria (OR):
+    1. High reflectance: Rnir > threshold (cloud)
+    2. High spatial variability: local std dev > threshold (cloud edge)
     """
 
     def __init__(
         self,
-        ds: xr.Dataset,
         cm_input_var: str,
-        cm_band_nir: int,
+        cm_band_nir: Any,
         cm_flag_value: int,
         cm_flag_name: str = "CLOUD",
         cm_flag_variable: str = "flags",
-        cm_thres_Rcloud=0.2,
-        cm_thres_Rcloud_std=0.04,
+        cm_thres_Rcloud: float = 0.2,
+        cm_thres_Rcloud_std: float = 0.04,
         cm_dist: int = 3,
         bitmask_invalid: int = -1,
         **kwargs,
     ):
-        self.ds = ds
-        self.thres_Rcloud = cm_thres_Rcloud
-        self.thres_Rcloud_std = cm_thres_Rcloud_std
-        self.band_nir = cm_band_nir
-        self.dist = cm_dist
         self.input_var = cm_input_var
+        self.band_nir = cm_band_nir
         self.flag_value = cm_flag_value
         self.flag_name = cm_flag_name
         self.flag_variable = cm_flag_variable
+        self.thres_Rcloud = cm_thres_Rcloud
+        self.thres_Rcloud_std = cm_thres_Rcloud_std
+        self.dist = cm_dist
         self.bitmask_invalid = bitmask_invalid
-        self.model = MapBlocksOutput([
-            Var('cloudmask', dtype='uint8', dims=('y', 'x'))
-        ])
 
-    def run(self, Rnir, flags):
+    def input_vars(self) -> list[Var]:
+        return [
+            Var(self.input_var),
+        ]
+
+    def modified_vars(self) -> list[Var]:
+        return [
+            Var(self.flag_variable, flags={self.flag_name: self.flag_value}),
+        ]
+
+    def process_block(self, block: xr.Dataset) -> None:
+        Rnir = block[self.input_var].sel(bands=self.band_nir)
+        flags = block[self.flag_variable]
+
         if self.bitmask_invalid >= 0:
-            ok = (flags & self.bitmask_invalid) == 0
+            ok = (flags.values & self.bitmask_invalid) == 0
         else:
-            ok = (flags >= 0)
+            ok = (flags.values >= 0)
 
-        cloudmask = np.zeros_like(flags, dtype="uint8")
-        cloudmask[:] = Rnir > self.thres_Rcloud
-        cloudmask |= stdNxN(Rnir, self.dist, ok, fillv=0.0) > self.thres_Rcloud_std
+        cloudmask = np.zeros_like(flags.values, dtype="uint8")
+        cloudmask[:] = Rnir.values > self.thres_Rcloud
+        cloudmask |= stdNxN(Rnir.values, self.dist, ok, fillv=0.0) > self.thres_Rcloud_std
 
-        return cloudmask
-
-    def map_block(self, ds: xr.Dataset):
-        cloudmask = self.run(
-            ds.Rnir.data,
-            ds.flags.data,
+        self.raiseflag(
+            block,
+            self.flag_variable,
+            self.flag_name,
+            xr.DataArray(cloudmask, dims=flags.dims),
         )
-        out = xr.Dataset()
-        out['cloudmask'] = (('y', 'x'), cloudmask)
-        return self.model.conform(out)
-
-    def apply(self, method='apply_ufunc'):
-        ds = self.ds
-        Rnir = ds[self.input_var].sel(bands=self.band_nir)
-
-        if method == 'apply_ufunc':
-            cloudmask = xr.apply_ufunc(
-                self.run,
-                Rnir,
-                ds[self.flag_variable],
-                dask="parallelized",
-                input_core_dims=[[], []],
-                output_core_dims=[[]],
-                output_dtypes=["uint8"],
-            )
-        
-        elif method == 'map_blocks':
-            ds_out = xr.map_blocks(
-                self.map_block,
-                xr.Dataset({
-                    "Rnir": Rnir,
-                    "flags": ds[self.flag_variable],
-                }),
-                template=self.model.template(ds),
-            )
-            cloudmask = ds_out.cloudmask
-
-        else:
-            raise ValueError(method)
-
-        raiseflag(ds[self.flag_variable], self.flag_name, self.flag_value, cloudmask)
