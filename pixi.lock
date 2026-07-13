@@ -1,6 +1,11 @@
 version: 7
 platforms:
 - name: linux-64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=x86_64
 environments:
   default:
     channels:
@@ -258,9 +263,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/xarray-2025.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/xlrd-2.0.1-pyhd8ed1ab_3.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
-      - pypi: .
-      - pypi: git+https://github.com/hygeos/core.git#b61f6bf8d2316df760c8c598cf5ed419bd6c2397
-      - pypi: git+https://github.com/hygeos/eoread.git#f62e514193bbec06692e8504253e687b2ae61a3f
+      - pypi: ./
+      - pypi: git+https://github.com/hygeos/core.git#b2f7023cdbd260666ca522d19bd428af594e578a
+      - pypi: git+https://github.com/hygeos/eoread.git#33b6ae0d3500c9ed3ee4385eb33397817dd4bb33
       - pypi: git+https://github.com/hygeos/luts.git#e48867fa657b295456ed80a3bd3769bcba502c01
       - pypi: git+https://github.com/hygeos/sand.git#c450673247b8dbe63e218bcf8546d512509ab961
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
@@ -542,9 +547,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/xarray-2025.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/xlrd-2.0.1-pyhd8ed1ab_3.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
-      - pypi: .
-      - pypi: git+https://github.com/hygeos/core.git#b61f6bf8d2316df760c8c598cf5ed419bd6c2397
-      - pypi: git+https://github.com/hygeos/eoread.git#f62e514193bbec06692e8504253e687b2ae61a3f
+      - pypi: ./
+      - pypi: git+https://github.com/hygeos/core.git#b2f7023cdbd260666ca522d19bd428af594e578a
+      - pypi: git+https://github.com/hygeos/eoread.git#33b6ae0d3500c9ed3ee4385eb33397817dd4bb33
       - pypi: git+https://github.com/hygeos/luts.git#e48867fa657b295456ed80a3bd3769bcba502c01
       - pypi: git+https://github.com/hygeos/sand.git#c450673247b8dbe63e218bcf8546d512509ab961
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
@@ -3985,7 +3990,7 @@ packages:
   - pkg:pypi/zipp?source=hash-mapping
   size: 24461
   timestamp: 1776131454755
-- pypi: .
+- pypi: ./
   name: eotools
   requires_dist:
   - xarray
@@ -3998,7 +4003,7 @@ packages:
   - sand @ git+https://github.com/hygeos/sand.git ; extra == 'git'
   - gatiab ; extra == 'gatiab'
   requires_python: '>=3.11'
-- pypi: git+https://github.com/hygeos/core.git#b61f6bf8d2316df760c8c598cf5ed419bd6c2397
+- pypi: git+https://github.com/hygeos/core.git#b2f7023cdbd260666ca522d19bd428af594e578a
   name: core
   version: 1.2.4
   requires_dist:
@@ -4011,7 +4016,7 @@ packages:
   - lxml
   - scipy
   requires_python: '>=3.10'
-- pypi: git+https://github.com/hygeos/eoread.git#f62e514193bbec06692e8504253e687b2ae61a3f
+- pypi: git+https://github.com/hygeos/eoread.git#33b6ae0d3500c9ed3ee4385eb33397817dd4bb33
   name: eoread
   version: 0.5.0
   requires_dist:
