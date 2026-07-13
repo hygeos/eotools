@@ -17,6 +17,59 @@ from xarray import Dataset
 from pathlib import Path
 
 
+class DEM:
+    """
+    Factory class that wraps the available DEM (Digital Elevation Model) processors.
+
+    Creates the appropriate DEM BlockProcessor based on the `source` parameter:
+
+    - `"zero"` → `ZeroAltitude` (all altitudes set to 0)
+    - `"gtopo30"` → `GTOPO30` (30 arc-second global DEM, ~1km resolution)
+    - `"copernicus"` → `CopernicusDEM` (90m or 30m Copernicus DEM)
+
+    Args:
+    -----
+    ds : xr.Dataset, optional
+        Level-1 dataset (used to extract lat/lon bounds for DEM loading).
+        Required for `"gtopo30"` and `"copernicus"` unless `lat`/`lon` are provided.
+    source : str, default `"zero"`
+        Which DEM source to use: `"zero"`, `"gtopo30"`, or `"copernicus"`.
+    **kwargs :
+        Additional keyword arguments passed to the DEM constructor:
+
+        - For `GTOPO30`: `lat`, `lon`, `directory`, `missing`, `method`, `verbose`
+        - For `CopernicusDEM`: `lat`, `lon`, `directory`, `resolution`, `missing`, `verbose`
+
+    Returns:
+    --------
+    BlockProcessor
+        An instance of the selected DEM processor class.
+
+    Examples:
+    ---------
+    >>> dem = DEM(ds, source="copernicus", resolution=30)
+    >>> result = dem.map_blocks(ds)
+    """
+
+    def __new__(cls, ds: xr.Dataset | None = None, source: str = "zero", **kwargs) -> "BlockProcessor":
+        source = source.lower()
+        if source == "zero":
+            return ZeroAltitude()
+        elif source == "gtopo30":
+            if ds is not None:
+                return GTOPO30(ds, **kwargs)
+            return GTOPO30(**kwargs)
+        elif source == "copernicus":
+            if ds is not None:
+                return CopernicusDEM(ds, **kwargs)
+            return CopernicusDEM(**kwargs)
+        else:
+            raise ValueError(
+                f"Unknown DEM source: {source!r}. "
+                f"Available sources: ['zero', 'gtopo30', 'copernicus']"
+            )
+
+
 class ZeroAltitude(BlockProcessor):
     """
     Bypasses DEM, by setting all altitudes to zero
