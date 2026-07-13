@@ -5,7 +5,7 @@ from core.interpolate import interp, Linear, Interpolator
 from core.xrtags import tag_add
 import pint_xarray     # noqa: F401
 from cf_xarray.units import units
-from core.tools import datetime as datetime_parse
+from core.tools import datetime as datetime_parse, is_numpy_backed
 
 units.define('Dobson = 2.1415E-05 kg/m**2')
 
@@ -43,7 +43,7 @@ class ApplyAncillary(Interpolator):
         assert isinstance(dt, datetime)
         data = ancillary_provider.get(dt)
         # Check if data is dask-backed and compute it if necessary
-        if data.chunks:
+        if not is_numpy_backed(data):
             data = data.compute(scheduler='sync')
         super().__init__(
             data,
