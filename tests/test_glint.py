@@ -11,8 +11,8 @@ from eoread.common import timeit
 from eoread.eo import init_geometry
 from matplotlib import pyplot as plt
 
-from eotools.apply_ancillary import apply_ancillary, ApplyAncillary
-from eotools.glint import apply_glitter, CalcSunGlint
+from eotools.apply_ancillary import ApplyAncillary
+from eotools.glint import CalcSunGlint
 from core.process.blockwise import CompoundProcessor
 from core.tools import datetime
 
@@ -21,7 +21,7 @@ level1 = pytest.fixture(msi.get_sample)
 # TODO: check sza and vza for MSI sample
 
 def test_glint(level1: Path, request):
-    ds = msi.Level1_MSI(level1, v1_compat=True)
+    ds = msi.Level1_MSI(level1)
     init_geometry(ds, scat_angle=True)
     ret = CompoundProcessor(
         [ApplyAncillary(datetime(ds), Ancillary_NASA()), CalcSunGlint()]
@@ -31,7 +31,7 @@ def test_glint(level1: Path, request):
         ds[var] = ret[var]
 
     with timeit('Compute'):
-        ds = ds.sel(bands=865).compute()
+        ds = ds.sel(bands='B8').compute()
 
     for label, data, vmin, vmax in [
         ("sza", ds.sza, 0, None), # DEBUG
