@@ -334,6 +334,7 @@ class RayleighCorrection(BlockProcessor):
         ] = "sea_level_pressure",
         sun_glint_corr: bool = True,
         transmittance_corr: bool = False,
+        dtype: str = "float32",
         **cfg,
     ):
         # todo: bitmask invalid
@@ -342,6 +343,7 @@ class RayleighCorrection(BlockProcessor):
         self.srf = srf
         self.sun_glint_corr = sun_glint_corr
         self.transmittance_corr = transmittance_corr
+        self.dtype = dtype
         self.interpolator = Interpolator(
             self.rayleigh_lut,
             odr=Linear("odr"),
@@ -371,22 +373,23 @@ class RayleighCorrection(BlockProcessor):
             rho_rc_desc = "Rayleigh corrected reflectance (incl. transmittance)"
         else:
             rho_rc_desc = "Rayleigh corrected reflectance"
+        dtype = self.dtype
         return [
             Var(
                 "rho_r",
-                dtype="float64",
+                dtype=dtype,
                 dims_like="rho_gc",
                 attrs={"desc": "Rayleigh reflectance"},
             ),
             Var(
                 "rho_rg",
-                dtype="float64",
+                dtype=dtype,
                 dims_like="rho_gc",
                 attrs={"desc": "Rayleigh + sun glint reflectance"},
             ),
             Var(
                 "t_d",
-                dtype="float64",
+                dtype=dtype,
                 dims_like="rho_gc",
                 attrs={
                     "desc": "Total transmittance (upward, downward, direct and diffuse)"
@@ -394,7 +397,7 @@ class RayleighCorrection(BlockProcessor):
             ),
             Var(
                 "rho_rc",
-                dtype="float64",
+                dtype=dtype,
                 dims_like="rho_gc",
                 attrs={"desc": rho_rc_desc},
             ),
@@ -425,6 +428,10 @@ class RayleighCorrection(BlockProcessor):
         if self.transmittance_corr:
             # Apply diffuse transmittance correction
             block['rho_rc'] = block['rho_rc'] / block['t_d']
+
+        # Cast outputs to specified dtype
+        for var in ['rho_r', 'rho_rg', 't_d', 'rho_rc']:
+            block[var] = block[var].astype(self.dtype)
 
 
 def process_rayleigh(

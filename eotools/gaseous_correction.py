@@ -70,6 +70,7 @@ class Gaseous_correction(CompoundProcessor):
                  no2_correction: str = "legacy",
                  gas_correction: str = "o3_legacy",
                  list_gases: list | None = None,
+                 dtype: str = "float32",
                  **kwargs
                  ):
 
@@ -80,6 +81,7 @@ class Gaseous_correction(CompoundProcessor):
         self.bands = list(ds[spectral_dim].data)
         self.input_var = input_var
         self.output_var = ouput_var
+        self.dtype = dtype
 
         try:
             # image mode: single date for the whole image
@@ -92,7 +94,7 @@ class Gaseous_correction(CompoundProcessor):
         
         # Initialize sub classes
         processors: list[BlockProcessor] = [
-            Init_rho_gc(input_var),
+            Init_rho_gc(input_var, dtype=dtype),
             Init_air_mass(ds),
         ]
         if no2_correction == "legacy":
@@ -112,20 +114,21 @@ class Gaseous_correction(CompoundProcessor):
 
 
 class Init_rho_gc(BlockProcessor):
-    def __init__(self, input_var: str):
+    def __init__(self, input_var: str, dtype: str = "float32"):
         self.input_var = input_var
+        self.dtype = dtype
 
     def input_vars(self) -> list[Var]:
         return [Var(self.input_var)]
 
     def created_vars(self) -> list[Var]:
-        return [Var("rho_gc")]
+        return [Var("rho_gc", dtype=self.dtype)]
     
     def auto_template(self) -> bool:
         return True
 
     def process_block(self, block: xr.Dataset):
-        block["rho_gc"] = block[self.input_var].copy(deep=True)
+        block["rho_gc"] = block[self.input_var].astype(self.dtype)
 
 
 class Init_air_mass(BlockProcessor):
