@@ -42,6 +42,8 @@ class InitGeometry(BlockProcessor):
         if self.calc_raa:
             ivars.append(Var("vaa"))
             ivars.append(Var("saa"))
+        elif self.calc_scat_angle:
+            ivars.append(Var("raa"))
         return ivars
 
     def created_vars(self) -> list[Var]:

@@ -41,6 +41,12 @@ def get_SRF(
             Example: "dscovr_1_epic"
         fuzzy (bool): whether to apply fuzzy search to the sensor and platform (don't match
             case, ignore whitespaces, "-" and "_")
+        rename_method (str): method to rename SRF band identifiers
+            - 'none' (default): keep original band names from the SRF source
+            - 'bands': rename SRF bands to match the `bands` dimension of the Dataset
+                given in `platform_sensor`; panchromatic bands are excluded from the
+                matching if the SRF has one more band than the Dataset
+            - 'cwav': rename SRF bands to their central wavelength identifiers
 
     Return a xr.Dataset with the SRF for each band, defined by default identifiers.
     """
