@@ -1,0 +1,680 @@
+[
+  {
+    "objectID": "gaseous.html",
+    "href": "gaseous.html",
+    "title": "Gaseous absorption correction",
+    "section": "",
+    "text": "The correction for the gaseous absorption of various gases is applied before Rayleigh correction, thus the coupling between absorption and scattering is neglected. The gaseous-corrected reflectance is obtained from the TOA reflectance as:\n\\[\\rho_{\\text{gc}} = \\frac{\\rho_{\\text{TOA}}}{t_g}\\]\nwhere \\(\\rho_{\\text{TOA}}\\) is the top-of-atmosphere reflectance and \\(t_g\\) is the gaseous absorption transmittance along the downward + upward (solar and sensor view) path.\nThe eotools.gaseous_correction module provides several classes implementing a generic correction for gaseous absorption:\n\n\n\nGas\nGas_correction_CKDMIP\nGas_correction_O3\nGas_correction_NO2\n\n\n\n\nReferences\n(Hogan and Matricardi 2022; Anderson et al. 1986)\nNASA O3\nNASA NO2\n\n\nCH₄\n✓\n\n\n\n\nCO₂\n✓\n\n\n\n\nH₂O\n✓\n\n\n\n\nN₂\n✓\n\n\n\n\nN₂O\n✓\n\n\n\n\nO₂\n✓\n\n\n\n\nO₃\n✓\n✓\n\n\n\nNO₂\n\n\n✓\n\n\n\n\nGas_correction_O3 & Gas_correction_NO2: Legacy correction modules using absorption cross-section data integrated with the sensor SRF.\nGas_correction_CKDMIP: Modern correction using the CKDMIP high-resolution line-by-line transmission model, supporting multiple absorbing gases simultaneously.\n\nGas_correction is a proxy to the above classes. By default, it uses Gas_correction_O3 and Gas_correction_NO2, but Gas_correction_O3 can be replaced by Gas_correction_CKDMIP via an option.\n\n\nThe Gas_correction_O3 class corrects for ozone (O₃) absorption using cross-section data from NASA Ocean Color (Anderson et al.). The absorption coefficient \\(K_{\\text{O}_3}\\) is computed per band by integrating the cross-section data with the sensor SRF, or by interpolation at central wavelengths when no SRF is available.\nThe correction follows the Beer-Lambert law:\n\\[T_{\\text{O}_3} = \\exp(-K_{\\text{O}_3} \\cdot U_{\\text{O}_3} \\cdot M)\\]\nwhere \\(U_{\\text{O}_3}\\) is the total column ozone in Dobson Units and \\(M\\) is the air mass factor. The TOA reflectance is then divided by the transmittance: \\(\\rho_{\\text{gc}} = \\rho_{\\text{TOA}} / T_{\\text{O}_3}\\).\nInputs required: Total column ozone (Dobson Units), air mass.",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Gaseous absorption correction"
+    ]
+  },
+  {
+    "objectID": "gaseous.html#gas_correction_o3",
+    "href": "gaseous.html#gas_correction_o3",
+    "title": "Gaseous absorption correction",
+    "section": "",
+    "text": "The Gas_correction_O3 class corrects for ozone (O₃) absorption using cross-section data from NASA Ocean Color (Anderson et al.). The absorption coefficient \\(K_{\\text{O}_3}\\) is computed per band by integrating the cross-section data with the sensor SRF, or by interpolation at central wavelengths when no SRF is available.\nThe correction follows the Beer-Lambert law:\n\\[T_{\\text{O}_3} = \\exp(-K_{\\text{O}_3} \\cdot U_{\\text{O}_3} \\cdot M)\\]\nwhere \\(U_{\\text{O}_3}\\) is the total column ozone in Dobson Units and \\(M\\) is the air mass factor. The TOA reflectance is then divided by the transmittance: \\(\\rho_{\\text{gc}} = \\rho_{\\text{TOA}} / T_{\\text{O}_3}\\).\nInputs required: Total column ozone (Dobson Units), air mass.",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Gaseous absorption correction"
+    ]
+  },
+  {
+    "objectID": "gaseous.html#high-spectral-resolution-line-by-line-dataset",
+    "href": "gaseous.html#high-spectral-resolution-line-by-line-dataset",
+    "title": "Gaseous absorption correction",
+    "section": "3.1 High spectral resolution line-by-line dataset",
+    "text": "3.1 High spectral resolution line-by-line dataset\nGas optical depths per layer are obtained for each considered gas from the CKDMIP high-resolution line-by-line database (Hogan and Matricardi 2022) via the gatiab interface, where the atmospheric profiles are provided by AFGL (Anderson et al. 1986). By default the AFGL-US profile is used. These profiles are then integrated to obtain, for each gas, the total column optical depth at a high spectral resolution, \\(T_1(\\lambda)\\), for unit air mass and a nominal gas quantity \\(U = U_0\\) (see Table 1).\n\n\n\nTable 1: Nominal total column \\(U_0\\) for each atmospheric gas.\n\n\n\n\n\nGas\n\\(U_0\\)\n\n\n\n\nCH₄\n9.46 × 10⁻⁴ g/cm²\n\n\nCO₂\n0.519 g/cm²\n\n\nH₂O\n1.42 g/cm²\n\n\nN₂\n782 g/cm²\n\n\nN₂O\n4.83 × 10⁻⁴ g/cm²\n\n\nO₂\n239 g/cm²\n\n\nO₃\n345 Dobson\n\n\n\n\n\n\nThe numerical values of \\(T_1(\\lambda)\\) are stored in the file gaseous_absorption_model_gatiab_ckdmip_v1.nc for each gas.\n\n\n\n\n\n\n\n\nFigure 1: High-resolution transmission \\(T_1\\) for all gases from 380 to 2200nm.",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Gaseous absorption correction"
+    ]
+  },
+  {
+    "objectID": "gaseous.html#integrated-transmission-model",
+    "href": "gaseous.html#integrated-transmission-model",
+    "title": "Gaseous absorption correction",
+    "section": "3.2 Integrated transmission model",
+    "text": "3.2 Integrated transmission model\n\n3.2.1 Model description\nThe monochromatic transmission coefficient for an arbitrary air mass \\(M\\) and gas content \\(U\\) follows the Beer-Lambert law: and can be expressed as \\(T_1(\\lambda)^x\\), where \\(T_1(\\lambda)\\) is given for each gas at \\(x=1\\), with \\(x = M \\cdot U/U_0\\) (air mass × gas content / nominal gas content). This expression is used for numerical reasons instead of the classical exponential law, so that \\(T_1(\\lambda) \\in [0, 1]\\).\nFor a given sensor band with SRF \\(S(\\lambda)\\), the integrated transmission is defined as:\n\\[\\bar{T}(x) = \\frac{\\int S(\\lambda) T_1(\\lambda)^x \\, d\\lambda}{\\int S(\\lambda) \\, d\\lambda} \\tag{1}\\]\nThis integrated transmission does not necessarily follow the Beer-Lambert law, thus we propose a model in the form of \\(\\bar{T}(x) = T_\\text{eq}^{x^n}\\). On Figure 2 (a) the model closely follows the Beer-Lambert law (\\(n \\approx 1\\)), but not on Figure 2 (b) (\\(n=0.633\\)).\nThe following plots illustrate the fitted transmission model \\(\\bar{T}(x) = T_\\text{eq}^{x^n}\\) for selected Sentinel-2A bands and gases.\n\n\n\n\n\n\n\n\n\n\n\n\n(a) O₃, band B3 (559.8 nm).\n\n\n\n\n\n\n\n\n\n\n\n\n\n(b) H₂O, band B8 (832.8 nm).\n\n\n\n\n\n\n\n\nFigure 2: Transmission data for two combinations of MSI bands and gases, and the corresponding model \\(T_\\text{eq}^{(x^n)}\\) (with numerical solving as detailed in next section). The ordinate axis is in log scale, thus n=1 corresponds to a straight line.\n\n\n\n\n\n3.2.2 Numerical integration method\nThis section provides a method to calculate on the fly (the values of $T_eq$ and $n$ are not stored), for a given sensor band (SRF), the parameters of the model (\\(T_\\text{eq}\\) and \\(n\\)). This method consists in calculating \\(\\bar{T}(x)\\) and its derivative, for a single value of \\(x = x_0\\). This requires only two integrations of the SRF, and avoids integrating the SRF over many values of \\(x\\) for linear regression.\nThe derivative of the integrated transmission is:\n\\[\\bar{T}'(x) = \\frac{\\int S(\\lambda) T_1(\\lambda)^x \\ln T_1(\\lambda) \\, d\\lambda}{\\int S(\\lambda) \\, d\\lambda} \\tag{2}\\]\nWe model the integrated transmission as:\n\\[\\bar{T}(x) = T_\\text{eq}^{(x^n)} \\tag{3}\\]\nThen, the derivative of \\(\\bar{T}(x)\\) at \\(x=x_0\\) is:\n\\[{\\bar{T}'}(x_0) = n T_\\text{eq}^{x_0^n} \\ln T_\\text{eq} \\cdot x_0^{n-1}\\]\nUsing \\(\\bar{T}(x_0) = T_\\text{eq}^{x_0^n}\\) and \\(\\ln \\bar{T}(x_0) = x_0^n \\ln T_\\text{eq}\\), this expression simplifies:\n\\[{\\bar{T}'}(x_0) = n \\cdot \\frac{\\bar{T}(x_0)\\,\\ln \\bar{T}(x_0)}{x_0}\\]\nThen \\(n\\) can be solved by:\n\\[n = \\frac{{\\bar{T}'}(x_0) \\cdot x_0}{\\bar{T}(x_0) \\cdot \\ln \\bar{T}(x_0)} \\tag{4}\\]\nThe values of \\(\\bar{T}(x_0)\\) and \\(\\bar{T'}(x_0)\\) are calculated using equations 1 and 2.\nFor \\(T_\\text{eq}\\), and having solved for \\(n\\), Equation 3 gives:\n\\[T_\\text{eq} = \\bar{T}(x_0)^{\\,x_0^{-n}} \\tag{5}\\]\nIn practice, this method is implemented in transmission_model_single with a default value of \\(x_0 = 5\\).",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Gaseous absorption correction"
+    ]
+  },
+  {
+    "objectID": "decomposition.html",
+    "href": "decomposition.html",
+    "title": "Signal decomposition",
+    "section": "",
+    "text": "The Rayleigh-corrected reflectance is obtained from the TOA reflectance as:\n\\[\\rho_{\\text{rc}} = \\rho_{\\text{TOA}} / t_g - \\rho_r\\]\nAlternatively, it can also be divided by the Rayleigh diffuse transmittance:\n\\[\\rho_{\\text{rc}}^\\prime = \\frac{\\rho_{\\text{TOA}} / t_g - \\rho_r}{t_r}\\]\n\n\n\nSymbol\nDescription\n\n\n\n\n\\(\\rho_{\\text{TOA}}\\)\nTop-of-atmosphere reflectance: \\(\\rho_{\\text{TOA}} = \\pi \\, L_{\\text{TOA}} / (F_0 \\, \\mu_0)\\)\n\n\n\\(L_{\\text{TOA}}\\)\nTOA radiance\n\n\n\\(F_0\\)\nExtraterrestrial solar irradiance\n\n\n\\(\\mu_0\\)\nCosine of the solar zenith angle\n\n\n\\(\\rho_r\\)\nRayleigh reflectance\n\n\n\\(t_g\\)\nGaseous absorption transmittance along the downward + upward (solar and sensor) path\n\n\n\\(t_r\\)\nRayleigh diffuse transmittance along the solar+sensor view path",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Signal decomposition"
+    ]
+  },
+  {
+    "objectID": "rayleigh.html",
+    "href": "rayleigh.html",
+    "title": "Rayleigh scattering correction",
+    "section": "",
+    "text": "The eotools.rayleigh module provides a generic look-up table (LUT) based Rayleigh correction method. The correction LUT, instead of being calculated for each sensor, relies on a generic “Rayleigh optical depth” dimension. The Rayleigh optical depth is calculated dynamically, for each pixel and each sensor band (characterized either by a spectral response function (SRF) or by a central wavelength), using the rod() function based on the analytical formula from (Bodhaine et al. 1999). Then, the Rayleigh LUT is interpolated pixel by pixel based on the observation geometry, wind speed, and Rayleigh optical depth.\nThe correction is implemented in the RayleighCorrection class.",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Rayleigh scattering correction"
+    ]
+  },
+  {
+    "objectID": "rayleigh.html#overview",
+    "href": "rayleigh.html#overview",
+    "title": "Rayleigh scattering correction",
+    "section": "",
+    "text": "The eotools.rayleigh module provides a generic look-up table (LUT) based Rayleigh correction method. The correction LUT, instead of being calculated for each sensor, relies on a generic “Rayleigh optical depth” dimension. The Rayleigh optical depth is calculated dynamically, for each pixel and each sensor band (characterized either by a spectral response function (SRF) or by a central wavelength), using the rod() function based on the analytical formula from (Bodhaine et al. 1999). Then, the Rayleigh LUT is interpolated pixel by pixel based on the observation geometry, wind speed, and Rayleigh optical depth.\nThe correction is implemented in the RayleighCorrection class.",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Rayleigh scattering correction"
+    ]
+  },
+  {
+    "objectID": "rayleigh.html#lut-structure-polymer_legacy",
+    "href": "rayleigh.html#lut-structure-polymer_legacy",
+    "title": "Rayleigh scattering correction",
+    "section": "2 LUT structure (\"polymer_legacy\")",
+    "text": "2 LUT structure (\"polymer_legacy\")\nThe lookup table used by RayleighCorrection is \"polymer_legacy\", a LUT calculated with the SOS (successive order of scattering) code. It contains the following data variables:\n\n\n\n\n\n\n\n\nVariable\nDimensions\nDescription\n\n\n\n\nrho_r\n(mu_s, raa, mu_v, odr)\nRayleigh reflectance (no glint, black surface)\n\n\nrho_rg\n(mu_s, raa, mu_v, odr, wind_speed)\nRayleigh reflectance with sun glint\n\n\nt_d\n(mu_s, odr, wind_speed, mu_v)\nTotal Rayleigh transmittance (downward × upward, direct + diffuse)\n\n\n\nIt has the following grid structure:\n\n\n\n\n\n\n\n\n\n\nDimension\nSize\nMin\nMax\nDescription\n\n\n\n\nodr\n201\n0.000\n0.400\nRayleigh optical depth. odr=0.4 allows covering \\(\\lambda &gt; 390nm\\)\n\n\nmu_s\n25\n0.032\n1.000\nSolar zenith cosine (0-88°)\n\n\nmu_v\n25\n0.032\n1.000\nViewing zenith cosine (0-88°)\n\n\nraa\n37\n0°\n180°\nRelative azimuth angle (5° spacing)\n\n\nwind_speed\n5\n0 m/s\n16 m/s\nHorizontal wind speed (values: 0, 2, 4, 8, 16 m/s)\n\n\n\nThe RAA convention follows the standard definition: \\(\\text{raa} = \\text{saa} - \\text{vaa}\\) (solar azimuth minus viewing azimuth).",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Rayleigh scattering correction"
+    ]
+  },
+  {
+    "objectID": "rayleigh.html#output-variables",
+    "href": "rayleigh.html#output-variables",
+    "title": "Rayleigh scattering correction",
+    "section": "3 Output variables",
+    "text": "3 Output variables\nAfter Rayleigh correction, the following variables are added to the dataset:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nrho_rc\nRayleigh-corrected reflectance (depending on options: with or without glint correction, with or without Rayleigh transmittance correction)\n\n\nrho_r\nRayleigh reflectance (without glint)\n\n\nrho_rg\nRayleigh + sun glint reflectance\n\n\nt_d\nTotal atmospheric transmittance (downward × upward, direct + diffuse)\n\n\nodr\nRayleigh optical depth (computed intermediate)",
+    "crumbs": [
+      "Home",
+      "Atmospheric correction modules",
+      "Rayleigh scattering correction"
+    ]
+  },
+  {
+    "objectID": "reference/srf.html",
+    "href": "reference/srf.html",
+    "title": "1 srf",
+    "section": "",
+    "text": "srf\n\n\n\n\n\nName\nDescription\n\n\n\n\ndownload_extract\nDownload a tar.gz file, and extract it to directory\n\n\nfilter_bands\nFilter the bands in srf to keep only the bands defined between wav_min and wav_max\n\n\nget_SRF\nGet a SRF for the product ds\n\n\nget_SRF_NASA\nDownload and read Spectral Response Function (SRF) from NASA ocean color\n\n\nget_SRF_eumetsat\nDownload and read Specrtral Response Function (SRF) from EUMETSAT database\n\n\nget_SRF_landsat8_oli\nGet SRF for LANDSAT8 OLI\n\n\nget_SRF_meris\nGet SRF for MERIS\n\n\nget_SRF_misr\nGet SRF for MISR\n\n\nget_SRF_msi\nGet SRF for Sentinel-2 MSI\n\n\nget_SRF_olci\nRead OLCI SRF from EUM database\n\n\nget_SRF_olci_full\nGet SRF for OLCI\n\n\nget_SRF_olci_single\nGet the OLCI Spectral Response Function for a single (central) detector.\n\n\nget_SRF_probav\nGet SRF for Proba-V\n\n\nget_SRF_seviri\nRead SEVIRI SRF from EUMETSAT database, and rename with shorter band names\n\n\nget_SRF_vgt\nGet SRF for VGT\n\n\nget_band\nReturns the SRF DataArray for a given band identifier.\n\n\nget_bands\nReturns the identifiers of the bands of a srf object\n\n\nintegrate_srf\nIntegrate the quantity x over each spectral band in srf\n\n\nnbands\nReturns the number of bands of a SRF object\n\n\nplot_srf\nPlot a SRF Dataset\n\n\nrename\nRename bands in a SRF object\n\n\nselect\nApply an index selection on the srf object.\n\n\nselect_first\nSelect the first N variables in srf\n\n\nsqueeze\nRemove the “id” variable if it has only a single dimension, and rename the\n\n\nto_tuple\nConvert an srf to a tuple for compatibility with codes that use such srf\n\n\n\n\n\nsrf.download_extract(directory, url, verbose=False)\nDownload a tar.gz file, and extract it to directory\n\n\n\nsrf.filter_bands(srf, wav_min=None, wav_max=None, use_cwav=False)\nFilter the bands in srf to keep only the bands defined between wav_min and wav_max\nIf use_cwav is True, filtering is based on the central wavelength of each band. If use_cwav is False, filtering requires the entire wavelength range of each SRF to fall within the specified bounds.\n\n\n\nsrf.get_SRF(\n    platform_sensor=None,\n    srf_getter=None,\n    srf_getter_arg=None,\n    fuzzy=True,\n    rename_method='none',\n    **kwargs,\n)\nGet a SRF for the product ds\nArgs: platform_sensor: sensor and platform definition - if a xr.Dataset, use the platform and sensor attributes of the Dataset - if a Tuple, it is (platform, sensor) - if a string, it is “” - if None (default, use srf_getter/srf_getter_arg) srf_getter (str): name of custom function to override the function for SRF reading. Example: ”eotools.srf.get_SRF_eumetsat” If None, srf_getter and srf_getter_arg are searched in the srf.csv file for the sensor/platform specified in ds. srf_getter_arg (str): argument passed to the srf_getter function, if any Example: ”dscovr_1_epic” fuzzy (bool): whether to apply fuzzy search to the sensor and platform (don’t match case, ignore whitespaces, ”-” and ””) rename_method (str): method to rename SRF band identifiers - ‘none’ (default): keep original band names from the SRF source - ‘bands’: rename SRF bands to match the bands dimension of the Dataset given in platform_sensor; panchromatic bands are excluded from the matching if the SRF has one more band than the Dataset - ‘cwav’: rename SRF bands to their central wavelength identifiers\nReturn a xr.Dataset with the SRF for each band, defined by default identifiers.\n\n\n\nsrf.get_SRF_NASA(id_sensor)\nDownload and read Spectral Response Function (SRF) from NASA ocean color website.\nhttps://oceancolor.gsfc.nasa.gov/resources/docs/rsr_tables/\nArgs: id_sensor (str): identifier of the sensor/platform.\nReturns: xr.Dataset: A dataset with the SRF for each band, defined by default identifiers.\n\n\n\nsrf.get_SRF_eumetsat(id_sensor='')\nDownload and read Specrtral Response Function (SRF) from EUMETSAT database -&gt; https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/\nArgs: id_sensor: identifier of the sensor/platform (as in the srf.csv file) Provide an empty string to list available id_sensors (default).\nReturns a xr.Dataset with the SRF for each band.\n\n\n\nsrf.get_SRF_landsat8_oli()\nGet SRF for LANDSAT8 OLI\n\n\n\nsrf.get_SRF_meris()\nGet SRF for MERIS\n\n\n\nsrf.get_SRF_misr()\nGet SRF for MISR\n\n\n\nsrf.get_SRF_msi(platform)\nGet SRF for Sentinel-2 MSI\nplatform: “S2A”, “S2B”, “S2C”\n\n\n\nsrf.get_SRF_olci(sensor)\nRead OLCI SRF from EUM database\nAdd the “id” variable for indexing Provide a mapping of (band, camera, ccd_col) to the corresponding variable name https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html\n\n\n\nsrf.get_SRF_olci_full(platform)\nGet SRF for OLCI\nplatform: one of “SENTINEL3_1”, “SENTINEL3_2”\n\n\n\nsrf.get_SRF_olci_single(sensor)\nGet the OLCI Spectral Response Function for a single (central) detector.\nSelects the central detector element (camera FM7, CCD column 374) and removes single-valued coordinates and the ‘id’ field from the result.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsensor\nstr\nOLCI sensor identifier. One of: - ‘sentinel3_1_olci’ - ‘sentinel3_2_olci’\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\nThe SRF data array for the central detector, with single-valued coordinates and the ‘id’ field removed.\n\n\n\n\n\n\n\nsrf.get_SRF_probav()\nGet SRF for Proba-V\n\n\n\nsrf.get_SRF_seviri(sensor)\nRead SEVIRI SRF from EUMETSAT database, and rename with shorter band names\nSensor: msg_1_seviri msg_2_seviri msg_3_seviri msg_4_seviri\n\n\n\nsrf.get_SRF_vgt(sensor)\nGet SRF for VGT\nsensor: VGT1 or VGT2\n\n\n\nsrf.get_band(srf, band_id)\nReturns the SRF DataArray for a given band identifier.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset\nSpectral response functions dataset.\nrequired\n\n\nband_id\nstr\nBand identifier (as returned by :func:get_bands).\nrequired\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\nThe SRF DataArray for the requested band.\n\n\n\n\n\n\n\nsrf.get_bands(srf)\nReturns the identifiers of the bands of a srf object\n\n\n\nsrf.integrate_srf(\n    srf,\n    x,\n    integration_function=simpson,\n    integration_dimension=None,\n    integration_dim_srf=None,\n    integration_dim_x=None,\n    resample=None,\n)\nIntegrate the quantity x over each spectral band in srf\nIf x is a Callable, it is assumed to take inputs in the same unit as defined in srf. If x is a DataArray, it should have a dimension “wav” and an associated unit corresponding to the unit on which the srf is defined. In this case, either the srf is resampled to the wav dimension of x (resample=“x”) or x is resampled to the wav dimension of the srf (resample=“srf”).\nintegration_function: can be one of: - np.trapz - scipy.integrate.simpson\nIf the SRFs are defined over more than 1 dimension, the spectral dimension is specified through the integration_dim_srf argument.\nReturns a Dataset of integrated values\n\n\n\nsrf.nbands(srf)\nReturns the number of bands of a SRF object\n\n\n\nsrf.plot_srf(srf)\nPlot a SRF Dataset\n\n\n\nsrf.rename(srf, band_ids, thres_check=None)\nRename bands in a SRF object\nArgs: srf: the input srf object, with arbitrary band names band_ids: the new band identifiers. if list or array, they are defined as the central if str: “cwav”: define the bands as their central wavelength “trim”: trim the variable names start and end to keep only the variable part “enum”: enumerate the bands, starting from 1 thres_check: check that the integrated srf is within a distance of thres_check of band_id (assumed integer) If None, this test is disactivated.\n\n\n\nsrf.select(srf, **kwargs)\nApply an index selection on the srf object.\nIf srf contains an “id” variable, it is used to trim down the variables.\nThe kwargs are used for the selection based on the dimensions present in srf.\nExample: select(srf, camera=1) returns a subset of the srf for camera 1.\n\n\n\nsrf.select_first(srf, N)\nSelect the first N variables in srf\n\n\n\nsrf.squeeze(ds)\nRemove the “id” variable if it has only a single dimension, and rename the main variables accordingly\n\n\n\nsrf.to_tuple(srf, minT=0.005, func_odr=_Func_ODR.simpson)\nConvert an srf to a tuple for compatibility with codes that use such srf representation (from smaclib)\nArguments: srf: a dataset coming from get_SRF minT: threshold for minimum transmission subsetting. 0.005 by default (legacy) func_odr: the function used for ODR integration, can either be _Func_ODR.simpson or _Func_ODR.trapz, _Func_ODR.simpson by default (legacy)\nreturns: (wvn_limits, wvl_limits, fwhm, wvl_central, rod_effective, srf_wvl, rsrf) with wvn in cm-1, wvl in nm, fwhm in nm, wvl_central in nm, SRF weighted Rayleigh optical depth, reference wavelegnth of the rsrf in nm, rsrf, name (string)",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "srf"
+    ]
+  },
+  {
+    "objectID": "reference/srf.html#functions",
+    "href": "reference/srf.html#functions",
+    "title": "1 srf",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\ndownload_extract\nDownload a tar.gz file, and extract it to directory\n\n\nfilter_bands\nFilter the bands in srf to keep only the bands defined between wav_min and wav_max\n\n\nget_SRF\nGet a SRF for the product ds\n\n\nget_SRF_NASA\nDownload and read Spectral Response Function (SRF) from NASA ocean color\n\n\nget_SRF_eumetsat\nDownload and read Specrtral Response Function (SRF) from EUMETSAT database\n\n\nget_SRF_landsat8_oli\nGet SRF for LANDSAT8 OLI\n\n\nget_SRF_meris\nGet SRF for MERIS\n\n\nget_SRF_misr\nGet SRF for MISR\n\n\nget_SRF_msi\nGet SRF for Sentinel-2 MSI\n\n\nget_SRF_olci\nRead OLCI SRF from EUM database\n\n\nget_SRF_olci_full\nGet SRF for OLCI\n\n\nget_SRF_olci_single\nGet the OLCI Spectral Response Function for a single (central) detector.\n\n\nget_SRF_probav\nGet SRF for Proba-V\n\n\nget_SRF_seviri\nRead SEVIRI SRF from EUMETSAT database, and rename with shorter band names\n\n\nget_SRF_vgt\nGet SRF for VGT\n\n\nget_band\nReturns the SRF DataArray for a given band identifier.\n\n\nget_bands\nReturns the identifiers of the bands of a srf object\n\n\nintegrate_srf\nIntegrate the quantity x over each spectral band in srf\n\n\nnbands\nReturns the number of bands of a SRF object\n\n\nplot_srf\nPlot a SRF Dataset\n\n\nrename\nRename bands in a SRF object\n\n\nselect\nApply an index selection on the srf object.\n\n\nselect_first\nSelect the first N variables in srf\n\n\nsqueeze\nRemove the “id” variable if it has only a single dimension, and rename the\n\n\nto_tuple\nConvert an srf to a tuple for compatibility with codes that use such srf\n\n\n\n\n\nsrf.download_extract(directory, url, verbose=False)\nDownload a tar.gz file, and extract it to directory\n\n\n\nsrf.filter_bands(srf, wav_min=None, wav_max=None, use_cwav=False)\nFilter the bands in srf to keep only the bands defined between wav_min and wav_max\nIf use_cwav is True, filtering is based on the central wavelength of each band. If use_cwav is False, filtering requires the entire wavelength range of each SRF to fall within the specified bounds.\n\n\n\nsrf.get_SRF(\n    platform_sensor=None,\n    srf_getter=None,\n    srf_getter_arg=None,\n    fuzzy=True,\n    rename_method='none',\n    **kwargs,\n)\nGet a SRF for the product ds\nArgs: platform_sensor: sensor and platform definition - if a xr.Dataset, use the platform and sensor attributes of the Dataset - if a Tuple, it is (platform, sensor) - if a string, it is “” - if None (default, use srf_getter/srf_getter_arg) srf_getter (str): name of custom function to override the function for SRF reading. Example: ”eotools.srf.get_SRF_eumetsat” If None, srf_getter and srf_getter_arg are searched in the srf.csv file for the sensor/platform specified in ds. srf_getter_arg (str): argument passed to the srf_getter function, if any Example: ”dscovr_1_epic” fuzzy (bool): whether to apply fuzzy search to the sensor and platform (don’t match case, ignore whitespaces, ”-” and ””) rename_method (str): method to rename SRF band identifiers - ‘none’ (default): keep original band names from the SRF source - ‘bands’: rename SRF bands to match the bands dimension of the Dataset given in platform_sensor; panchromatic bands are excluded from the matching if the SRF has one more band than the Dataset - ‘cwav’: rename SRF bands to their central wavelength identifiers\nReturn a xr.Dataset with the SRF for each band, defined by default identifiers.\n\n\n\nsrf.get_SRF_NASA(id_sensor)\nDownload and read Spectral Response Function (SRF) from NASA ocean color website.\nhttps://oceancolor.gsfc.nasa.gov/resources/docs/rsr_tables/\nArgs: id_sensor (str): identifier of the sensor/platform.\nReturns: xr.Dataset: A dataset with the SRF for each band, defined by default identifiers.\n\n\n\nsrf.get_SRF_eumetsat(id_sensor='')\nDownload and read Specrtral Response Function (SRF) from EUMETSAT database -&gt; https://nwp-saf.eumetsat.int/site/software/rttov/download/coefficients/spectral-response-functions/\nArgs: id_sensor: identifier of the sensor/platform (as in the srf.csv file) Provide an empty string to list available id_sensors (default).\nReturns a xr.Dataset with the SRF for each band.\n\n\n\nsrf.get_SRF_landsat8_oli()\nGet SRF for LANDSAT8 OLI\n\n\n\nsrf.get_SRF_meris()\nGet SRF for MERIS\n\n\n\nsrf.get_SRF_misr()\nGet SRF for MISR\n\n\n\nsrf.get_SRF_msi(platform)\nGet SRF for Sentinel-2 MSI\nplatform: “S2A”, “S2B”, “S2C”\n\n\n\nsrf.get_SRF_olci(sensor)\nRead OLCI SRF from EUM database\nAdd the “id” variable for indexing Provide a mapping of (band, camera, ccd_col) to the corresponding variable name https://nwp-saf.eumetsat.int/downloads/rtcoef_rttov13/ir_srf/rtcoef_sentinel3_1_olci_srf.html\n\n\n\nsrf.get_SRF_olci_full(platform)\nGet SRF for OLCI\nplatform: one of “SENTINEL3_1”, “SENTINEL3_2”\n\n\n\nsrf.get_SRF_olci_single(sensor)\nGet the OLCI Spectral Response Function for a single (central) detector.\nSelects the central detector element (camera FM7, CCD column 374) and removes single-valued coordinates and the ‘id’ field from the result.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsensor\nstr\nOLCI sensor identifier. One of: - ‘sentinel3_1_olci’ - ‘sentinel3_2_olci’\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\nThe SRF data array for the central detector, with single-valued coordinates and the ‘id’ field removed.\n\n\n\n\n\n\n\nsrf.get_SRF_probav()\nGet SRF for Proba-V\n\n\n\nsrf.get_SRF_seviri(sensor)\nRead SEVIRI SRF from EUMETSAT database, and rename with shorter band names\nSensor: msg_1_seviri msg_2_seviri msg_3_seviri msg_4_seviri\n\n\n\nsrf.get_SRF_vgt(sensor)\nGet SRF for VGT\nsensor: VGT1 or VGT2\n\n\n\nsrf.get_band(srf, band_id)\nReturns the SRF DataArray for a given band identifier.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset\nSpectral response functions dataset.\nrequired\n\n\nband_id\nstr\nBand identifier (as returned by :func:get_bands).\nrequired\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\nThe SRF DataArray for the requested band.\n\n\n\n\n\n\n\nsrf.get_bands(srf)\nReturns the identifiers of the bands of a srf object\n\n\n\nsrf.integrate_srf(\n    srf,\n    x,\n    integration_function=simpson,\n    integration_dimension=None,\n    integration_dim_srf=None,\n    integration_dim_x=None,\n    resample=None,\n)\nIntegrate the quantity x over each spectral band in srf\nIf x is a Callable, it is assumed to take inputs in the same unit as defined in srf. If x is a DataArray, it should have a dimension “wav” and an associated unit corresponding to the unit on which the srf is defined. In this case, either the srf is resampled to the wav dimension of x (resample=“x”) or x is resampled to the wav dimension of the srf (resample=“srf”).\nintegration_function: can be one of: - np.trapz - scipy.integrate.simpson\nIf the SRFs are defined over more than 1 dimension, the spectral dimension is specified through the integration_dim_srf argument.\nReturns a Dataset of integrated values\n\n\n\nsrf.nbands(srf)\nReturns the number of bands of a SRF object\n\n\n\nsrf.plot_srf(srf)\nPlot a SRF Dataset\n\n\n\nsrf.rename(srf, band_ids, thres_check=None)\nRename bands in a SRF object\nArgs: srf: the input srf object, with arbitrary band names band_ids: the new band identifiers. if list or array, they are defined as the central if str: “cwav”: define the bands as their central wavelength “trim”: trim the variable names start and end to keep only the variable part “enum”: enumerate the bands, starting from 1 thres_check: check that the integrated srf is within a distance of thres_check of band_id (assumed integer) If None, this test is disactivated.\n\n\n\nsrf.select(srf, **kwargs)\nApply an index selection on the srf object.\nIf srf contains an “id” variable, it is used to trim down the variables.\nThe kwargs are used for the selection based on the dimensions present in srf.\nExample: select(srf, camera=1) returns a subset of the srf for camera 1.\n\n\n\nsrf.select_first(srf, N)\nSelect the first N variables in srf\n\n\n\nsrf.squeeze(ds)\nRemove the “id” variable if it has only a single dimension, and rename the main variables accordingly\n\n\n\nsrf.to_tuple(srf, minT=0.005, func_odr=_Func_ODR.simpson)\nConvert an srf to a tuple for compatibility with codes that use such srf representation (from smaclib)\nArguments: srf: a dataset coming from get_SRF minT: threshold for minimum transmission subsetting. 0.005 by default (legacy) func_odr: the function used for ODR integration, can either be _Func_ODR.simpson or _Func_ODR.trapz, _Func_ODR.simpson by default (legacy)\nreturns: (wvn_limits, wvl_limits, fwhm, wvl_central, rod_effective, srf_wvl, rsrf) with wvn in cm-1, wvl in nm, fwhm in nm, wvl_central in nm, SRF weighted Rayleigh optical depth, reference wavelegnth of the rsrf in nm, rsrf, name (string)",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "srf"
+    ]
+  },
+  {
+    "objectID": "reference/gaseous_absorption.html",
+    "href": "reference/gaseous_absorption.html",
+    "title": "1 gaseous_absorption",
+    "section": "",
+    "text": "gaseous_absorption\n\n\n\n\n\nName\nDescription\n\n\n\n\ncreate_gaseous_abs\nCreate a high-resolution gaseous absorption model DataTree and write to NetCDF.\n\n\nget_abs_data_hires\nGenerate high-resolution gaseous absorption transmission at unit air mass\n\n\nget_absorption\nRead absorption cross-section data for a given gas.\n\n\nget_climate_data\nDownload NO₂ climatology climate data files from the Hygeos server.\n\n\nget_file_gatiab\nReturn the path to a GATIAB optical-depth spectrum NetCDF file.\n\n\nget_gaseous_abs\nLoad a DataTree of high-resolution absorption models for gases.\n\n\ntransmission_model\nDetermine transmission model (Teq, n) for each gas , for a given srf\n\n\ntransmission_model_eval\nEvaluate the transmission model returned by transmission_model_srf, at provided x\n\n\ntransmission_model_single\nDetermine transmission model (Teq, n) for a given srf (for a single band)\n\n\nwrite_coeffs_uint16_netcdf\nPack numeric coefficient variables into uint16 and write to NetCDF.\n\n\n\n\n\ngaseous_absorption.create_gaseous_abs(filename)\nCreate a high-resolution gaseous absorption model DataTree and write to NetCDF.\nFor each gas in gas_list_gatiab, computes high-resolution transmission data at unit air mass and nominal gas content via :func:get_abs_data_hires, then packs the coefficients into uint16 and writes a single NetCDF file.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nfilename\nPath\nOutput NetCDF file path. The parent directory will be created if it does not exist.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValueError\nIf wavelength coordinates are inconsistent across gas datasets.\n\n\n\n\n\n\n\ngaseous_absorption.get_abs_data_hires(gas, afglmod='afglus')\nGenerate high-resolution gaseous absorption transmission at unit air mass and nominal gas content.\nReturns a gaseous transmission value per wavelength, computed for: - Air mass M = 1.0 (zenith path) - Nominal gas content U = U0 (from GATIAB)\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ngas\nstr\nGas species identifier. Must be one of the GATIAB-supported gases: [‘CH4’, ‘CO2’, ‘H2O’, ‘N2’, ‘N2O’, ‘O2’, ‘O3’]\nrequired\n\n\nafglmod\nstr\nAtmospheric model to use, by default ‘afglus’\n'afglus'\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.Dataset\nDataset with a single 1-D T1 variable over the wav dimension (wavelength in nm), plus scalar U0 and P0.\n\n\n\n\n\n\n\ngaseous_absorption.get_absorption(gaz, dirname=None)\nRead absorption cross-section data for a given gas.\nDownloads (if necessary) and parses a tabular text file that contains wavelength-dependent absorption values for the requested gas species. The metadata (URL, skip-rows, etc.) is looked up in absorption_MTL.csv.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ngaz\nstr\nGas species identifier (e.g. “O3”, “NO2”). Must match a gaz entry in the absorption metadata file.\nrequired\n\n\ndirname\nstr, Path, or None\nDirectory in which to cache the downloaded file. Defaults to DIR_STATIC/common.\nNone\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\n1-D array of absorption values with a wav coordinate (nm).\n\n\n\n\n\n\n\ngaseous_absorption.get_climate_data(dirname)\nDownload NO₂ climatology climate data files from the Hygeos server.\nFetches two HDF files: - no2_climatology.hdf — NO₂ climatology data - trop_f_no2_200m.hdf — tropospheric NO₂ factor at 200 m resolution\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndirname\nstr or Path\nDirectory where the files will be downloaded.\nrequired\n\n\n\n\n\n\n\ngaseous_absorption.get_file_gatiab(gas, afglmod='afglus')\nReturn the path to a GATIAB optical-depth spectrum NetCDF file.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ngas\nstr\nGas species identifier. Must be one of gas_list_gatiab: [‘CH4’, ‘CO2’, ‘H2O’, ‘N2’, ‘N2O’, ‘O2’, ‘O3’].\nrequired\n\n\nafglmod\nstr\nAtmospheric profile model directory name, by default ‘afglus’.\n'afglus'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nPath\nAbsolute path to the optical-depth spectrum file.\n\n\n\n\n\n\n\ngaseous_absorption.get_gaseous_abs()\nLoad a DataTree of high-resolution absorption models for gases.\nThe root dataset stores the common wav coordinate, and each gas is added as a child node containing fitted coefficients (without duplicating wav).\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataTree\nA tree with one child dataset per gas in gas_list_gatiab. Each Dataset holds a variable T1.\n\n\n\n\n\n\n\ngaseous_absorption.transmission_model(srf, x0=5.0)\nDetermine transmission model (Teq, n) for each gas , for a given srf T(lam) = Teq(xn) where x = M*U/U0\nThe model is fitted by evaluating the integrated transmission and its derivative at x = x0.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset\nSpectral response functions for all bands\nrequired\n\n\nx0\nfloat\nReference value of x = M*U/U0 at which to evaluate the derivative for fitting n\n5.0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataTree\nDataTree with root having ‘bands’ coordinate, and each gas node containing ‘Teq’ and ‘n’ variables for each band\n\n\n\n\n\n\n\ngaseous_absorption.transmission_model_eval(mod, x)\nEvaluate the transmission model returned by transmission_model_srf, at provided x values.\n\n\n\ngaseous_absorption.transmission_model_single(T, srf_band, x0=5.0)\nDetermine transmission model (Teq, n) for a given srf (for a single band) T(lam) = Teq(xn) where x = M*U/U0\nThe model is fitted by evaluating the integrated transmission and its derivative at x = x0.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nT\nxr.DataArray\nHigh-resolution transmission spectrum T(lambda)\nrequired\n\n\nsrf_band\nxr.DataArray\nSpectral response function for the band\nrequired\n\n\nx0\nfloat\nReference value of x = M*U/U0 at which to evaluate the derivative for fitting n\n2.0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntuple\n(Teq, n) where Teq is the equivalent transmission at x=1, and n is the exponent\n\n\n\n\n\n\n\ngaseous_absorption.write_coeffs_uint16_netcdf(\n    coeffs,\n    filename,\n    *,\n    engine='h5netcdf',\n)\nPack numeric coefficient variables into uint16 and write to NetCDF.\nNumeric variables are stored with dtype=uint16 using scale_factor and add_offset so values are approximately preserved on read. Non-numeric variables are written without packing.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncoeffs\nxr.DataTree\nCoefficient tree to write. Packing is applied independently to each node dataset.\nrequired\n\n\nfilename\nstr | Path\nOutput NetCDF path.\nrequired\n\n\nengine\nstr\nNetCDF backend engine passed to xarray.\n\"h5netcdf\"\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nPath\nPath to written NetCDF file.",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "gaseous_absorption"
+    ]
+  },
+  {
+    "objectID": "reference/gaseous_absorption.html#functions",
+    "href": "reference/gaseous_absorption.html#functions",
+    "title": "1 gaseous_absorption",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\ncreate_gaseous_abs\nCreate a high-resolution gaseous absorption model DataTree and write to NetCDF.\n\n\nget_abs_data_hires\nGenerate high-resolution gaseous absorption transmission at unit air mass\n\n\nget_absorption\nRead absorption cross-section data for a given gas.\n\n\nget_climate_data\nDownload NO₂ climatology climate data files from the Hygeos server.\n\n\nget_file_gatiab\nReturn the path to a GATIAB optical-depth spectrum NetCDF file.\n\n\nget_gaseous_abs\nLoad a DataTree of high-resolution absorption models for gases.\n\n\ntransmission_model\nDetermine transmission model (Teq, n) for each gas , for a given srf\n\n\ntransmission_model_eval\nEvaluate the transmission model returned by transmission_model_srf, at provided x\n\n\ntransmission_model_single\nDetermine transmission model (Teq, n) for a given srf (for a single band)\n\n\nwrite_coeffs_uint16_netcdf\nPack numeric coefficient variables into uint16 and write to NetCDF.\n\n\n\n\n\ngaseous_absorption.create_gaseous_abs(filename)\nCreate a high-resolution gaseous absorption model DataTree and write to NetCDF.\nFor each gas in gas_list_gatiab, computes high-resolution transmission data at unit air mass and nominal gas content via :func:get_abs_data_hires, then packs the coefficients into uint16 and writes a single NetCDF file.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nfilename\nPath\nOutput NetCDF file path. The parent directory will be created if it does not exist.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValueError\nIf wavelength coordinates are inconsistent across gas datasets.\n\n\n\n\n\n\n\ngaseous_absorption.get_abs_data_hires(gas, afglmod='afglus')\nGenerate high-resolution gaseous absorption transmission at unit air mass and nominal gas content.\nReturns a gaseous transmission value per wavelength, computed for: - Air mass M = 1.0 (zenith path) - Nominal gas content U = U0 (from GATIAB)\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ngas\nstr\nGas species identifier. Must be one of the GATIAB-supported gases: [‘CH4’, ‘CO2’, ‘H2O’, ‘N2’, ‘N2O’, ‘O2’, ‘O3’]\nrequired\n\n\nafglmod\nstr\nAtmospheric model to use, by default ‘afglus’\n'afglus'\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.Dataset\nDataset with a single 1-D T1 variable over the wav dimension (wavelength in nm), plus scalar U0 and P0.\n\n\n\n\n\n\n\ngaseous_absorption.get_absorption(gaz, dirname=None)\nRead absorption cross-section data for a given gas.\nDownloads (if necessary) and parses a tabular text file that contains wavelength-dependent absorption values for the requested gas species. The metadata (URL, skip-rows, etc.) is looked up in absorption_MTL.csv.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ngaz\nstr\nGas species identifier (e.g. “O3”, “NO2”). Must match a gaz entry in the absorption metadata file.\nrequired\n\n\ndirname\nstr, Path, or None\nDirectory in which to cache the downloaded file. Defaults to DIR_STATIC/common.\nNone\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\n1-D array of absorption values with a wav coordinate (nm).\n\n\n\n\n\n\n\ngaseous_absorption.get_climate_data(dirname)\nDownload NO₂ climatology climate data files from the Hygeos server.\nFetches two HDF files: - no2_climatology.hdf — NO₂ climatology data - trop_f_no2_200m.hdf — tropospheric NO₂ factor at 200 m resolution\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndirname\nstr or Path\nDirectory where the files will be downloaded.\nrequired\n\n\n\n\n\n\n\ngaseous_absorption.get_file_gatiab(gas, afglmod='afglus')\nReturn the path to a GATIAB optical-depth spectrum NetCDF file.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ngas\nstr\nGas species identifier. Must be one of gas_list_gatiab: [‘CH4’, ‘CO2’, ‘H2O’, ‘N2’, ‘N2O’, ‘O2’, ‘O3’].\nrequired\n\n\nafglmod\nstr\nAtmospheric profile model directory name, by default ‘afglus’.\n'afglus'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nPath\nAbsolute path to the optical-depth spectrum file.\n\n\n\n\n\n\n\ngaseous_absorption.get_gaseous_abs()\nLoad a DataTree of high-resolution absorption models for gases.\nThe root dataset stores the common wav coordinate, and each gas is added as a child node containing fitted coefficients (without duplicating wav).\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataTree\nA tree with one child dataset per gas in gas_list_gatiab. Each Dataset holds a variable T1.\n\n\n\n\n\n\n\ngaseous_absorption.transmission_model(srf, x0=5.0)\nDetermine transmission model (Teq, n) for each gas , for a given srf T(lam) = Teq(xn) where x = M*U/U0\nThe model is fitted by evaluating the integrated transmission and its derivative at x = x0.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset\nSpectral response functions for all bands\nrequired\n\n\nx0\nfloat\nReference value of x = M*U/U0 at which to evaluate the derivative for fitting n\n5.0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataTree\nDataTree with root having ‘bands’ coordinate, and each gas node containing ‘Teq’ and ‘n’ variables for each band\n\n\n\n\n\n\n\ngaseous_absorption.transmission_model_eval(mod, x)\nEvaluate the transmission model returned by transmission_model_srf, at provided x values.\n\n\n\ngaseous_absorption.transmission_model_single(T, srf_band, x0=5.0)\nDetermine transmission model (Teq, n) for a given srf (for a single band) T(lam) = Teq(xn) where x = M*U/U0\nThe model is fitted by evaluating the integrated transmission and its derivative at x = x0.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nT\nxr.DataArray\nHigh-resolution transmission spectrum T(lambda)\nrequired\n\n\nsrf_band\nxr.DataArray\nSpectral response function for the band\nrequired\n\n\nx0\nfloat\nReference value of x = M*U/U0 at which to evaluate the derivative for fitting n\n2.0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntuple\n(Teq, n) where Teq is the equivalent transmission at x=1, and n is the exponent\n\n\n\n\n\n\n\ngaseous_absorption.write_coeffs_uint16_netcdf(\n    coeffs,\n    filename,\n    *,\n    engine='h5netcdf',\n)\nPack numeric coefficient variables into uint16 and write to NetCDF.\nNumeric variables are stored with dtype=uint16 using scale_factor and add_offset so values are approximately preserved on read. Non-numeric variables are written without packing.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncoeffs\nxr.DataTree\nCoefficient tree to write. Packing is applied independently to each node dataset.\nrequired\n\n\nfilename\nstr | Path\nOutput NetCDF path.\nrequired\n\n\nengine\nstr\nNetCDF backend engine passed to xarray.\n\"h5netcdf\"\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nPath\nPath to written NetCDF file.",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "gaseous_absorption"
+    ]
+  },
+  {
+    "objectID": "reference/index.html",
+    "href": "reference/index.html",
+    "title": "1 API Reference",
+    "section": "",
+    "text": "Rayleigh and gaseous correction utilities\n\n\n\nrayleigh\n\n\n\ngaseous_absorption\n\n\n\ngaseous_correction\n\n\n\nbodhaine\nRayleigh Optical Depth calculation from Bodhaine, 99\n\n\nchapman\n\n\n\n\n\n\n\nGeometry and solar irradiance\n\n\n\ngeometry\n\n\n\nsolar_irradiance\n\n\n\nearth_radius\n\n\n\n\n\n\n\nSurface data and ancillary inputs\n\n\n\ndem\n\n\n\nwater\nRead global surface water from https://global-surface-water.appspot.com/\n\n\nglint\n\n\n\napply_ancillary\n\n\n\n\n\n\n\nTOA reflectance, SRF, and units\n\n\n\ntoa_reflectance\n\n\n\nsrf\n\n\n\nunits",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#atmospheric-correction",
+    "href": "reference/index.html#atmospheric-correction",
+    "title": "1 API Reference",
+    "section": "",
+    "text": "Rayleigh and gaseous correction utilities\n\n\n\nrayleigh\n\n\n\ngaseous_absorption\n\n\n\ngaseous_correction\n\n\n\nbodhaine\nRayleigh Optical Depth calculation from Bodhaine, 99\n\n\nchapman",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#geometry-solar",
+    "href": "reference/index.html#geometry-solar",
+    "title": "1 API Reference",
+    "section": "",
+    "text": "Geometry and solar irradiance\n\n\n\ngeometry\n\n\n\nsolar_irradiance\n\n\n\nearth_radius",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#surface-ancillary",
+    "href": "reference/index.html#surface-ancillary",
+    "title": "1 API Reference",
+    "section": "",
+    "text": "Surface data and ancillary inputs\n\n\n\ndem\n\n\n\nwater\nRead global surface water from https://global-surface-water.appspot.com/\n\n\nglint\n\n\n\napply_ancillary",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#radiometry",
+    "href": "reference/index.html#radiometry",
+    "title": "1 API Reference",
+    "section": "",
+    "text": "TOA reflectance, SRF, and units\n\n\n\ntoa_reflectance\n\n\n\nsrf\n\n\n\nunits",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/earth_radius.html",
+    "href": "reference/earth_radius.html",
+    "title": "1 earth_radius",
+    "section": "",
+    "text": "earth_radius\n\n\n\n\n\nName\nDescription\n\n\n\n\nearth_radius\nCompute the earth radius giving the geocentric or geodetic latitude\n\n\ngeocentric_to_geodetic_lat\nConvert geocentric latitude to geodetic latitude\n\n\ngeodetic_to_geocentric_lat\nConvert geodetic latitude to geocentric latitude\n\n\n\n\n\nearth_radius.earth_radius(lat, lat_type='geocentric')\nCompute the earth radius giving the geocentric or geodetic latitude\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlat\n(float,)\nGeocentric or geodetic latitude in degrees\nrequired\n\n\nlat_type\nstr\nThe latitude type, 2 options: “geocentric”, “geodetic”\n'geocentric'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nrad\nfloat\nThe earth radius at the given latitude\n\n\n\n\n\n\n\nearth_radius.geocentric_to_geodetic_lat(lat)\nConvert geocentric latitude to geodetic latitude\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlat\nfloat\nGeocentric latitude in degrees\nrequired\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nout\nfloat\nGeodetic latitude in degrees\n\n\n\n\n\n\n\nearth_radius.geodetic_to_geocentric_lat(lat)\nConvert geodetic latitude to geocentric latitude\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlat\nfloat\nGeodetic latitude in degrees\nrequired\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nout\nfloat\nGeocentric latitude in degrees",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "earth_radius"
+    ]
+  },
+  {
+    "objectID": "reference/earth_radius.html#functions",
+    "href": "reference/earth_radius.html#functions",
+    "title": "1 earth_radius",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nearth_radius\nCompute the earth radius giving the geocentric or geodetic latitude\n\n\ngeocentric_to_geodetic_lat\nConvert geocentric latitude to geodetic latitude\n\n\ngeodetic_to_geocentric_lat\nConvert geodetic latitude to geocentric latitude\n\n\n\n\n\nearth_radius.earth_radius(lat, lat_type='geocentric')\nCompute the earth radius giving the geocentric or geodetic latitude\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlat\n(float,)\nGeocentric or geodetic latitude in degrees\nrequired\n\n\nlat_type\nstr\nThe latitude type, 2 options: “geocentric”, “geodetic”\n'geocentric'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nrad\nfloat\nThe earth radius at the given latitude\n\n\n\n\n\n\n\nearth_radius.geocentric_to_geodetic_lat(lat)\nConvert geocentric latitude to geodetic latitude\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlat\nfloat\nGeocentric latitude in degrees\nrequired\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nout\nfloat\nGeodetic latitude in degrees\n\n\n\n\n\n\n\nearth_radius.geodetic_to_geocentric_lat(lat)\nConvert geodetic latitude to geocentric latitude\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlat\nfloat\nGeodetic latitude in degrees\nrequired\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nout\nfloat\nGeocentric latitude in degrees",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "earth_radius"
+    ]
+  },
+  {
+    "objectID": "reference/gaseous_correction.html",
+    "href": "reference/gaseous_correction.html",
+    "title": "1 gaseous_correction",
+    "section": "",
+    "text": "gaseous_correction\n\n\n\n\n\nName\nDescription\n\n\n\n\nGas_correction_CKDMIP\nCKDMIP-based gaseous correction using transmission model coefficients.\n\n\nGas_correction_O3\nOzone absorption correction module\n\n\nGaseous_correction\nGaseous correction module\n\n\n\n\n\ngaseous_correction.Gas_correction_CKDMIP(\n    srf,\n    thres_correction=0.5,\n    list_gases=None,\n)\nCKDMIP-based gaseous correction using transmission model coefficients.\nComputes band-averaged transmission coefficients by integrating over the sensor spectral response function (SRF). Supports correction for multiple absorbing gases (O3, H2O, CH4, CO2, N2, N2O, etc.) using a parametric model T = Teq ** (x ** n) where x is the normalized column amount.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset\nThe sensor spectral response function. Must contain all bands present in the input dataset.\nrequired\n\n\nthres_correction\nfloat\nMinimum transmission threshold. Transmission values below this threshold are replaced with NaN to avoid extreme reflectance corrections. Default is 0.5.\n0.5\n\n\nlist_gases\nlist of str\nGases to include in the correction. Default is all available gases in the transmission model: ['CH4', 'CO2', 'H2O', 'N2', 'N2O', 'O2', 'O3'].\nNone\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nprocess_block\nApply CKDMIP gaseous correction to a single block.\n\n\n\n\n\ngaseous_correction.Gas_correction_CKDMIP.process_block(block)\nApply CKDMIP gaseous correction to a single block.\nComputes the combined transmission from all gases (O3, H2O, etc.) using log-space accumulation for numerical stability: prod(Teq(xn)) = exp(sum(x^n * log(Teq))) then divides the reflectance by the total gas transmission.\n\n\n\n\n\ngaseous_correction.Gas_correction_O3(\n    ds,\n    srf,\n    dir_common,\n    K_OZ=None,\n    spectral_dim='bands',\n)\nOzone absorption correction module\n\n\n\n\n\nName\nDescription\n\n\n\n\nrun\nApply O3 transmission\n\n\n\n\n\ngaseous_correction.Gas_correction_O3.run(bands, Rtoa_gc, ok, air_mass, ozone)\nApply O3 transmission\nozone : total column in Dobson Unit (DU)\n\n\n\n\n\ngaseous_correction.Gaseous_correction(\n    ds,\n    srf=None,\n    input_var='rho_toa',\n    ouput_var='rho_gc',\n    spectral_dim='bands',\n    K_NO2=None,\n    K_OZ=None,\n    no2_correction='legacy',\n    gas_correction='o3_legacy',\n    list_gases=None,\n    dtype='float32',\n    **kwargs,\n)\nGaseous correction module\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nds\nxr.Dataset\nThe dataset to which the gaseous correction is applied. The bands of ds shall be contained in srf.\nrequired\n\n\nsrf\nxr.Dataset\nThe sensor spectral response function (SRF).\nNone\n\n\ninput_var\nstr\nName of the input variable in ds (Top of atmosphere reflectance)\n'rho_toa'\n\n\nouput_var\nstr\nName of the output variable in ds\n'rho_gc'\n\n\nspectral_dim\nstr\nName of the spectral dimension in input_var and output_var\n'bands'\n\n\nno2_correction\nstr\nMethod for NO2 correction. Options: “legacy” (default, uses climatology-based NO2 correction) or any other value to skip.\n'legacy'\n\n\ngas_correction\nstr\nMethod for gas correction. Options: “o3_legacy” (default, legacy O3 correction), “ckdmip” (CKDMIP transmission coefficients).\n'o3_legacy'\n\n\nK_NO2\nDict | None\nExplicit NO2 absorption coefficients per band. If None, coefficients are calculated from the SRF or central wavelengths.\nNone\n\n\nK_OZ\nDict | None\nExplicit ozone absorption coefficients per band. If None, coefficients are calculated from the SRF or central wavelengths.\nNone\n\n\nlist_gases\nlist of str\nSubset of gases to include in the CKDMIP correction (used when gas_correction='ckdmip'). Valid gas names are ['CH4', 'CO2', 'H2O', 'N2', 'N2O', 'O2', 'O3']. If None (default), all gases available in the transmission model are used.\nNone\n\n\n\n\n\n\nApply gaseous correction to l1\n\n\n\nGaseous_correction(l1).apply()",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "gaseous_correction"
+    ]
+  },
+  {
+    "objectID": "reference/gaseous_correction.html#classes",
+    "href": "reference/gaseous_correction.html#classes",
+    "title": "1 gaseous_correction",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nGas_correction_CKDMIP\nCKDMIP-based gaseous correction using transmission model coefficients.\n\n\nGas_correction_O3\nOzone absorption correction module\n\n\nGaseous_correction\nGaseous correction module\n\n\n\n\n\ngaseous_correction.Gas_correction_CKDMIP(\n    srf,\n    thres_correction=0.5,\n    list_gases=None,\n)\nCKDMIP-based gaseous correction using transmission model coefficients.\nComputes band-averaged transmission coefficients by integrating over the sensor spectral response function (SRF). Supports correction for multiple absorbing gases (O3, H2O, CH4, CO2, N2, N2O, etc.) using a parametric model T = Teq ** (x ** n) where x is the normalized column amount.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset\nThe sensor spectral response function. Must contain all bands present in the input dataset.\nrequired\n\n\nthres_correction\nfloat\nMinimum transmission threshold. Transmission values below this threshold are replaced with NaN to avoid extreme reflectance corrections. Default is 0.5.\n0.5\n\n\nlist_gases\nlist of str\nGases to include in the correction. Default is all available gases in the transmission model: ['CH4', 'CO2', 'H2O', 'N2', 'N2O', 'O2', 'O3'].\nNone\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nprocess_block\nApply CKDMIP gaseous correction to a single block.\n\n\n\n\n\ngaseous_correction.Gas_correction_CKDMIP.process_block(block)\nApply CKDMIP gaseous correction to a single block.\nComputes the combined transmission from all gases (O3, H2O, etc.) using log-space accumulation for numerical stability: prod(Teq(xn)) = exp(sum(x^n * log(Teq))) then divides the reflectance by the total gas transmission.\n\n\n\n\n\ngaseous_correction.Gas_correction_O3(\n    ds,\n    srf,\n    dir_common,\n    K_OZ=None,\n    spectral_dim='bands',\n)\nOzone absorption correction module\n\n\n\n\n\nName\nDescription\n\n\n\n\nrun\nApply O3 transmission\n\n\n\n\n\ngaseous_correction.Gas_correction_O3.run(bands, Rtoa_gc, ok, air_mass, ozone)\nApply O3 transmission\nozone : total column in Dobson Unit (DU)\n\n\n\n\n\ngaseous_correction.Gaseous_correction(\n    ds,\n    srf=None,\n    input_var='rho_toa',\n    ouput_var='rho_gc',\n    spectral_dim='bands',\n    K_NO2=None,\n    K_OZ=None,\n    no2_correction='legacy',\n    gas_correction='o3_legacy',\n    list_gases=None,\n    dtype='float32',\n    **kwargs,\n)\nGaseous correction module\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nds\nxr.Dataset\nThe dataset to which the gaseous correction is applied. The bands of ds shall be contained in srf.\nrequired\n\n\nsrf\nxr.Dataset\nThe sensor spectral response function (SRF).\nNone\n\n\ninput_var\nstr\nName of the input variable in ds (Top of atmosphere reflectance)\n'rho_toa'\n\n\nouput_var\nstr\nName of the output variable in ds\n'rho_gc'\n\n\nspectral_dim\nstr\nName of the spectral dimension in input_var and output_var\n'bands'\n\n\nno2_correction\nstr\nMethod for NO2 correction. Options: “legacy” (default, uses climatology-based NO2 correction) or any other value to skip.\n'legacy'\n\n\ngas_correction\nstr\nMethod for gas correction. Options: “o3_legacy” (default, legacy O3 correction), “ckdmip” (CKDMIP transmission coefficients).\n'o3_legacy'\n\n\nK_NO2\nDict | None\nExplicit NO2 absorption coefficients per band. If None, coefficients are calculated from the SRF or central wavelengths.\nNone\n\n\nK_OZ\nDict | None\nExplicit ozone absorption coefficients per band. If None, coefficients are calculated from the SRF or central wavelengths.\nNone\n\n\nlist_gases\nlist of str\nSubset of gases to include in the CKDMIP correction (used when gas_correction='ckdmip'). Valid gas names are ['CH4', 'CO2', 'H2O', 'N2', 'N2O', 'O2', 'O3']. If None (default), all gases available in the transmission model are used.\nNone\n\n\n\n\n\n\nApply gaseous correction to l1\n\n\n\nGaseous_correction(l1).apply()",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "gaseous_correction"
+    ]
+  },
+  {
+    "objectID": "reference/bodhaine.html",
+    "href": "reference/bodhaine.html",
+    "title": "1 bodhaine",
+    "section": "",
+    "text": "bodhaine\nRayleigh Optical Depth calculation from Bodhaine, 99\nrod(lam, co2, lat, z, P)\n\n\n\n\n\nName\nDescription\n\n\n\n\nFN2\ndepolarisation factor of N2\n\n\nFO2\ndepolarisation factor of O2\n\n\nFair\ndepolarisation factor of air for CO2\n\n\ncolumn_number_density\nCalculate column number density of air molecules (molecules/cm²).\n\n\ng\ngravity acceleration at altitude z\n\n\ng0\ngravity acceleration at the ground\n\n\nma\nmolecular volume\n\n\nn300\nindex of refraction of dry air (300 ppm CO2)\n\n\nn_air\nindex of refraction of dry air\n\n\nraycrs\nRayleigh cross section\n\n\nrod\nRayleigh optical depth calculation for Bodhaine, 1999.\n\n\n\n\n\nbodhaine.FN2(lam)\ndepolarisation factor of N2 lam : um\n\n\n\nbodhaine.FO2(lam)\ndepolarisation factor of O2 lam : um\n\n\n\nbodhaine.Fair(lam, co2)\ndepolarisation factor of air for CO2 lam : um co2 : ppm\n\n\n\nbodhaine.column_number_density(\n    co2=400.0,\n    lat=45.0,\n    z=0.0,\n    P=1013.25,\n    pressure='surface',\n)\nCalculate column number density of air molecules (molecules/cm²).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nco2\nfloat\nCO2 concentration in ppm. Default 400.0.\n400.0\n\n\nlat\nfloat\nLatitude in degrees. Default 45.0.\n45.0\n\n\nz\nfloat\nAltitude in meters. Default 0.0.\n0.0\n\n\nP\nfloat\nReference pressure in hPa. Default 1013.25.\n1013.25\n\n\npressure\nLiteral['sea-level', 'surface']\nPressure reference type. Default “surface”.\n'surface'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloat\nColumn number density of air molecules.\n\n\n\n\n\n\n\nbodhaine.g(lat, z)\ngravity acceleration at altitude z lat : deg (scalar) z : m\n\n\n\nbodhaine.g0(lat)\ngravity acceleration at the ground lat : deg\n\n\n\nbodhaine.ma(co2)\nmolecular volume co2 : ppm\n\n\n\nbodhaine.n300(lam)\nindex of refraction of dry air (300 ppm CO2) lam : um\n\n\n\nbodhaine.n_air(lam, co2)\nindex of refraction of dry air lam : um co2 : ppm\n\n\n\nbodhaine.raycrs(lam, co2=400.0)\nRayleigh cross section lam : um co2 : ppm\n\n\n\nbodhaine.rod(lam, co2=400.0, lat=45.0, z=0.0, P=1013.25, pressure='surface')\nRayleigh optical depth calculation for Bodhaine, 1999.\nCalculates the Rayleigh optical depth for dry air at a given wavelength, accounting for CO2 concentration, latitude, altitude, and pressure.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlam\nfloat\nWavelength in micrometers (um).\nrequired\n\n\nco2\nfloat\nCO2 concentration in ppm. Default is 400.0.\n400.0\n\n\nlat\nfloat\nLatitude in degrees. Default is 45.0.\n45.0\n\n\nz\nfloat\nAltitude in meters. Default is 0.0.\n0.0\n\n\nP\nfloat\nReference pressure in hPa. Default is 1013.25.\n1013.25\n\n\npressure\nLiteral['sea-level', 'surface']\nPressure reference type. Default is “surface”.\n'surface'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloat\nRayleigh optical depth.\n\n\n\n\n\n\nThis implementation follows the methodology described in: Bodhaine, B. A., Wood, N. T., Dutton, E. G., & Slusser, J. R. (1999). “Rayleigh optical depth calculations for atmospheric research”. Atmospheric Environment, 33(15), 2235-2248.\n\n\n\n\n\n\nrod(0.4, 400., 45., 0., 1013.25)",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "bodhaine"
+    ]
+  },
+  {
+    "objectID": "reference/bodhaine.html#functions",
+    "href": "reference/bodhaine.html#functions",
+    "title": "1 bodhaine",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nFN2\ndepolarisation factor of N2\n\n\nFO2\ndepolarisation factor of O2\n\n\nFair\ndepolarisation factor of air for CO2\n\n\ncolumn_number_density\nCalculate column number density of air molecules (molecules/cm²).\n\n\ng\ngravity acceleration at altitude z\n\n\ng0\ngravity acceleration at the ground\n\n\nma\nmolecular volume\n\n\nn300\nindex of refraction of dry air (300 ppm CO2)\n\n\nn_air\nindex of refraction of dry air\n\n\nraycrs\nRayleigh cross section\n\n\nrod\nRayleigh optical depth calculation for Bodhaine, 1999.\n\n\n\n\n\nbodhaine.FN2(lam)\ndepolarisation factor of N2 lam : um\n\n\n\nbodhaine.FO2(lam)\ndepolarisation factor of O2 lam : um\n\n\n\nbodhaine.Fair(lam, co2)\ndepolarisation factor of air for CO2 lam : um co2 : ppm\n\n\n\nbodhaine.column_number_density(\n    co2=400.0,\n    lat=45.0,\n    z=0.0,\n    P=1013.25,\n    pressure='surface',\n)\nCalculate column number density of air molecules (molecules/cm²).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nco2\nfloat\nCO2 concentration in ppm. Default 400.0.\n400.0\n\n\nlat\nfloat\nLatitude in degrees. Default 45.0.\n45.0\n\n\nz\nfloat\nAltitude in meters. Default 0.0.\n0.0\n\n\nP\nfloat\nReference pressure in hPa. Default 1013.25.\n1013.25\n\n\npressure\nLiteral['sea-level', 'surface']\nPressure reference type. Default “surface”.\n'surface'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloat\nColumn number density of air molecules.\n\n\n\n\n\n\n\nbodhaine.g(lat, z)\ngravity acceleration at altitude z lat : deg (scalar) z : m\n\n\n\nbodhaine.g0(lat)\ngravity acceleration at the ground lat : deg\n\n\n\nbodhaine.ma(co2)\nmolecular volume co2 : ppm\n\n\n\nbodhaine.n300(lam)\nindex of refraction of dry air (300 ppm CO2) lam : um\n\n\n\nbodhaine.n_air(lam, co2)\nindex of refraction of dry air lam : um co2 : ppm\n\n\n\nbodhaine.raycrs(lam, co2=400.0)\nRayleigh cross section lam : um co2 : ppm\n\n\n\nbodhaine.rod(lam, co2=400.0, lat=45.0, z=0.0, P=1013.25, pressure='surface')\nRayleigh optical depth calculation for Bodhaine, 1999.\nCalculates the Rayleigh optical depth for dry air at a given wavelength, accounting for CO2 concentration, latitude, altitude, and pressure.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlam\nfloat\nWavelength in micrometers (um).\nrequired\n\n\nco2\nfloat\nCO2 concentration in ppm. Default is 400.0.\n400.0\n\n\nlat\nfloat\nLatitude in degrees. Default is 45.0.\n45.0\n\n\nz\nfloat\nAltitude in meters. Default is 0.0.\n0.0\n\n\nP\nfloat\nReference pressure in hPa. Default is 1013.25.\n1013.25\n\n\npressure\nLiteral['sea-level', 'surface']\nPressure reference type. Default is “surface”.\n'surface'\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloat\nRayleigh optical depth.\n\n\n\n\n\n\nThis implementation follows the methodology described in: Bodhaine, B. A., Wood, N. T., Dutton, E. G., & Slusser, J. R. (1999). “Rayleigh optical depth calculations for atmospheric research”. Atmospheric Environment, 33(15), 2235-2248.\n\n\n\n\n\n\nrod(0.4, 400., 45., 0., 1013.25)",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "bodhaine"
+    ]
+  },
+  {
+    "objectID": "reference/rayleigh.html",
+    "href": "reference/rayleigh.html",
+    "title": "1 rayleigh",
+    "section": "",
+    "text": "rayleigh\n\n\n\n\n\nName\nDescription\n\n\n\n\nRayleighCorrection\nBlock processor for applying Rayleigh scattering correction.\n\n\n\n\n\nrayleigh.RayleighCorrection(\n    srf=None,\n    version='polymer_legacy',\n    pressure_kind='sea_level_pressure',\n    sun_glint_corr=True,\n    transmittance_corr=False,\n    dtype='float32',\n    **cfg,\n)\nBlock processor for applying Rayleigh scattering correction.\nThis processor applies atmospheric Rayleigh scattering correction to satellite reflectance data using pre-computed lookup tables (LUTs).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset | None\nSensor spectral response function for multi-wavelength correction.\nNone\n\n\nversion\nLiteral['polymer_legacy']\nVersion of the Rayleigh LUT to use. Currently only “polymer_legacy” is supported.\n\"polymer_legacy\"\n\n\npressure_kind\nLiteral['surface_pressure', 'sea_level_pressure']\nType of pressure data to use. “sea_level_pressure” uses sea-level pressure, “surface_pressure” uses surface pressure.\n\"sea_level_pressure\"\n\n\nsun_glint_corr\nbool\nWhether to include sun glint correction. If True, subtracts Rayleigh + glint reflectance (rho_rg); otherwise subtracts Rayleigh reflectance only (rho_r).\nTrue\n\n\ntransmittance_corr\nbool\nWhether to apply the Rayleigh diffuse transmittance correction. If True, the corrected reflectance rho_rc is divided by the total diffuse transmittance t_d (downward x upward), effectively compensating for remaining Rayleigh and gaseous attenuation along both the solar and sensor view paths.\nFalse\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nrayleigh_lut\nxr.Dataset\nPre-computed Rayleigh scattering lookup table.\n\n\ninterpolator\nInterpolator\nInterpolator object for performing multi-dimensional interpolation.\n\n\npressure_kind\nstr\nType of pressure data used.\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\ncheck\nCheck that srf bands are identical to ds.bands\n\n\n\n\n\nrayleigh.RayleighCorrection.check(ds)\nCheck that srf bands are identical to ds.bands\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\ncalc_odr\nCalculates ODR (Optical Depth Rayleigh)\n\n\nload_rayleigh_lut\nLoad the Rayleigh LUT (PP or SP)\n\n\nmain\nCommand-line interface for Rayleigh correction processing.\n\n\nprocess_rayleigh\nRun the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.\n\n\nprocess_rayleigh_dataset\nApply the full Rayleigh correction pipeline to a Level-1 dataset.\n\n\nrayleigh_correction\nApply Rayleigh correction to ds\n\n\n\n\n\nrayleigh.calc_odr(ds, srf=None)\nCalculates ODR (Optical Depth Rayleigh)\nComputes the Rayleigh optical depth based on altitude and pressure.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nds\nxr.Dataset\nInput dataset containing altitude and pressure information. Must contain either: - “altitude” and “surface_pressure” or “sea_level_pressure” - “cwav” (central wavelength) for single-wavelength calculation\nrequired\n\n\nsrf\nxr.Dataset | None\nSensor spectral response function for multi-wavelength calculation. If provided, ODR is calculated by integrating the Rayleigh cross-section over the SRF.\nNone\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\nRayleigh optical depth values with same dimensions as input.\n\n\n\n\n\n\n\nIf srf is provided, ODR is computed by integrating the Rayleigh cross-section over the SRF using the Bodhaine et al. (1999) method.\nIf srf is None, ODR is computed using the central wavelength from “cwav”\n\n\n\n\n\nrayleigh.load_rayleigh_lut(lut_rayleigh_pp, lut_rayleigh_sp, rayleigh, **kwargs)\nLoad the Rayleigh LUT (PP or SP)\nRelative azimuth angle convention: standard (raa = saa - vaa)\nReturns a dataset with: - reflectance_glitter (reflectance with a rough sea surface, no atmosphere) - reflectance_toa (including glitter) - T_tot_down: total transmission (downward) - T_tot_up: total transmission (upward)\n\n\n\nrayleigh.main()\nCommand-line interface for Rayleigh correction processing.\n\n\n\nrayleigh.process_rayleigh(\n    input_product,\n    reader,\n    output_product,\n    dem='eotools.dem.GTOPO30',\n    transmittance_corr=True,\n    **cfg,\n)\nRun the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.\nLoads the input product using the specified reader class, applies the Rayleigh correction via :func:process_rayleigh_dataset, and saves the result as a NetCDF file.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ninput_product\nPath\nPath to the Level-1 input product.\nrequired\n\n\nreader\nstr\nDotted path of the reader class to use (e.g. eoread.planetscope.Level1_Planetscope). The class must be callable with a path and return an xr.Dataset.\nrequired\n\n\noutput_product\nPath\nDestination path for the output NetCDF file.\nrequired\n\n\ndem\nstr\nDotted path of the DEM class to use (e.g. ‘eotools.dem.GTOPO30’ or ‘eotools.dem.CopernicusDEM’). Default is ‘eotools.dem.GTOPO30’.\n'eotools.dem.GTOPO30'\n\n\ntransmittance_corr\nbool\nWhether to apply the Rayleigh diffuse transmittance correction to the Rayleigh-corrected reflectance. If True, rho_rc is divided by the total (downward x upward) Rayleigh diffuse transmittance t_d, which accounts for both direct and diffuse Rayleigh attenuation along the solar and sensor view paths. Default is True.\nTrue\n\n\n\n\n\n\n\nrayleigh.process_rayleigh_dataset(\n    input_dataset,\n    dem='eotools.dem.CopernicusDEM',\n    transmittance_corr=True,\n)\nApply the full Rayleigh correction pipeline to a Level-1 dataset.\nRuns TOA reflectance initialisation, geometry, altitude, NASA ancillary data, gaseous absorption, and Rayleigh scattering correction in sequence.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ninput_dataset\nxr.Dataset\nLevel-1 dataset as returned by a reader module.\nrequired\n\n\ndem\nstr\nDotted path of the DEM class to use (e.g. 'eotools.dem.GTOPO30' or 'eotools.dem.CopernicusDEM'). Default is 'eotools.dem.GTOPO30'.\n'eotools.dem.CopernicusDEM'\n\n\ntransmittance_corr\nbool\nWhether to apply the Rayleigh diffuse transmittance correction to the Rayleigh-corrected reflectance. If True, rho_rc is divided by the total (downward x upward) Rayleigh diffuse transmittance t_d, which accounts for both direct and diffuse Rayleigh attenuation along the solar and sensor view paths. Default is True.\nTrue\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.Dataset\nRayleigh-corrected dataset containing the following variables: - rho_gc : Gaseous corrected reflectances - rho_r : Rayleigh reflectance - rho_rg : Rayleigh + glint reflectance - t_d : Diffuse transmittance (upward + downward) - rho_rc : Rayleigh-corrected reflectance Other input and ancillary variables: - Rtoa : Top-of-atmosphere reflectance - cwav : Central wavelengths (nm) - altitude : Surface altitude (m) - horizontal_wind : Horizontal wind speed - sea_level_pressure : Sea level pressure - total_column_ozone : Total column ozone - total_column_water_vapour : Total column water vapour\n\n\n\n\n\n\n\nrayleigh.rayleigh_correction(ds, srf=None, **cfg)\nApply Rayleigh correction to ds\nThis function applies atmospheric Rayleigh scattering correction to the top-of-atmosphere reflectance data. It computes the Rayleigh-corrected reflectance and related atmospheric transmission parameters.\nThis creates the following variables in ds:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nrho_rc\nRayleigh-corrected signal\n\n\nrho_mol_gli\nRayleigh + glint reflectance\n\n\nrho_mol\nRayleigh reflectance (no glint)\n\n\nt_d\nTotal diffuse transmittance (downward+upward)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nds\nxr.Dataset\nThe Dataset used for inputs/outputs. Must contain: - “altitude”: altitude above sea level - “horizontal_wind”: horizontal wind speed - “mus”: cosine of solar zenith angle - “muv”: cosine of viewing zenith angle - “raa”: relative azimuth angle (saa - vaa) - “rho_gc”: ground-corrected reflectance - “surface_pressure” or “sea_level_pressure”: atmospheric pressure\nrequired\n\n\nsrf\nxr.Dataset | None\nThe sensor spectral response function (SRF).\nNone\n\n\n**cfg\ndict\nAdditional configuration parameters passed to load_rayleigh_lut.\n{}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.Dataset\nThe input dataset with added variables: rho_rc, rho_mol_gli, rho_mol, t_d.\n\n\nNote\nthis function shoud be deprecated in favour of the class RayleighCorrection",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "rayleigh"
+    ]
+  },
+  {
+    "objectID": "reference/rayleigh.html#classes",
+    "href": "reference/rayleigh.html#classes",
+    "title": "1 rayleigh",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nRayleighCorrection\nBlock processor for applying Rayleigh scattering correction.\n\n\n\n\n\nrayleigh.RayleighCorrection(\n    srf=None,\n    version='polymer_legacy',\n    pressure_kind='sea_level_pressure',\n    sun_glint_corr=True,\n    transmittance_corr=False,\n    dtype='float32',\n    **cfg,\n)\nBlock processor for applying Rayleigh scattering correction.\nThis processor applies atmospheric Rayleigh scattering correction to satellite reflectance data using pre-computed lookup tables (LUTs).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nsrf\nxr.Dataset | None\nSensor spectral response function for multi-wavelength correction.\nNone\n\n\nversion\nLiteral['polymer_legacy']\nVersion of the Rayleigh LUT to use. Currently only “polymer_legacy” is supported.\n\"polymer_legacy\"\n\n\npressure_kind\nLiteral['surface_pressure', 'sea_level_pressure']\nType of pressure data to use. “sea_level_pressure” uses sea-level pressure, “surface_pressure” uses surface pressure.\n\"sea_level_pressure\"\n\n\nsun_glint_corr\nbool\nWhether to include sun glint correction. If True, subtracts Rayleigh + glint reflectance (rho_rg); otherwise subtracts Rayleigh reflectance only (rho_r).\nTrue\n\n\ntransmittance_corr\nbool\nWhether to apply the Rayleigh diffuse transmittance correction. If True, the corrected reflectance rho_rc is divided by the total diffuse transmittance t_d (downward x upward), effectively compensating for remaining Rayleigh and gaseous attenuation along both the solar and sensor view paths.\nFalse\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nrayleigh_lut\nxr.Dataset\nPre-computed Rayleigh scattering lookup table.\n\n\ninterpolator\nInterpolator\nInterpolator object for performing multi-dimensional interpolation.\n\n\npressure_kind\nstr\nType of pressure data used.\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\ncheck\nCheck that srf bands are identical to ds.bands\n\n\n\n\n\nrayleigh.RayleighCorrection.check(ds)\nCheck that srf bands are identical to ds.bands",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "rayleigh"
+    ]
+  },
+  {
+    "objectID": "reference/rayleigh.html#functions",
+    "href": "reference/rayleigh.html#functions",
+    "title": "1 rayleigh",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\ncalc_odr\nCalculates ODR (Optical Depth Rayleigh)\n\n\nload_rayleigh_lut\nLoad the Rayleigh LUT (PP or SP)\n\n\nmain\nCommand-line interface for Rayleigh correction processing.\n\n\nprocess_rayleigh\nRun the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.\n\n\nprocess_rayleigh_dataset\nApply the full Rayleigh correction pipeline to a Level-1 dataset.\n\n\nrayleigh_correction\nApply Rayleigh correction to ds\n\n\n\n\n\nrayleigh.calc_odr(ds, srf=None)\nCalculates ODR (Optical Depth Rayleigh)\nComputes the Rayleigh optical depth based on altitude and pressure.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nds\nxr.Dataset\nInput dataset containing altitude and pressure information. Must contain either: - “altitude” and “surface_pressure” or “sea_level_pressure” - “cwav” (central wavelength) for single-wavelength calculation\nrequired\n\n\nsrf\nxr.Dataset | None\nSensor spectral response function for multi-wavelength calculation. If provided, ODR is calculated by integrating the Rayleigh cross-section over the SRF.\nNone\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.DataArray\nRayleigh optical depth values with same dimensions as input.\n\n\n\n\n\n\n\nIf srf is provided, ODR is computed by integrating the Rayleigh cross-section over the SRF using the Bodhaine et al. (1999) method.\nIf srf is None, ODR is computed using the central wavelength from “cwav”\n\n\n\n\n\nrayleigh.load_rayleigh_lut(lut_rayleigh_pp, lut_rayleigh_sp, rayleigh, **kwargs)\nLoad the Rayleigh LUT (PP or SP)\nRelative azimuth angle convention: standard (raa = saa - vaa)\nReturns a dataset with: - reflectance_glitter (reflectance with a rough sea surface, no atmosphere) - reflectance_toa (including glitter) - T_tot_down: total transmission (downward) - T_tot_up: total transmission (upward)\n\n\n\nrayleigh.main()\nCommand-line interface for Rayleigh correction processing.\n\n\n\nrayleigh.process_rayleigh(\n    input_product,\n    reader,\n    output_product,\n    dem='eotools.dem.GTOPO30',\n    transmittance_corr=True,\n    **cfg,\n)\nRun the full Rayleigh correction pipeline on a Level-1 product and write the result to disk.\nLoads the input product using the specified reader class, applies the Rayleigh correction via :func:process_rayleigh_dataset, and saves the result as a NetCDF file.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ninput_product\nPath\nPath to the Level-1 input product.\nrequired\n\n\nreader\nstr\nDotted path of the reader class to use (e.g. eoread.planetscope.Level1_Planetscope). The class must be callable with a path and return an xr.Dataset.\nrequired\n\n\noutput_product\nPath\nDestination path for the output NetCDF file.\nrequired\n\n\ndem\nstr\nDotted path of the DEM class to use (e.g. ‘eotools.dem.GTOPO30’ or ‘eotools.dem.CopernicusDEM’). Default is ‘eotools.dem.GTOPO30’.\n'eotools.dem.GTOPO30'\n\n\ntransmittance_corr\nbool\nWhether to apply the Rayleigh diffuse transmittance correction to the Rayleigh-corrected reflectance. If True, rho_rc is divided by the total (downward x upward) Rayleigh diffuse transmittance t_d, which accounts for both direct and diffuse Rayleigh attenuation along the solar and sensor view paths. Default is True.\nTrue\n\n\n\n\n\n\n\nrayleigh.process_rayleigh_dataset(\n    input_dataset,\n    dem='eotools.dem.CopernicusDEM',\n    transmittance_corr=True,\n)\nApply the full Rayleigh correction pipeline to a Level-1 dataset.\nRuns TOA reflectance initialisation, geometry, altitude, NASA ancillary data, gaseous absorption, and Rayleigh scattering correction in sequence.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ninput_dataset\nxr.Dataset\nLevel-1 dataset as returned by a reader module.\nrequired\n\n\ndem\nstr\nDotted path of the DEM class to use (e.g. 'eotools.dem.GTOPO30' or 'eotools.dem.CopernicusDEM'). Default is 'eotools.dem.GTOPO30'.\n'eotools.dem.CopernicusDEM'\n\n\ntransmittance_corr\nbool\nWhether to apply the Rayleigh diffuse transmittance correction to the Rayleigh-corrected reflectance. If True, rho_rc is divided by the total (downward x upward) Rayleigh diffuse transmittance t_d, which accounts for both direct and diffuse Rayleigh attenuation along the solar and sensor view paths. Default is True.\nTrue\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.Dataset\nRayleigh-corrected dataset containing the following variables: - rho_gc : Gaseous corrected reflectances - rho_r : Rayleigh reflectance - rho_rg : Rayleigh + glint reflectance - t_d : Diffuse transmittance (upward + downward) - rho_rc : Rayleigh-corrected reflectance Other input and ancillary variables: - Rtoa : Top-of-atmosphere reflectance - cwav : Central wavelengths (nm) - altitude : Surface altitude (m) - horizontal_wind : Horizontal wind speed - sea_level_pressure : Sea level pressure - total_column_ozone : Total column ozone - total_column_water_vapour : Total column water vapour\n\n\n\n\n\n\n\nrayleigh.rayleigh_correction(ds, srf=None, **cfg)\nApply Rayleigh correction to ds\nThis function applies atmospheric Rayleigh scattering correction to the top-of-atmosphere reflectance data. It computes the Rayleigh-corrected reflectance and related atmospheric transmission parameters.\nThis creates the following variables in ds:\n\n\n\n\n\n\n\nVariable\nDescription\n\n\n\n\nrho_rc\nRayleigh-corrected signal\n\n\nrho_mol_gli\nRayleigh + glint reflectance\n\n\nrho_mol\nRayleigh reflectance (no glint)\n\n\nt_d\nTotal diffuse transmittance (downward+upward)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nds\nxr.Dataset\nThe Dataset used for inputs/outputs. Must contain: - “altitude”: altitude above sea level - “horizontal_wind”: horizontal wind speed - “mus”: cosine of solar zenith angle - “muv”: cosine of viewing zenith angle - “raa”: relative azimuth angle (saa - vaa) - “rho_gc”: ground-corrected reflectance - “surface_pressure” or “sea_level_pressure”: atmospheric pressure\nrequired\n\n\nsrf\nxr.Dataset | None\nThe sensor spectral response function (SRF).\nNone\n\n\n**cfg\ndict\nAdditional configuration parameters passed to load_rayleigh_lut.\n{}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nxr.Dataset\nThe input dataset with added variables: rho_rc, rho_mol_gli, rho_mol, t_d.\n\n\nNote\nthis function shoud be deprecated in favour of the class RayleighCorrection",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "rayleigh"
+    ]
+  },
+  {
+    "objectID": "reference/glint.html",
+    "href": "reference/glint.html",
+    "title": "1 glint",
+    "section": "",
+    "text": "glint\n\n\n\n\n\nName\nDescription\n\n\n\n\nglitter\nThis function computes glitter’s normalized radiance from\n\n\n\n\n\nglint.glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None)\nThis function computes glitter’s normalized radiance from Cox and Munk wave slope probability density function model, for isotropic or directionnal approximation\nArguments: float wind [IN] : Norm of the wind surface vector [m/s] float mu_s [IN] : Cosine of the solar zenith angle float mu_v [IN] : Cosine of the viewing zenith angle float gamma [IN] : Scattering angle (degrees) Directional approximation: (not used if phi and phi_vent are None (default)) float phi [IN] : Relative azimutal angle between solar azimtual angle and viewing azimutal angle (degrees) float phi_vent [IN] : Relative azimutal angle between solar azimutal angle and wind azimutal angle (degrees)",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "glint"
+    ]
+  },
+  {
+    "objectID": "reference/glint.html#functions",
+    "href": "reference/glint.html#functions",
+    "title": "1 glint",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nglitter\nThis function computes glitter’s normalized radiance from\n\n\n\n\n\nglint.glitter(wind, mu_s, mu_v, gamma, phi=None, phi_vent=None)\nThis function computes glitter’s normalized radiance from Cox and Munk wave slope probability density function model, for isotropic or directionnal approximation\nArguments: float wind [IN] : Norm of the wind surface vector [m/s] float mu_s [IN] : Cosine of the solar zenith angle float mu_v [IN] : Cosine of the viewing zenith angle float gamma [IN] : Scattering angle (degrees) Directional approximation: (not used if phi and phi_vent are None (default)) float phi [IN] : Relative azimutal angle between solar azimtual angle and viewing azimutal angle (degrees) float phi_vent [IN] : Relative azimutal angle between solar azimutal angle and wind azimutal angle (degrees)",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "glint"
+    ]
+  },
+  {
+    "objectID": "reference/chapman.html",
+    "href": "reference/chapman.html",
+    "title": "1 chapman",
+    "section": "",
+    "text": "chapman\n\n\n\n\n\nName\nDescription\n\n\n\n\nchapman\nCompute the optical slant air mass accounting for the earth’s curvature\n\n\n\n\n\nchapman.chapman(mu, X=6371.0 / 8.0, method='f')\nCompute the optical slant air mass accounting for the earth’s curvature using the Chapman function.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmu\nfloat or array_like\nCosine of the zenith angle at the point of interest.\nrequired\n\n\nX\nfloat\nRatio of altitude at the point of interest (from Earth’s centre) to the scale height of the atmospheric absorber. Default is 6371/8 ≈ 796.375, corresponding to Earth’s mean radius (6371 km) and Rayleigh scale height (8 km).\n6371.0 / 8.0\n\n\nmethod\n(d, e, f)\nMethod for computation. Default is ‘f’. - ‘d’: Titheridge (1988, 2000) method - ‘e’: Kocifaj (1996) and Schüler (2012) method - ‘f’: Huestis(2001) method (the most accurate)\n'd'\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloat or ndarray\nChapman function value(s) representing the optical slant air mass factor (ratio of slant to vertical path) for a spherical atmosphere. In plane-parallel limit this reduces to 1/mu.\n\n\n\n\n\n\n.. [1] Vasylyev, D. (2021). Accurate analytic approximation for the Chapman grazing incidence function. Earth Planets Space, 73, 112. https://doi.org/10.1186/s40623-021-01435-y .. [2] Huestis, D. L. (2001). Accurate evaluation of the Chapman function for atmospheric attenuation. Journal of Quantitative Spectroscopy and Radiative Transfer, 69(6), 709–721. https://doi.org/10.1016/S0022-4073(00)00107-2 .. [3] Titheridge, J. E. (1988). A non-linear theory of the Chapman graticule. Journal of Atmospheric and Solar-Terrestrial Physics, 50(3), 209-219. .. [4] Titheridge, J. E. (2000). Modelling of the basic mechanisms controlling the pre-reversal enhancement of equatorial spread F. Journal of Atmospheric and Solar-Terrestrial Physics, 62(17), 1521-1531. .. [5] Kocifaj, M. (1996). On the Chapman graticule computation revisited. Journal of Atmospheric and Solar-Terrestrial Physics, 58(16), 1819-1823. .. [6] Schüler, T. (2012). On the use of ionospheric scale heights in the Chapman function model. Radio Science, 47, RS5003.",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "chapman"
+    ]
+  },
+  {
+    "objectID": "reference/chapman.html#functions",
+    "href": "reference/chapman.html#functions",
+    "title": "1 chapman",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nchapman\nCompute the optical slant air mass accounting for the earth’s curvature\n\n\n\n\n\nchapman.chapman(mu, X=6371.0 / 8.0, method='f')\nCompute the optical slant air mass accounting for the earth’s curvature using the Chapman function.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmu\nfloat or array_like\nCosine of the zenith angle at the point of interest.\nrequired\n\n\nX\nfloat\nRatio of altitude at the point of interest (from Earth’s centre) to the scale height of the atmospheric absorber. Default is 6371/8 ≈ 796.375, corresponding to Earth’s mean radius (6371 km) and Rayleigh scale height (8 km).\n6371.0 / 8.0\n\n\nmethod\n(d, e, f)\nMethod for computation. Default is ‘f’. - ‘d’: Titheridge (1988, 2000) method - ‘e’: Kocifaj (1996) and Schüler (2012) method - ‘f’: Huestis(2001) method (the most accurate)\n'd'\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloat or ndarray\nChapman function value(s) representing the optical slant air mass factor (ratio of slant to vertical path) for a spherical atmosphere. In plane-parallel limit this reduces to 1/mu.\n\n\n\n\n\n\n.. [1] Vasylyev, D. (2021). Accurate analytic approximation for the Chapman grazing incidence function. Earth Planets Space, 73, 112. https://doi.org/10.1186/s40623-021-01435-y .. [2] Huestis, D. L. (2001). Accurate evaluation of the Chapman function for atmospheric attenuation. Journal of Quantitative Spectroscopy and Radiative Transfer, 69(6), 709–721. https://doi.org/10.1016/S0022-4073(00)00107-2 .. [3] Titheridge, J. E. (1988). A non-linear theory of the Chapman graticule. Journal of Atmospheric and Solar-Terrestrial Physics, 50(3), 209-219. .. [4] Titheridge, J. E. (2000). Modelling of the basic mechanisms controlling the pre-reversal enhancement of equatorial spread F. Journal of Atmospheric and Solar-Terrestrial Physics, 62(17), 1521-1531. .. [5] Kocifaj, M. (1996). On the Chapman graticule computation revisited. Journal of Atmospheric and Solar-Terrestrial Physics, 58(16), 1819-1823. .. [6] Schüler, T. (2012). On the use of ionospheric scale heights in the Chapman function model. Radio Science, 47, RS5003.",
+    "crumbs": [
+      "API Reference",
+      "Atmospheric correction",
+      "chapman"
+    ]
+  },
+  {
+    "objectID": "reference/units.html",
+    "href": "reference/units.html",
+    "title": "1 units",
+    "section": "",
+    "text": "units\n\n\n\n\n\nName\nDescription\n\n\n\n\ncheck_units\nValidate that a DataArray has the expected units.\n\n\nconvert\nUse pint-xarray for units conversion\n\n\n\n\n\nunits.check_units(da, expected_units)\nValidate that a DataArray has the expected units.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nda\nxr.DataArray\nThe DataArray to check for units.\nrequired\n\n\nexpected_units\nstr\nThe expected units string (e.g., ‘Dobson’, ’kg/m**2’).\nrequired\n\n\n\n\n\n\n\nunits.convert(da, new_units)\nUse pint-xarray for units conversion\nExample: # Detect the input data units (through the ‘units’ attribute) and # convert, if necessary, to ‘Dobson’ convert(total_ozone, ‘Dobson’)",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "units"
+    ]
+  },
+  {
+    "objectID": "reference/units.html#functions",
+    "href": "reference/units.html#functions",
+    "title": "1 units",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\ncheck_units\nValidate that a DataArray has the expected units.\n\n\nconvert\nUse pint-xarray for units conversion\n\n\n\n\n\nunits.check_units(da, expected_units)\nValidate that a DataArray has the expected units.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nda\nxr.DataArray\nThe DataArray to check for units.\nrequired\n\n\nexpected_units\nstr\nThe expected units string (e.g., ‘Dobson’, ’kg/m**2’).\nrequired\n\n\n\n\n\n\n\nunits.convert(da, new_units)\nUse pint-xarray for units conversion\nExample: # Detect the input data units (through the ‘units’ attribute) and # convert, if necessary, to ‘Dobson’ convert(total_ozone, ‘Dobson’)",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "units"
+    ]
+  },
+  {
+    "objectID": "reference/toa_reflectance.html",
+    "href": "reference/toa_reflectance.html",
+    "title": "1 toa_reflectance",
+    "section": "",
+    "text": "toa_reflectance\n\n\n\n\n\nName\nDescription\n\n\n\n\nInit_rho_toa\nBlockProcessor that computes TOA reflectance from TOA radiance.\n\n\n\n\n\ntoa_reflectance.Init_rho_toa(\n    ds,\n    srf=None,\n    solar_irradiance=None,\n    correct_sun_earth_distance=None,\n)\nBlockProcessor that computes TOA reflectance from TOA radiance.\nImplements the standard formula: rho_toa = pi * L_toa * d^2 / (mu_s * F0)\nwhere d is the sun-earth distance in AU, mu_s = cos(SZA), and F0 is the extraterrestrial solar irradiance.\nThe processor is a no-op if rtoa is already present in the dataset. F0 can come from two sources (in order of priority): 1. As a per-pixel band variable in the dataset (F0). 2. Integrated from srf using a solar spectrum: either the solar_irradiance argument or, by default, the LISIRD p1nm spectrum. In this case F0 represents the irradiance at 1 AU.\nThe sun-earth distance correction (d²) can be controlled via correct_sun_earth_distance: - None (default): apply d² only when F0 is integrated from SRF (i.e., assume dataset-provided F0 already includes the correction). - True: always apply d² regardless of F0 source. - False: never apply d².\nArgs: ds: Input dataset used to determine which variables are already present and to parse the acquisition datetime. srf: Per-band spectral response functions used to integrate F0 when it is not available in ds. Required when names.F0 is absent from ds. solar_irradiance: Solar spectrum DataArray (wavelength axis named \"wav\") to integrate over srf. Defaults to the LISIRD p1nm spectrum when None. correct_sun_earth_distance: Whether to apply the sun-earth distance correction. If None (default), the correction is applied only when F0 is integrated from SRF. If True, always applied. If False, never applied.\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nsun_earth_distance\nReturn the sun-earth distance in AU for a given datetime.\n\n\n\n\n\ntoa_reflectance.sun_earth_distance(t)\nReturn the sun-earth distance in AU for a given datetime.\nd is computed using a two-term Keplerian expansion of Earth’s orbit. Use it in the TOA reflectance formula as: rho = pi * L * sun_earth_distance(t)**2 / (F0 * cos(sza)) where F0 is the solar irradiance tabulated at 1 AU.\nArgs: t: acquisition datetime (timezone-aware or naive, UTC assumed).\nReturns: Sun-earth distance in AU.",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "toa_reflectance"
+    ]
+  },
+  {
+    "objectID": "reference/toa_reflectance.html#classes",
+    "href": "reference/toa_reflectance.html#classes",
+    "title": "1 toa_reflectance",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nInit_rho_toa\nBlockProcessor that computes TOA reflectance from TOA radiance.\n\n\n\n\n\ntoa_reflectance.Init_rho_toa(\n    ds,\n    srf=None,\n    solar_irradiance=None,\n    correct_sun_earth_distance=None,\n)\nBlockProcessor that computes TOA reflectance from TOA radiance.\nImplements the standard formula: rho_toa = pi * L_toa * d^2 / (mu_s * F0)\nwhere d is the sun-earth distance in AU, mu_s = cos(SZA), and F0 is the extraterrestrial solar irradiance.\nThe processor is a no-op if rtoa is already present in the dataset. F0 can come from two sources (in order of priority): 1. As a per-pixel band variable in the dataset (F0). 2. Integrated from srf using a solar spectrum: either the solar_irradiance argument or, by default, the LISIRD p1nm spectrum. In this case F0 represents the irradiance at 1 AU.\nThe sun-earth distance correction (d²) can be controlled via correct_sun_earth_distance: - None (default): apply d² only when F0 is integrated from SRF (i.e., assume dataset-provided F0 already includes the correction). - True: always apply d² regardless of F0 source. - False: never apply d².\nArgs: ds: Input dataset used to determine which variables are already present and to parse the acquisition datetime. srf: Per-band spectral response functions used to integrate F0 when it is not available in ds. Required when names.F0 is absent from ds. solar_irradiance: Solar spectrum DataArray (wavelength axis named \"wav\") to integrate over srf. Defaults to the LISIRD p1nm spectrum when None. correct_sun_earth_distance: Whether to apply the sun-earth distance correction. If None (default), the correction is applied only when F0 is integrated from SRF. If True, always applied. If False, never applied.",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "toa_reflectance"
+    ]
+  },
+  {
+    "objectID": "reference/toa_reflectance.html#functions",
+    "href": "reference/toa_reflectance.html#functions",
+    "title": "1 toa_reflectance",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nsun_earth_distance\nReturn the sun-earth distance in AU for a given datetime.\n\n\n\n\n\ntoa_reflectance.sun_earth_distance(t)\nReturn the sun-earth distance in AU for a given datetime.\nd is computed using a two-term Keplerian expansion of Earth’s orbit. Use it in the TOA reflectance formula as: rho = pi * L * sun_earth_distance(t)**2 / (F0 * cos(sza)) where F0 is the solar irradiance tabulated at 1 AU.\nArgs: t: acquisition datetime (timezone-aware or naive, UTC assumed).\nReturns: Sun-earth distance in AU.",
+    "crumbs": [
+      "API Reference",
+      "Radiometry",
+      "toa_reflectance"
+    ]
+  },
+  {
+    "objectID": "reference/geometry.html",
+    "href": "reference/geometry.html",
+    "title": "1 geometry",
+    "section": "",
+    "text": "geometry\n\n\n\n\n\nName\nDescription\n\n\n\n\nInitGeometry\nInitialize geometrical variables:\n\n\n\n\n\ngeometry.InitGeometry(ds, calc_scat_angle=False, calc_air_mass=False)\nInitialize geometrical variables: - cosines of the view and zenith angles (muv, mus) - relative azimuth angle (raa) - air mass (1/mus + 1/muv) - scattering angle\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nscattering_angle\nScattering angle in degrees\n\n\n\n\n\ngeometry.scattering_angle(mu_s, mu_v, phi)\nScattering angle in degrees\nmu_s: cos of the sun zenith angle (degrees) mu_v: cos of the view zenith angle (degrees) phi: relative azimuth angle in degrees",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "geometry"
+    ]
+  },
+  {
+    "objectID": "reference/geometry.html#classes",
+    "href": "reference/geometry.html#classes",
+    "title": "1 geometry",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nInitGeometry\nInitialize geometrical variables:\n\n\n\n\n\ngeometry.InitGeometry(ds, calc_scat_angle=False, calc_air_mass=False)\nInitialize geometrical variables: - cosines of the view and zenith angles (muv, mus) - relative azimuth angle (raa) - air mass (1/mus + 1/muv) - scattering angle",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "geometry"
+    ]
+  },
+  {
+    "objectID": "reference/geometry.html#functions",
+    "href": "reference/geometry.html#functions",
+    "title": "1 geometry",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nscattering_angle\nScattering angle in degrees\n\n\n\n\n\ngeometry.scattering_angle(mu_s, mu_v, phi)\nScattering angle in degrees\nmu_s: cos of the sun zenith angle (degrees) mu_v: cos of the view zenith angle (degrees) phi: relative azimuth angle in degrees",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "geometry"
+    ]
+  },
+  {
+    "objectID": "reference/dem.html",
+    "href": "reference/dem.html",
+    "title": "1 dem",
+    "section": "",
+    "text": "dem\n\n\n\n\n\nName\nDescription\n\n\n\n\nCopernicusDEM\nCopernicus digital elevation model, 90m or 30m, with functions\n\n\nDEM\nFactory class that wraps the available DEM (Digital Elevation Model) processors.\n\n\nGTOPO30\nGTOPO30 digital elevation model\n\n\nZeroAltitude\nBypasses DEM, by setting all altitudes to zero\n\n\n\n\n\ndem.CopernicusDEM(\n    l1=None,\n    lat=None,\n    lon=None,\n    directory=None,\n    resolution=90,\n    missing=0,\n    verbose=True,\n)\nCopernicus digital elevation model, 90m or 30m, with functions to get the altitude for a lat-lon grid and to download on demand DEM tiles via internet.\nUses per-pixel tile lookup: for each (lat, lon) point, determines which 1° tile covers that point, downloads the tile on demand, and indexes into it using the tile’s actual dimensions.\nThe DEM is a grid of tie points, not of pixels. The altitude is given for the degree line. There are 1200 rows per degree. The number of columns depends on the latitude band (fewer columns at higher latitudes, each spanning wider longitude).\n\n\nl1: optional Xarray Dataset from an eoread reader (used to extract lat/lon bounds) lat: optional tuple (min, max) latitude bounds for pre-downloading tiles lon: optional tuple (min, max) longitude bounds for pre-downloading tiles directory: directory for tile storage resolution: 90 or 30, default 90 missing: value to use for missing (ocean) elevation data (default: 0) verbose: with trace output\n\n\n\n\ndem.DEM()\nFactory class that wraps the available DEM (Digital Elevation Model) processors.\nCreates the appropriate DEM BlockProcessor based on the source parameter:\n\n\"zero\" → ZeroAltitude (all altitudes set to 0)\n\"gtopo30\" → GTOPO30 (30 arc-second global DEM, ~1km resolution)\n\"copernicus\" → CopernicusDEM (90m or 30m Copernicus DEM)\n\n\n\nds : xr.Dataset, optional Level-1 dataset (used to extract lat/lon bounds for DEM loading). Required for \"gtopo30\" and \"copernicus\" unless lat/lon are provided. source : str, default \"zero\" Which DEM source to use: \"zero\", \"gtopo30\", or \"copernicus\". **kwargs : Additional keyword arguments passed to the DEM constructor:\n- For `GTOPO30`: `lat`, `lon`, `directory`, `missing`, `method`, `verbose`\n- For `CopernicusDEM`: `lat`, `lon`, `directory`, `resolution`, `missing`, `verbose`\n\n\n\nBlockProcessor An instance of the selected DEM processor class.\n\n\n\n\n\n\ndem = DEM(ds, source=“copernicus”, resolution=30) result = dem.map_blocks(ds)\n\n\n\n\n\n\n\ndem.GTOPO30(\n    l1=None,\n    lat=None,\n    lon=None,\n    directory=None,\n    missing=0,\n    method='linear',\n    verbose=True,\n)\nGTOPO30 digital elevation model\n30 arc-second (~1km) - Between 56S and 60N\n\n\nl1: Xarray Dataset for an eoread reader lat: tuple of (min, max) latitude bounds lon: tuple of (min, max) longitude bounds directory: directory for tile storage missing: value to use for missing elevation data (default: 0) method: interpolation method, ‘nearest’ or ‘linear’ (default: ‘linear’)\n\n\n\n\ndem.ZeroAltitude()\nBypasses DEM, by setting all altitudes to zero",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "dem"
+    ]
+  },
+  {
+    "objectID": "reference/dem.html#classes",
+    "href": "reference/dem.html#classes",
+    "title": "1 dem",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nCopernicusDEM\nCopernicus digital elevation model, 90m or 30m, with functions\n\n\nDEM\nFactory class that wraps the available DEM (Digital Elevation Model) processors.\n\n\nGTOPO30\nGTOPO30 digital elevation model\n\n\nZeroAltitude\nBypasses DEM, by setting all altitudes to zero\n\n\n\n\n\ndem.CopernicusDEM(\n    l1=None,\n    lat=None,\n    lon=None,\n    directory=None,\n    resolution=90,\n    missing=0,\n    verbose=True,\n)\nCopernicus digital elevation model, 90m or 30m, with functions to get the altitude for a lat-lon grid and to download on demand DEM tiles via internet.\nUses per-pixel tile lookup: for each (lat, lon) point, determines which 1° tile covers that point, downloads the tile on demand, and indexes into it using the tile’s actual dimensions.\nThe DEM is a grid of tie points, not of pixels. The altitude is given for the degree line. There are 1200 rows per degree. The number of columns depends on the latitude band (fewer columns at higher latitudes, each spanning wider longitude).\n\n\nl1: optional Xarray Dataset from an eoread reader (used to extract lat/lon bounds) lat: optional tuple (min, max) latitude bounds for pre-downloading tiles lon: optional tuple (min, max) longitude bounds for pre-downloading tiles directory: directory for tile storage resolution: 90 or 30, default 90 missing: value to use for missing (ocean) elevation data (default: 0) verbose: with trace output\n\n\n\n\ndem.DEM()\nFactory class that wraps the available DEM (Digital Elevation Model) processors.\nCreates the appropriate DEM BlockProcessor based on the source parameter:\n\n\"zero\" → ZeroAltitude (all altitudes set to 0)\n\"gtopo30\" → GTOPO30 (30 arc-second global DEM, ~1km resolution)\n\"copernicus\" → CopernicusDEM (90m or 30m Copernicus DEM)\n\n\n\nds : xr.Dataset, optional Level-1 dataset (used to extract lat/lon bounds for DEM loading). Required for \"gtopo30\" and \"copernicus\" unless lat/lon are provided. source : str, default \"zero\" Which DEM source to use: \"zero\", \"gtopo30\", or \"copernicus\". **kwargs : Additional keyword arguments passed to the DEM constructor:\n- For `GTOPO30`: `lat`, `lon`, `directory`, `missing`, `method`, `verbose`\n- For `CopernicusDEM`: `lat`, `lon`, `directory`, `resolution`, `missing`, `verbose`\n\n\n\nBlockProcessor An instance of the selected DEM processor class.\n\n\n\n\n\n\ndem = DEM(ds, source=“copernicus”, resolution=30) result = dem.map_blocks(ds)\n\n\n\n\n\n\n\ndem.GTOPO30(\n    l1=None,\n    lat=None,\n    lon=None,\n    directory=None,\n    missing=0,\n    method='linear',\n    verbose=True,\n)\nGTOPO30 digital elevation model\n30 arc-second (~1km) - Between 56S and 60N\n\n\nl1: Xarray Dataset for an eoread reader lat: tuple of (min, max) latitude bounds lon: tuple of (min, max) longitude bounds directory: directory for tile storage missing: value to use for missing elevation data (default: 0) method: interpolation method, ‘nearest’ or ‘linear’ (default: ‘linear’)\n\n\n\n\ndem.ZeroAltitude()\nBypasses DEM, by setting all altitudes to zero",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "dem"
+    ]
+  },
+  {
+    "objectID": "reference/solar_irradiance.html",
+    "href": "reference/solar_irradiance.html",
+    "title": "1 solar_irradiance",
+    "section": "",
+    "text": "solar_irradiance\n\n\n\n\n\nName\nDescription\n\n\n\n\nsolar_irradiance\nGet solar irradiance from various sources (xarray DataArray)\n\n\nsolar_irradiance_lisird\nGet solar irradiance from LASP LISIRD\n\n\n\n\n\nsolar_irradiance.solar_irradiance(source, **kwargs)\nGet solar irradiance from various sources (xarray DataArray)\nEx: solar_irradiance(‘LISIRD’, variant=‘1nm’)\n\n\n\nsolar_irradiance.solar_irradiance_lisird(variant)\nGet solar irradiance from LASP LISIRD\nhttps://lasp.colorado.edu/lisird/data/tsis1_hsrs_p1nm\nThe data file is written in the directory $DIR_STATIC (see core.env.getdir)\nArgs: variant: variant of the model\nReturns a dataset with variables: ‘SSI’: Spectral Solar Irradiance ‘SSI_UNC’: Spectral Solar Irradiance Uncertainty",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "solar_irradiance"
+    ]
+  },
+  {
+    "objectID": "reference/solar_irradiance.html#functions",
+    "href": "reference/solar_irradiance.html#functions",
+    "title": "1 solar_irradiance",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nsolar_irradiance\nGet solar irradiance from various sources (xarray DataArray)\n\n\nsolar_irradiance_lisird\nGet solar irradiance from LASP LISIRD\n\n\n\n\n\nsolar_irradiance.solar_irradiance(source, **kwargs)\nGet solar irradiance from various sources (xarray DataArray)\nEx: solar_irradiance(‘LISIRD’, variant=‘1nm’)\n\n\n\nsolar_irradiance.solar_irradiance_lisird(variant)\nGet solar irradiance from LASP LISIRD\nhttps://lasp.colorado.edu/lisird/data/tsis1_hsrs_p1nm\nThe data file is written in the directory $DIR_STATIC (see core.env.getdir)\nArgs: variant: variant of the model\nReturns a dataset with variables: ‘SSI’: Spectral Solar Irradiance ‘SSI_UNC’: Spectral Solar Irradiance Uncertainty",
+    "crumbs": [
+      "API Reference",
+      "Geometry & Solar",
+      "solar_irradiance"
+    ]
+  },
+  {
+    "objectID": "reference/water.html",
+    "href": "reference/water.html",
+    "title": "1 water",
+    "section": "",
+    "text": "water\nRead global surface water from https://global-surface-water.appspot.com/\nhttps://doi.org/10.1038/nature20584\n\n\n\n\n\ngsw = GSW(agg=8) Create water mask mask = gsw.sel(latitude=lat, longitude=lon, method=‘nearest’) &gt; 50\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nGSW\nGlobal surface water reader\n\n\nGSWLandMask\nBlockProcessor that adds GSW water occurrence data and raises a flag\n\n\n\n\n\nwater.GSW(l1=None, lat=None, lon=None, directory=None, agg=8)\nGlobal surface water reader\n\n\nlat: tuple of (min, max) latitude bounds lon: tuple of (min, max) longitude bounds directory: directory for tile storage agg: Factor of aggregation\n\n\n\nA xarray.DataArray of the water occurrence between 0 and 100\n\n\n\n\nwater.GSWLandMask(\n    l1=None,\n    lat=None,\n    lon=None,\n    directory=None,\n    agg=8,\n    threshold=50,\n    flag_var='flags',\n    flag_name='LAND',\n    flag_value=1,\n)\nBlockProcessor that adds GSW water occurrence data and raises a flag where water occurrence is below threshold.\nArguments: l1: Level-1 dataset for cropping GSW data (passed to GSW) lat: latitude bounds tuple (passed to GSW) lon: longitude bounds tuple (passed to GSW) directory: directory for GSW tile storage (passed to GSW) agg: GSW aggregation factor (passed to GSW) threshold: water occurrence threshold in % (default: 50) flag_var: name of the flags variable to modify (default: “flags”) flag_name: name of the flag to raise (default: “LAND”) flag_value: bitmask value for the flag (default: 1)\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\ngenerate_full_gsw_mosaic\nBuild a lazy dask array representing the full global surface water mosaic\n\n\nlist_tiles\nReturn list of latlon acronym\n\n\nread_tile\nRead a single tile as a dask array\n\n\n\n\n\nwater.generate_full_gsw_mosaic(directory, agg)\nBuild a lazy dask array representing the full global surface water mosaic\n\n\n\nwater.list_tiles()\nReturn list of latlon acronym\n\n\n\nwater.read_tile(tile_name, agg, directory)\nRead a single tile as a dask array\nData is accessed on demand",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "water"
+    ]
+  },
+  {
+    "objectID": "reference/water.html#example",
+    "href": "reference/water.html#example",
+    "title": "1 water",
+    "section": "",
+    "text": "gsw = GSW(agg=8) Create water mask mask = gsw.sel(latitude=lat, longitude=lon, method=‘nearest’) &gt; 50",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "water"
+    ]
+  },
+  {
+    "objectID": "reference/water.html#classes",
+    "href": "reference/water.html#classes",
+    "title": "1 water",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nGSW\nGlobal surface water reader\n\n\nGSWLandMask\nBlockProcessor that adds GSW water occurrence data and raises a flag\n\n\n\n\n\nwater.GSW(l1=None, lat=None, lon=None, directory=None, agg=8)\nGlobal surface water reader\n\n\nlat: tuple of (min, max) latitude bounds lon: tuple of (min, max) longitude bounds directory: directory for tile storage agg: Factor of aggregation\n\n\n\nA xarray.DataArray of the water occurrence between 0 and 100\n\n\n\n\nwater.GSWLandMask(\n    l1=None,\n    lat=None,\n    lon=None,\n    directory=None,\n    agg=8,\n    threshold=50,\n    flag_var='flags',\n    flag_name='LAND',\n    flag_value=1,\n)\nBlockProcessor that adds GSW water occurrence data and raises a flag where water occurrence is below threshold.\nArguments: l1: Level-1 dataset for cropping GSW data (passed to GSW) lat: latitude bounds tuple (passed to GSW) lon: longitude bounds tuple (passed to GSW) directory: directory for GSW tile storage (passed to GSW) agg: GSW aggregation factor (passed to GSW) threshold: water occurrence threshold in % (default: 50) flag_var: name of the flags variable to modify (default: “flags”) flag_name: name of the flag to raise (default: “LAND”) flag_value: bitmask value for the flag (default: 1)",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "water"
+    ]
+  },
+  {
+    "objectID": "reference/water.html#functions",
+    "href": "reference/water.html#functions",
+    "title": "1 water",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\ngenerate_full_gsw_mosaic\nBuild a lazy dask array representing the full global surface water mosaic\n\n\nlist_tiles\nReturn list of latlon acronym\n\n\nread_tile\nRead a single tile as a dask array\n\n\n\n\n\nwater.generate_full_gsw_mosaic(directory, agg)\nBuild a lazy dask array representing the full global surface water mosaic\n\n\n\nwater.list_tiles()\nReturn list of latlon acronym\n\n\n\nwater.read_tile(tile_name, agg, directory)\nRead a single tile as a dask array\nData is accessed on demand",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "water"
+    ]
+  },
+  {
+    "objectID": "reference/apply_ancillary.html",
+    "href": "reference/apply_ancillary.html",
+    "title": "1 apply_ancillary",
+    "section": "",
+    "text": "apply_ancillary\n\n\n\n\n\nName\nDescription\n\n\n\n\nApplyAncillary\nInterpolator for ancillary data retrieved from a provider at a given datetime.\n\n\n\n\n\napply_ancillary.ApplyAncillary(dt, ancillary_provider)\nInterpolator for ancillary data retrieved from a provider at a given datetime.\nThis class extends Interpolator to handle ancillary data that varies with time, by fetching the appropriate data from an ancillary provider for the specified datetime.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndt\ndatetime | xr.DataArray\nThe datetime or dataset to retrieve ancillary data for. If a dataset is provided, its datetime will be extracted using core.tools.datetime.\nrequired\n\n\nancillary_provider\nobject\nAn ancillary data provider object with a get() method that accepts a datetime and returns an xarray Dataset containing ancillary variables.\nrequired\n\n\n\n\n\n\n&gt;&gt;&gt; from datetime import datetime\n&gt;&gt;&gt; from eoread.ancillary_nasa import Ancillary_NASA\n&gt;&gt;&gt; processor = ApplyAncillary(datetime(2023, 1, 1), Ancillary_NASA())\n&gt;&gt;&gt; result = processor.map_blocks(dataset)\n... # result contains all variables provided by Ancillary_NASA(), interpolated\n... # over the variables provided by `dataset`.\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\napply_ancillary\nApply ancillary data from ancillary to dataset ds\n\n\n\n\n\napply_ancillary.apply_ancillary(\n    ds,\n    ancillary,\n    variables,\n    interp_dims=None,\n    overwrite=None,\n    tag='ancillary',\n    **kwargs,\n)\nApply ancillary data from ancillary to dataset ds\nArguments:\nds: destination dataset\n\nancillary: ancillary data provider. If None, just check that all variables are\n    already provided in ds.\n\nvariables: dictionary containing the list of variables to get and\n    interpolate in `ancillary`, and their units (as interpreted\n    by the `pint` library).\n    Example:\n    {\n        'horizontal_wind': 'm/s',\n        'sea_level_pressure': 'hectopascals',\n        'total_column_ozone': 'Dobson',\n    }\n\ninterp_dims: maps the dimensions in `ancillary` to the variables in `ds`.\n    Example:\n    {\"latitude\": \"latitude\", \"longitude\": \"longitude\"}\n\noverwrite: whether to overwrite existing variables\n    (True, False, None: raise an Error in case of existing variable)\n\ntag: Defines the tag to be added to the output variables.",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "apply_ancillary"
+    ]
+  },
+  {
+    "objectID": "reference/apply_ancillary.html#classes",
+    "href": "reference/apply_ancillary.html#classes",
+    "title": "1 apply_ancillary",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nApplyAncillary\nInterpolator for ancillary data retrieved from a provider at a given datetime.\n\n\n\n\n\napply_ancillary.ApplyAncillary(dt, ancillary_provider)\nInterpolator for ancillary data retrieved from a provider at a given datetime.\nThis class extends Interpolator to handle ancillary data that varies with time, by fetching the appropriate data from an ancillary provider for the specified datetime.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndt\ndatetime | xr.DataArray\nThe datetime or dataset to retrieve ancillary data for. If a dataset is provided, its datetime will be extracted using core.tools.datetime.\nrequired\n\n\nancillary_provider\nobject\nAn ancillary data provider object with a get() method that accepts a datetime and returns an xarray Dataset containing ancillary variables.\nrequired\n\n\n\n\n\n\n&gt;&gt;&gt; from datetime import datetime\n&gt;&gt;&gt; from eoread.ancillary_nasa import Ancillary_NASA\n&gt;&gt;&gt; processor = ApplyAncillary(datetime(2023, 1, 1), Ancillary_NASA())\n&gt;&gt;&gt; result = processor.map_blocks(dataset)\n... # result contains all variables provided by Ancillary_NASA(), interpolated\n... # over the variables provided by `dataset`.",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "apply_ancillary"
+    ]
+  },
+  {
+    "objectID": "reference/apply_ancillary.html#functions",
+    "href": "reference/apply_ancillary.html#functions",
+    "title": "1 apply_ancillary",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\napply_ancillary\nApply ancillary data from ancillary to dataset ds\n\n\n\n\n\napply_ancillary.apply_ancillary(\n    ds,\n    ancillary,\n    variables,\n    interp_dims=None,\n    overwrite=None,\n    tag='ancillary',\n    **kwargs,\n)\nApply ancillary data from ancillary to dataset ds\nArguments:\nds: destination dataset\n\nancillary: ancillary data provider. If None, just check that all variables are\n    already provided in ds.\n\nvariables: dictionary containing the list of variables to get and\n    interpolate in `ancillary`, and their units (as interpreted\n    by the `pint` library).\n    Example:\n    {\n        'horizontal_wind': 'm/s',\n        'sea_level_pressure': 'hectopascals',\n        'total_column_ozone': 'Dobson',\n    }\n\ninterp_dims: maps the dimensions in `ancillary` to the variables in `ds`.\n    Example:\n    {\"latitude\": \"latitude\", \"longitude\": \"longitude\"}\n\noverwrite: whether to overwrite existing variables\n    (True, False, None: raise an Error in case of existing variable)\n\ntag: Defines the tag to be added to the output variables.",
+    "crumbs": [
+      "API Reference",
+      "Surface & Ancillary",
+      "apply_ancillary"
+    ]
+  },
+  {
+    "objectID": "getting_started.html",
+    "href": "getting_started.html",
+    "title": "Getting started",
+    "section": "",
+    "text": "This page provides a quick introduction to using eotools for atmospheric correction of satellite imagery.",
+    "crumbs": [
+      "Home",
+      "Getting started"
+    ]
+  },
+  {
+    "objectID": "getting_started.html#installation",
+    "href": "getting_started.html#installation",
+    "title": "Getting started",
+    "section": "1 Installation",
+    "text": "1 Installation\nInstall directly from Hygeos GitHub:\npip install git+https://github.com/hygeos/eotools.git\neotools relies on auxiliary data (data files, meteo files, etc.) that are fetched automatically.\nSet the DIR_DATA environment variable to point to your data directory. Other paths (static, ancillary, sample_products) default to subdirectories under it.\nexport DIR_DATA=\"$HOME/eo_data\"\nYou can also set it in a .env file in your working directory. If undefined, data defaults to ./data.",
+    "crumbs": [
+      "Home",
+      "Getting started"
+    ]
+  },
+  {
+    "objectID": "getting_started.html#quick-example-gaseous-rayleigh-correction",
+    "href": "getting_started.html#quick-example-gaseous-rayleigh-correction",
+    "title": "Getting started",
+    "section": "2 Quick example: Gaseous & Rayleigh correction",
+    "text": "2 Quick example: Gaseous & Rayleigh correction\n\n2.1 From command line\nProcess a level1 product with the eoread.planetscope.Level1_Planetscope reader, and write it to netcdf:\npython -m eotools.rayleigh \\\n    /path/to/level1_product \\\n    eoread.planetscope.Level1_Planetscope \\\n    /path/to/output.nc\nAvailable readers include all sensors available in eoread:\n\neoread.msi.Level1_MSI\neoread.olci.Level1_OLCI\neoread.oli.Level1_OLI\neoread.planetscope.Level1_Planetscope\neoread.pleiades.Level1_Pleiades\neoread.pleiades_neo.Level1_PNEO\neoread.geosat.Level1_GEOSAT\n\n\n\n2.2 With process_rayleigh\nFor programmatic use, process_rayleigh handles file I/O and applies the full correction pipeline:\nfrom pathlib import Path\nfrom eotools.rayleigh import process_rayleigh\nfrom core.files.save import to_netcdf\n\nprocess_rayleigh(\n    input_product=Path(\"/path/to/level1_product\"),\n    reader=\"eoread.planetscope.Level1_Planetscope\",\n    output_product=Path(\"/path/to/output.nc\"),\n    dem=\"eotools.dem.CopernicusDEM\",\n)\n\n\n2.3 With process_rayleigh_dataset\nTo work with an xarray.Dataset directly (e.g., for further custom processing), use process_rayleigh_dataset:\nimport eoread.planetscope as planetscope\nfrom eotools.rayleigh import process_rayleigh_dataset\n\n# Load a Level-1 dataset\nds = planetscope.Level1_Planetscope(\"/path/to/level1_product\")\n\n# Apply the full Rayleigh correction pipeline\nresult = process_rayleigh_dataset(\n    ds,\n    dem=\"eotools.dem.GTOPO30\",\n    transmittance_corr=True,\n)\n\n# Access corrected reflectance\nrho_rc = result[\"rho_rc\"]\n\n# Write the full corrected dataset to a NetCDF file\nto_netcdf(result, filename=\"/path/to/output.nc\")",
+    "crumbs": [
+      "Home",
+      "Getting started"
+    ]
+  },
+  {
+    "objectID": "getting_started.html#output-variables",
+    "href": "getting_started.html#output-variables",
+    "title": "Getting started",
+    "section": "3 Output variables",
+    "text": "3 Output variables\n\n\n\nVariable\nDescription\n\n\n\n\nrho_gc\nGaseous-corrected reflectance\n\n\nrho_rc\nRayleigh-corrected surface reflectance\n\n\nrho_r\nRayleigh reflectance (without glint)\n\n\nrho_rg\nRayleigh + sun glint reflectance\n\n\nt_d\nTotal atmospheric transmittance\n\n\nodr\nRayleigh optical depth",
+    "crumbs": [
+      "Home",
+      "Getting started"
+    ]
+  },
+  {
+    "objectID": "getting_started.html#next-steps",
+    "href": "getting_started.html#next-steps",
+    "title": "Getting started",
+    "section": "4 Next steps",
+    "text": "4 Next steps\n\nRayleigh scattering — Detailed documentation on Rayleigh correction\nGaseous absorption — Detailed documentation on gaseous correction",
+    "crumbs": [
+      "Home",
+      "Getting started"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "eotools",
+    "section": "",
+    "text": "eotools is a collection of Python tools and modules for building Earth Observation atmospheric correction processing chains. It provides utilities for satellite data management, radiometric correction, and surface reflectance retrieval.",
+    "crumbs": [
+      "Home",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "index.html#getting-started",
+    "href": "index.html#getting-started",
+    "title": "eotools",
+    "section": "1 Getting started",
+    "text": "1 Getting started\nSee the Getting started page for installation instructions and a quick-start example.",
+    "crumbs": [
+      "Home",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "index.html#key-capabilities",
+    "href": "index.html#key-capabilities",
+    "title": "eotools",
+    "section": "2 Key capabilities",
+    "text": "2 Key capabilities\n\n2.1 Atmospheric correction\nCorrect satellite observations for atmospheric effects to retrieve accurate surface reflectance:\n\nRayleigh scattering — Generic correction for molecular scattering using precomputed LUTs (plane-parallel or spherical modes)\nGaseous absorption — Generic correction for absorption by atmospheric gases (O₃, CO₂, H₂O, CH₄, N₂O, NO₂)\nSun glint reflectance calculation — Model specular reflection from wave roughened water surfaces\n\n\n\n2.2 Spectral response functions\nRetrieve and work with sensor spectral response functions (SRFs) for a wide range of sensors.\nIntegrate high-resolution spectral data (gas absorption, Rayleigh optical depth) into band-averaged values weighted by the SRF.\n\n\n2.3 Geometry & solar\n\nCompute viewing and illumination geometry (solar/viewing zenith and azimuth angles, scattering angle)\nSolar irradiance from various sources (LISIRD, etc.)\nSun-earth distance correction for TOA reflectance\nEarth radius and Chapman function for slant-path corrections\n\n\n\n2.4 Surface & ancillary data\n\nDEM - Retrieve and apply digital elevation models (GTOPO30, Copernicus DEM)\nWater masks - Global Surface Water (GSW) classification from JRC dataset\nAncillary data - Apply atmospheric ancillary variables (pressure, ozone, wind) from NASA or other providers (rely on the eoread package)\n\n\n\n2.5 Radiometry\n\nConvert TOA radiance to TOA reflectance\nUnit validation and conversion utilities",
+    "crumbs": [
+      "Home",
+      "Overview"
+    ]
+  }
+]
