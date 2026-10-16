@@ -1,3 +1,4 @@
+import functools
 import warnings
 from pathlib import Path
 from typing import Literal
@@ -258,6 +259,16 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
     ds["t_d"].attrs.update({"desc": "Total atmospheric transmittance"})
 
 
+@functools.lru_cache(maxsize=None)
+def _read_lut_cached(version: str) -> xr.Dataset:
+    """
+    Read the Rayleigh LUT once per process
+    """
+    if version == 'polymer_legacy':
+        return read_lut_polymer_legacy()
+    raise ValueError(f'Invalid Rayleigh LUT version "{version}"')
+
+
 def read_lut_polymer_legacy() -> xr.Dataset:
     lut_file = download_url(
         "https://github.com/hygeos/eotools/releases/download/root/LUT.hdf",
@@ -338,12 +349,16 @@ class RayleighCorrection(BlockProcessor):
         **cfg,
     ):
         # todo: bitmask invalid
-        if version == 'polymer_legacy':
-            self.rayleigh_lut = read_lut_polymer_legacy()
+        self.version = version
         self.srf = srf
         self.sun_glint_corr = sun_glint_corr
         self.transmittance_corr = transmittance_corr
         self.dtype = dtype
+        self.pressure_kind = pressure_kind
+        self._init_lut()
+
+    def _init_lut(self):
+        self.rayleigh_lut = _read_lut_cached(self.version)
         self.interpolator = Interpolator(
             self.rayleigh_lut,
             odr=Linear("odr"),
@@ -352,7 +367,19 @@ class RayleighCorrection(BlockProcessor):
             raa=Linear("raa"),
             wind_speed=Linear("horizontal_wind"),
         )
-        self.pressure_kind = pressure_kind
+
+    # Pickle support: the LUT is not serialized (it is large, and would be
+    # sent with each dask task in multiprocessing mode). It is read again
+    # (once per process) when unpickling.
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('rayleigh_lut', None)
+        state.pop('interpolator', None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._init_lut()
     
     def input_vars(self) -> list[Var]:
         ivars = [

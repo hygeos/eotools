@@ -76,7 +76,6 @@ class Gaseous_correction(CompoundProcessor):
 
         self.no2_correction = no2_correction
         self.gas_correction = gas_correction
-        self.ds = ds
         self.spectral_dim = spectral_dim
         self.bands = list(ds[spectral_dim].data)
         self.input_var = input_var
