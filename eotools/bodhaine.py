@@ -131,15 +131,37 @@ def column_number_density(
     Avogadro = value('Avogadro constant')
     zs = 0.73737 * z + 5517.56  # effective mass-weighted altitude
     G = g(lat, zs)
-    # air pressure at the pixel (i.e. at altitude) in hPa
-    if pressure == 'sea-level':
-        Psurf = (P * (1. - 0.0065 * z / 288.15) ** 5.255) * 1000.  # air pressure at pixel location in dyn / cm2, which is hPa * 1000
-    elif pressure == 'surface':
-        Psurf = P * 1000.  # convert to dyn/cm2
-    else:
-        raise ValueError(f'Invalid pressure type ({pressure})')
+    # air pressure at the pixel location in dyn / cm2, which is hPa * 1000
+    Psurf = pixel_pressure(P, z, pressure) * 1000.
 
     return Psurf * Avogadro/ma(co2)/G
+
+
+def pixel_pressure(
+    P,
+    z=0.0,
+    pressure: Literal["sea-level", "surface"] = "surface",
+):
+    """
+    Air pressure at the pixel (i.e. at altitude z), in hPa
+
+    Parameters
+    ----------
+    P : float
+        Pressure in hPa.
+    z : float
+        Altitude in meters. Default 0.0.
+    pressure : Literal["sea-level", "surface"]
+        Pressure reference type: "sea-level" if P is the sea-level pressure
+        (it is then scaled to altitude z), "surface" if P is already the
+        surface pressure. Default "surface".
+    """
+    if pressure == 'sea-level':
+        return P * (1. - 0.0065 * z / 288.15) ** 5.255
+    elif pressure == 'surface':
+        return P
+    else:
+        raise ValueError(f'Invalid pressure type ({pressure})')
 
 def rod(
     lam,

@@ -14,7 +14,7 @@ from core import env
 from core.files.save import to_netcdf
 from core.import_utils import import_module
 from eotools.srf import get_SRF, integrate_srf
-from eotools.bodhaine import rod, raycrs, column_number_density
+from eotools.bodhaine import rod, raycrs, column_number_density, pixel_pressure
 from eotools.chapman import chapman
 from eotools.units import check_units, convert
 from eotools.utils.tools import deduplicate_dims
@@ -97,7 +97,12 @@ def load_rayleigh_lut(lut_rayleigh_pp: Path,
     return lut.compute(scheduler="sync")
 
 
-def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
+def calc_odr(
+    ds: xr.Dataset,
+    srf: xr.Dataset | None = None,
+    odr: dict | None = None,
+    odr_pressure: float = 1013.25,
+) -> xr.DataArray:
     """
     Calculates ODR (Optical Depth Rayleigh)
 
@@ -114,6 +119,12 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
         Sensor spectral response function for multi-wavelength calculation.
         If provided, ODR is calculated by integrating the Rayleigh cross-section
         over the SRF.
+    odr : dict | None, optional
+        Custom Rayleigh optical depth of each band ({band: odr}), at the
+        pressure `odr_pressure`. If provided, it is scaled by the pressure at
+        the pixel, and takes precedence over `srf` and "cwav".
+    odr_pressure : float, default=1013.25
+        Reference pressure of `odr`, in hPa.
 
     Returns
     -------
@@ -122,6 +133,8 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
 
     Notes
     -----
+    - If odr is provided, ODR is odr[band] * P / odr_pressure, where P is the
+      pressure at the pixel.
     - If srf is provided, ODR is computed by integrating the Rayleigh cross-section
       over the SRF using the Bodhaine et al. (1999) method.
     - If srf is None, ODR is computed using the central wavelength from "cwav"
@@ -134,7 +147,17 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
         pressure_hpa = convert(ds["sea_level_pressure"], "hPa")
         pressure_kind = "sea-level"
 
-    if srf is not None:
+    if odr is not None:
+        # custom ODR, scaled by the pressure at the pixel
+        odr_ref = xr.DataArray(
+            [odr[b] for b in ds.bands.values],
+            dims=["bands"],
+            coords={"bands": ds.bands},
+        )
+        P = pixel_pressure(pressure_hpa, z=altitude_m, pressure=pressure_kind)
+        return odr_ref * P / odr_pressure
+
+    elif srf is not None:
         # calculate ODR from SRF integration
         for coord in srf.coords:
             check_units(srf.coords[coord], 'nm')
@@ -325,6 +348,12 @@ class RayleighCorrection(BlockProcessor):
         diffuse transmittance `t_d` (downward x upward), effectively
         compensating for remaining Rayleigh and gaseous attenuation along
         both the solar and sensor view paths.
+    odr : dict | None, optional
+        Custom Rayleigh optical depth of each band ({band: odr}) at the
+        pressure `odr_pressure`, scaled by the pressure at each pixel. If
+        provided, it is used instead of the SRF or the central wavelength.
+    odr_pressure : float, default=1013.25
+        Reference pressure of `odr`, in hPa.
 
     Attributes
     ----------
@@ -346,6 +375,8 @@ class RayleighCorrection(BlockProcessor):
         sun_glint_corr: bool = True,
         transmittance_corr: bool = False,
         dtype: str = "float32",
+        odr: dict | None = None,
+        odr_pressure: float = 1013.25,
         **cfg,
     ):
         # todo: bitmask invalid
@@ -355,6 +386,8 @@ class RayleighCorrection(BlockProcessor):
         self.transmittance_corr = transmittance_corr
         self.dtype = dtype
         self.pressure_kind = pressure_kind
+        self.odr = odr
+        self.odr_pressure = odr_pressure
         self._init_lut()
 
     def _init_lut(self):
@@ -391,7 +424,7 @@ class RayleighCorrection(BlockProcessor):
             Var("raa"),
             Var("rho_gc"),
         ]
-        if self.srf is None:
+        if (self.srf is None) and (self.odr is None):
             ivars.append(Var("cwav"))
         return ivars
     
@@ -432,16 +465,22 @@ class RayleighCorrection(BlockProcessor):
     
     def check(self, ds: xr.Dataset) -> None:
         """
-        Check that srf bands are identical to ds.bands
+        Check that srf bands are identical to ds.bands, and that odr is
+        provided for all bands
         """
         if self.srf is not None:
             ds_bands = [str(x) for x in ds.bands.values]
             srf_bands = [str(x) for x in self.srf]
             assert ds_bands == srf_bands
+        if self.odr is not None:
+            missing = [b for b in ds.bands.values if b not in self.odr]
+            assert not missing, f"odr is not provided for bands {missing}"
         check_units(ds['horizontal_wind'], 'm/s')
     
     def process_block(self, block: xr.Dataset):
-        block['odr'] = calc_odr(block, self.srf).transpose(*block.rho_gc.dims)
+        block['odr'] = calc_odr(
+            block, self.srf, odr=self.odr, odr_pressure=self.odr_pressure
+        ).transpose(*block.rho_gc.dims)
 
         self.interpolator.process_block(block)
 
