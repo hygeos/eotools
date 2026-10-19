@@ -128,7 +128,7 @@ def calc_odr(ds: xr.Dataset, srf: xr.Dataset | None = None) -> xr.DataArray:
     """
     altitude_m = convert(ds["altitude"], "m")
     if "surface_pressure" in ds:
-        pressure_hpa = convert(ds["surface"], "hPa")
+        pressure_hpa = convert(ds["surface_pressure"], "hPa")
         pressure_kind = "surface"
     else:
         pressure_hpa = convert(ds["sea_level_pressure"], "hPa")
