@@ -19,6 +19,9 @@ class Cloud_mask(BlockProcessor):
     Two criteria (OR):
     1. High reflectance: Rnir > threshold (cloud)
     2. High spatial variability: local std dev > threshold (cloud edge)
+
+    A negative threshold disables the corresponding test. The pixels flagged in
+    `bitmask_invalid` are not tested, and are excluded from the spatial variability.
     """
 
     def __init__(
@@ -55,7 +58,6 @@ class Cloud_mask(BlockProcessor):
         ]
 
     def process_block(self, block: xr.Dataset) -> None:
-        Rnir = block[self.input_var].sel(bands=self.band_nir)
         flags = block[self.flag_variable]
 
         if self.bitmask_invalid >= 0:
@@ -63,9 +65,14 @@ class Cloud_mask(BlockProcessor):
         else:
             ok = (flags.values >= 0)
 
+        # invalid pixels are not tested, and are excluded from the spatial variability
+        Rnir = np.where(ok, block[self.input_var].sel(bands=self.band_nir).values, 0.)
+
         cloudmask = np.zeros_like(flags.values, dtype="uint8")
-        cloudmask[:] = Rnir.values > self.thres_Rcloud
-        cloudmask |= stdNxN(Rnir.values, self.dist, ok, fillv=0.0) > self.thres_Rcloud_std
+        if self.thres_Rcloud >= 0:
+            cloudmask[:] = Rnir > self.thres_Rcloud
+        if self.thres_Rcloud_std >= 0:
+            cloudmask |= stdNxN(Rnir, self.dist, ok, fillv=0.0) > self.thres_Rcloud_std
 
         self.raiseflag(
             block,
