@@ -191,3 +191,15 @@ def test_get_SRF_gaussian():
     # half maximum at cwav +/- fwhm/2
     s = srf[865]
     assert np.isclose(float(s.interp(wav_865=875.)), 0.5, atol=1e-3)
+
+
+def test_get_SRF_sgli():
+    from eotools.srf import get_SRF_sgli
+    try:
+        srf = get_SRF_sgli()
+    except FileNotFoundError:
+        pytest.skip('SGLI RSR file not available')
+    assert list(srf) == [f'VN{i:02}' for i in range(1, 12)]
+    cw = integrate_srf(srf, lambda x: x)
+    assert np.isclose(cw['VN03'], 443., atol=1)
+    assert len(get_SRF(('GCOM-C', 'SGLI'))) == 11

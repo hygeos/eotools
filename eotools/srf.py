@@ -849,6 +849,45 @@ def get_SRF_landsat8_oli() -> xr.Dataset:
     return ds
 
 
+def get_SRF_sgli(channels: str = "VN") -> xr.Dataset:
+    """
+    Get SRF for GCOM-C SGLI, from the JAXA relative spectral responses
+    (sgli_rsr_f_for_algorithm_201008.txt.gz, in $DIR_STATIC/SGLI)
+
+    Args:
+        channels: prefix of the channels to return: "VN" (VN01 to VN11), "P"
+            (P01, P02), "SW" (SW01 to SW04), "TI" (TI01, TI02), or "" for all
+            channels.
+
+    Returns:
+        xr.Dataset: A dataset with the SRF for each channel, identified by the
+        channel name (ex: "VN01").
+    """
+    file_rsr = env.getdir("DIR_STATIC") / "SGLI" / "sgli_rsr_f_for_algorithm_201008.txt.gz"
+    if not file_rsr.exists():
+        raise FileNotFoundError(
+            f"SGLI relative spectral responses not found ({file_rsr}). They are "
+            "provided by JAXA (GCOM-C SGLI RSR for algorithm, 2010-08).")
+
+    # columns alternate wavelength ("WL(nm)") and response ("RSR_<channel>")
+    rsr = pd.read_csv(file_rsr, sep=r"\s+")
+    columns = list(rsr.columns)
+    srf = xr.Dataset()
+    for i in range(1, len(columns), 2):
+        channel = columns[i].removeprefix("RSR_")
+        if not channel.startswith(channels):
+            continue
+        dim = f"wav_{channel}"
+        srf[channel] = xr.DataArray(
+            rsr.iloc[:, i].values,
+            dims=[dim],
+            coords={dim: xr.DataArray(rsr.iloc[:, i-1].values, dims=[dim],
+                                      attrs={"units": "nm"})},
+        )
+    srf.attrs["desc"] = "Spectral response functions for GCOM-C SGLI"
+    return srf
+
+
 def get_SRF_misr() -> xr.Dataset:
     """
     Get SRF for MISR

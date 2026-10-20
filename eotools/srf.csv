@@ -169,6 +169,7 @@ MSG-1,SEVIRI,eotools.srf.get_SRF_seviri,msg_1_seviri
 MSG-2,SEVIRI,eotools.srf.get_SRF_seviri,msg_2_seviri
 MSG-3,SEVIRI,eotools.srf.get_SRF_seviri,msg_3_seviri
 MSG-4,SEVIRI,eotools.srf.get_SRF_seviri,msg_4_seviri
+GCOM-C,SGLI,eotools.srf.get_SRF_sgli,VN
 ,,eotools.srf.get_SRF_eumetsat,gcom-c_1_sgli
 ,,eotools.srf.get_SRF_eumetsat,nimbus_3_sirs
 ,,eotools.srf.get_SRF_eumetsat,nimbus_3_sirs-blur
