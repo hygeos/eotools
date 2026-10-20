@@ -177,3 +177,17 @@ def test_filter_bands():
     # Test empty result preserves attributes
     srf_empty = filter_bands(srf, wav_min=10000.0, wav_max=20000.0)
     assert srf_empty.attrs == srf.attrs
+
+
+def test_get_SRF_gaussian():
+    from eotools.srf import get_SRF_gaussian
+    cwav = xr.DataArray([443., 865.], dims=['bands'], coords={'bands': [443, 865]})
+    fwhm = xr.DataArray([10., 20.], dims=['bands'], coords={'bands': [443, 865]})
+    srf = get_SRF_gaussian(cwav, fwhm)
+    assert list(srf) == [443, 865]
+    cw = integrate_srf(srf, lambda x: x)
+    assert np.isclose(cw[443], 443.)
+    assert np.isclose(cw[865], 865.)
+    # half maximum at cwav +/- fwhm/2
+    s = srf[865]
+    assert np.isclose(float(s.interp(wav_865=875.)), 0.5, atol=1e-3)

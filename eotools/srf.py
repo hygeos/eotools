@@ -135,6 +135,42 @@ def get_SRF(
         raise RuntimeError
 
 
+def get_SRF_gaussian(
+    cwav: xr.DataArray,
+    fwhm: xr.DataArray,
+    step: float = 0.1,
+    width: float = 1.5,
+) -> xr.Dataset:
+    """
+    Gaussian Spectral Response Functions, from the central wavelength and full
+    width at half maximum of each band
+
+    Args:
+        cwav: central wavelength of each band, in nm (dimension "bands")
+        fwhm: full width at half maximum of each band, in nm (dimension "bands")
+        step: spectral sampling of the SRFs, in nm
+        width: the SRFs are defined over +/- `width` * fwhm around cwav
+
+    Returns:
+        xr.Dataset: A dataset with the SRF for each band, identified by the
+        "bands" coordinate of `cwav`.
+    """
+    srf = xr.Dataset()
+    for band in cwav.bands.values:
+        c = float(cwav.sel(bands=band))
+        w = float(fwhm.sel(bands=band))
+        wav = np.arange(c - width*w, c + width*w + step/2, step)
+        sigma = w/(2*np.sqrt(2*np.log(2)))
+        dim = f"wav_{band}"
+        srf[band] = xr.DataArray(
+            np.exp(-0.5*((wav - c)/sigma)**2),
+            dims=[dim],
+            coords={dim: xr.DataArray(wav, dims=[dim], attrs={"units": "nm"})},
+        )
+    srf.attrs["desc"] = "Gaussian spectral response functions"
+    return srf
+
+
 def get_SRF_eumetsat(id_sensor: str = "") -> xr.Dataset:
     """
     Download and read Spectral Response Function (SRF) from EUMETSAT database
