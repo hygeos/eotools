@@ -398,7 +398,8 @@ class RayleighCorrection(BlockProcessor):
             mu_s=Linear("mus"),
             mu_v=Linear("muv"),
             raa=Linear("raa"),
-            wind_speed=Linear("horizontal_wind"),
+            # clip the wind speed to the LUT range
+            wind_speed=Linear("horizontal_wind", bounds="clip"),
         )
 
     # Pickle support: the LUT is not serialized (it is large, and would be
