@@ -354,6 +354,12 @@ class RayleighCorrection(BlockProcessor):
         provided, it is used instead of the SRF or the central wavelength.
     odr_pressure : float, default=1013.25
         Reference pressure of `odr`, in hPa.
+    bitmask_invalid : int, default=-1
+        If positive, the Rayleigh LUT is interpolated only for the pixels which
+        have none of these bits raised in `flag_variable`, and the outputs are
+        NaN for the other pixels.
+    flag_variable : str, default="flags"
+        Name of the flags variable used with `bitmask_invalid`.
 
     Attributes
     ----------
@@ -377,9 +383,10 @@ class RayleighCorrection(BlockProcessor):
         dtype: str = "float32",
         odr: dict | None = None,
         odr_pressure: float = 1013.25,
+        bitmask_invalid: int = -1,
+        flag_variable: str = "flags",
         **cfg,
     ):
-        # todo: bitmask invalid
         self.version = version
         self.srf = srf
         self.sun_glint_corr = sun_glint_corr
@@ -388,6 +395,8 @@ class RayleighCorrection(BlockProcessor):
         self.pressure_kind = pressure_kind
         self.odr = odr
         self.odr_pressure = odr_pressure
+        self.bitmask_invalid = bitmask_invalid
+        self.flag_variable = flag_variable
         self._init_lut()
 
     def _init_lut(self):
@@ -427,6 +436,8 @@ class RayleighCorrection(BlockProcessor):
         ]
         if (self.srf is None) and (self.odr is None):
             ivars.append(Var("cwav"))
+        if self.bitmask_invalid >= 0:
+            ivars.append(Var(self.flag_variable))
         return ivars
     
     def created_vars(self) -> list[Var]:
@@ -483,7 +494,10 @@ class RayleighCorrection(BlockProcessor):
             block, self.srf, odr=self.odr, odr_pressure=self.odr_pressure
         ).transpose(*block.rho_gc.dims)
 
-        self.interpolator.process_block(block)
+        if self.bitmask_invalid >= 0:
+            self.interp_valid(block)
+        else:
+            self.interpolator.process_block(block)
 
         if self.sun_glint_corr:
             # Rayleigh + glint correction
@@ -499,6 +513,44 @@ class RayleighCorrection(BlockProcessor):
         # Cast outputs to specified dtype
         for var in ['rho_r', 'rho_rg', 't_d', 'rho_rc']:
             block[var] = block[var].astype(self.dtype)
+
+
+    def interp_valid(self, block: xr.Dataset):
+        """
+        Interpolate the Rayleigh LUT for the valid pixels only (NaN elsewhere)
+        """
+        flags = block[self.flag_variable]
+        ok = ((flags.values & self.bitmask_invalid) == 0).ravel()
+        pix_dims = flags.dims
+        other_dims = [d for d in block.rho_gc.dims if d not in pix_dims]
+        other_shape = [block.sizes[d] for d in other_dims]
+
+        # results, as (pixels, other dims)
+        results = {
+            var: np.full([ok.size] + other_shape, np.nan, dtype=self.dtype)
+            for var in self.rayleigh_lut.data_vars
+        }
+
+        if ok.any():
+            # select the valid pixels of the interpolation coordinates
+            sub = xr.Dataset()
+            for name in self.interpolator.varnames.values():
+                da = block[name].broadcast_like(flags)
+                da_other = [d for d in da.dims if d not in pix_dims]
+                arr = da.transpose(*pix_dims, *da_other).values
+                sub[name] = (
+                    ("_pixel", *da_other),
+                    arr.reshape(ok.size, *arr.shape[len(pix_dims):])[ok],
+                )
+            self.interpolator.process_block(sub)
+            for var, res in results.items():
+                res[ok] = sub[var].transpose("_pixel", *other_dims).values
+
+        for var, res in results.items():
+            block[var] = xr.DataArray(
+                res.reshape([flags.sizes[d] for d in pix_dims] + other_shape),
+                dims=(*pix_dims, *other_dims),
+            ).transpose(*block.rho_gc.dims)
 
 
 def process_rayleigh(
