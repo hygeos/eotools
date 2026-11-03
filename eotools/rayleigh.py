@@ -252,7 +252,7 @@ def rayleigh_correction(ds: xr.Dataset, srf: xr.Dataset | None = None, **cfg):
         wdspd=Linear(wdspd, bounds="clip"),
     ) * interp(
         lut.T_tot_up,
-        mu_v=Linear(ds.mus, bounds="nan"),
+        mu_v=Linear(ds.muv, bounds="nan"),
         odr=Linear(odr),
     )
     ds["t_d"].attrs.update({"desc": "Total atmospheric transmittance"})
