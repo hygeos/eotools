@@ -19,6 +19,32 @@ def scattering_angle(mu_s, mu_v, phi):
     return np.arccos(sa)*180./np.pi
 
 
+def reduce_geometry(
+    da: xr.DataArray,
+    band=None,
+    dim: str = "bands",
+) -> xr.DataArray:
+    """
+    Reduce a geometry variable to a single band
+
+    The geometry variables (view angles and derived quantities) may have a
+    spectral dimension `dim` (per-band viewing geometry). This function is used
+    by the processing steps which do not support a per-band geometry, to
+    reduce it to the geometry of a reference band.
+
+    da: geometry variable
+    band: label of the reference band. If None, the first band is used.
+    dim: name of the spectral dimension
+
+    Returns `da` unchanged if it has no dimension `dim`.
+    """
+    if dim not in da.dims:
+        return da
+    if band is None:
+        return da.isel({dim: 0}, drop=True)
+    return da.sel({dim: band}, drop=True)
+
+
 class InitGeometry(BlockProcessor):
     """
     Initialize geometrical variables:
@@ -26,6 +52,10 @@ class InitGeometry(BlockProcessor):
         - relative azimuth angle (raa)
         - air mass (1/mus + 1/muv)
         - scattering angle
+
+    The view angles (vza, vaa) may have a `bands` dimension (per-band viewing
+    geometry): the variables derived from them (muv, raa, air mass,
+    scattering angle) then also have this dimension.
     """
     def __init__(
         self,
@@ -87,3 +117,11 @@ class InitGeometry(BlockProcessor):
         if self.calc_air_mass:
             block['air_mass'] = 1 / block[str(n.mus)] + 1 / block[str(n.muv)]
             block['air_mass'].attrs['description'] = 'air mass'
+
+        # per-band viewing geometry: same dimensions order as vza for all the
+        # variables derived from the view angles
+        if 'bands' in block[str(n.vza)].dims:
+            dims = block[str(n.vza)].dims
+            for var in [str(n.raa), 'scat_angle', 'air_mass']:
+                if (var in block) and ('bands' in block[var].dims):
+                    block[var] = block[var].transpose(*dims)

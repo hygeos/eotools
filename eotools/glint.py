@@ -8,11 +8,17 @@ from core.process.blockwise import BlockProcessor, Var
 
 
 class CalcSunGlint(BlockProcessor):
+    """
+    Sun glint reflectance `Rgli` (Cox and Munk, isotropic)
+
+    With a per-band viewing geometry (`muv` and `scat_angle` with a `bands`
+    dimension), `Rgli` is calculated for each band (same dimensions as `muv`).
+    """
     def input_vars(self) -> list[Var]:
         return [Var('horizontal_wind'), Var('mus'), Var('muv'), Var('scat_angle')]
 
     def created_vars(self) -> list[Var]:
-        return [Var('Rgli', dtype='float32', dims_like='mus')]
+        return [Var('Rgli', dtype='float32', dims_like='muv')]
 
     def process_block(self, block: xr.Dataset):
         block['Rgli'] = glitter(
@@ -20,7 +26,7 @@ class CalcSunGlint(BlockProcessor):
             block['mus'],
             block['muv'],
             block['scat_angle']
-        )
+        ).transpose(*block['muv'].dims)
 
 
 def apply_glitter(ds, method='apply_ufunc'):

@@ -18,6 +18,30 @@ from core import env
 from core.process.blockwise import BlockProcessor, CompoundProcessor, Var
 
 
+def air_mass_like(block: xr.Dataset, spectral_dim: str = "bands") -> np.ndarray:
+    """
+    Air mass of `block` as a numpy array, consistent with
+    `block.rho_gc.transpose(..., spectral_dim)`.
+
+    The air mass is either 2D (pixel dimensions), or has an additional
+    spectral dimension in case of per-band viewing geometry: it is then
+    returned with the spectral dimension last.
+    """
+    air_mass = block.air_mass
+    if spectral_dim in air_mass.dims:
+        dims = block.rho_gc.transpose(..., spectral_dim).dims
+        return air_mass.transpose(*dims).data
+    return air_mass.data
+
+
+def _air_mass_band(air_mass: np.ndarray, i: int) -> np.ndarray:
+    """
+    Air mass (selected pixels) for the band of index `i`: `air_mass` is either
+    (pixels,) or (pixels, bands)
+    """
+    return air_mass if air_mass.ndim == 1 else air_mass[:, i]
+
+
 class Gaseous_correction(CompoundProcessor):
     """Gaseous correction module
 
@@ -208,7 +232,7 @@ class Gas_correction_O3(BlockProcessor):
             tauO3 = self.K_OZ[b].values * ozone[ok] * 1e-3  # convert from DU to cm*atm
 
             # ozone transmittance
-            trans_O3 = np.exp(-tauO3 * air_mass[ok])
+            trans_O3 = np.exp(-tauO3 * _air_mass_band(air_mass[ok], i))
 
             Rtoa_gc[ok, i] /= trans_O3
 
@@ -232,7 +256,7 @@ class Gas_correction_O3(BlockProcessor):
             block[self.spectral_dim].data,
             block.rho_gc.transpose(..., 'bands').data,
             ok,
-            block.air_mass.data,
+            air_mass_like(block, self.spectral_dim),
             ozone_dobson
             )
 
@@ -316,7 +340,7 @@ class Gas_correction_NO2(BlockProcessor):
 
             tau_to200 = a_285*no2_tr200 + a_225*no2_strat
 
-            t_no2 = np.exp(-tau_to200[ok] * air_mass[ok])
+            t_no2 = np.exp(-tau_to200[ok] * _air_mass_band(air_mass[ok], i))
 
             Rtoa_gc[ok, i] /= t_no2
         
@@ -410,7 +434,7 @@ class Gas_correction_NO2(BlockProcessor):
             block[self.spectral_dim].data,
             block.rho_gc.transpose(..., 'bands').data,
             ok,
-            block.air_mass.data,
+            air_mass_like(block, self.spectral_dim),
             block.latitude.data,
             block.longitude.data,
             self.datetime,
@@ -471,7 +495,7 @@ class Gas_correction_CKDMIP(BlockProcessor):
         then divides the reflectance by the total gas transmission.
         """
         Rtoa_gc = block.rho_gc.transpose(..., 'bands').values
-        air_mass = block.air_mass.values
+        air_mass = air_mass_like(block)
 
         ozone = convert(block.total_column_ozone, 'Dobson').values
         sea_surface_pressure = convert(block.sea_level_pressure, 'hPa').values
@@ -483,18 +507,24 @@ class Gas_correction_CKDMIP(BlockProcessor):
         n_pixels = ok.sum()
         log_T_total = np.zeros((n_pixels, n_bands), dtype=np.float64)
 
+        # air mass of the selected pixels: (pixels,) or (pixels, bands) for
+        # per-band viewing geometry
+        am = air_mass[ok]
+        def column(v):
+            return v[ok] if am.ndim == 1 else v[ok][:, None]
+
         for gas in self.list_gases:
             U0 = self.tmod[gas]['U0']
             P0 = self.tmod[gas]['P0']
             if gas == 'O3':
                 assert U0.units == "Dobson"
-                x = air_mass[ok] * ozone[ok] / U0.values
+                x = am * column(ozone) / U0.values
             elif gas == 'H2O':
                 assert U0.units == "g/cm²"
-                x = air_mass[ok] * tcwv[ok] / U0.values
+                x = am * column(tcwv) / U0.values
             else:
                 assert P0.units == 'hPa'
-                x = air_mass[ok] * sea_surface_pressure[ok] / P0.values
+                x = am * column(sea_surface_pressure) / P0.values
 
             n = np.nan_to_num(self.tmod[gas].n.values, nan=1.0)
             log_Teq = np.log(self.tmod[gas].Teq.values)
@@ -502,7 +532,8 @@ class Gas_correction_CKDMIP(BlockProcessor):
             # Skip bands with near-unity transmission (log_Teq ≈ 0)
             mask = np.abs(log_Teq) > 1e-6
             if mask.any():
-                log_T_total[:, mask] += (x[:, None] ** n[None, mask]) * log_Teq[None, mask]
+                xb = x[:, None] if x.ndim == 1 else x[:, mask]
+                log_T_total[:, mask] += (xb ** n[None, mask]) * log_Teq[None, mask]
 
         T = np.exp(log_T_total)
         T[T < self.thres_correction] = np.nan
