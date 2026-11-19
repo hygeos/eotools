@@ -33,7 +33,11 @@ cfg_rayleigh_processor = {  # (platform, sensor) -> config
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    from eoread.ancillary_nasa import Ancillary_NASA
+    try:
+        from eoread.ancillary.nasa import Ancillary_NASA
+    except ImportError:
+        # eoread < v2
+        from eoread.ancillary_nasa import Ancillary_NASA
 
 
 

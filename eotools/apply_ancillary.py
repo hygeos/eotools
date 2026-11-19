@@ -27,7 +27,7 @@ class ApplyAncillary(Interpolator):
     Examples
     --------
     >>> from datetime import datetime
-    >>> from eoread.ancillary_nasa import Ancillary_NASA
+    >>> from eoread.ancillary.nasa import Ancillary_NASA
     >>> processor = ApplyAncillary(datetime(2023, 1, 1), Ancillary_NASA())
     >>> result = processor.map_blocks(dataset)
     ... # result contains all variables provided by Ancillary_NASA(), interpolated

@@ -128,7 +128,22 @@ def get_SRF(
             if sum(['panchro' in x.lower() for x in srf]) == 1:
                 srf = srf[[x for x in srf if 'panchro' not in x.lower()]]
         assert len(platform_sensor.bands) == len(srf)
-        return rename(srf, platform_sensor.bands.values)
+        band_ids = platform_sensor.bands.values
+        cwav = platform_sensor.get('cwav')
+        if (cwav is not None) and (cwav.dims == ('bands',)):
+            # Match the SRF bands to the Dataset bands by rank of central
+            # wavelength, as the bands may be in a different order in the SRF
+            # source and in the Dataset (e.g. sorted by wavelength); the ties
+            # keep their order
+            srf_vars = [x for x in srf if x != "id"]
+            integrated = integrate_srf(srf[srf_vars], lambda x: x)
+            # (mean over the other dimensions, e.g. per-detector SRF)
+            cwav_srf = np.array([float(integrated[v].mean()) for v in srf_vars])
+            order_srf = np.argsort(cwav_srf, kind='stable')
+            order_ds = np.argsort(cwav.values, kind='stable')
+            band_ids = np.empty(len(band_ids), dtype=object)
+            band_ids[order_srf] = platform_sensor.bands.values[order_ds]
+        return rename(srf, list(band_ids))
     elif rename_method == 'cwav':
         return rename(srf, "cwav")
     else:
