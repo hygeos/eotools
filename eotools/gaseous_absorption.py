@@ -4,11 +4,11 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import xarray as xr
-from core import env
-from core.env import getdir
-from core.files.fileutils import filegen
-from core.network.download import download_url
-from core.tools import only
+from hygeos_core import env
+from hygeos_core.env import getdir
+from hygeos_core.files.fileutils import filegen
+from hygeos_core.network.download import download_url
+from hygeos_core.tools import only
 
 # Optional import for gatiab
 try:

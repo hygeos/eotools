@@ -4,7 +4,7 @@
 from pathlib import Path
 
 import pytest
-from core.tests.conftest import savefig
+from hygeos_core.tests.conftest import savefig
 from eoread import msi
 from eoread.ancillary_nasa import Ancillary_NASA
 from eoread.common import timeit
@@ -13,8 +13,8 @@ from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import ApplyAncillary
 from eotools.glint import CalcSunGlint
-from core.process.blockwise import CompoundProcessor
-from core.tools import datetime
+from hygeos_core.process.blockwise import CompoundProcessor
+from hygeos_core.tools import datetime
 
 level1 = pytest.fixture(msi.get_sample)
 

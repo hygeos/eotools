@@ -1,6 +1,6 @@
 import numpy as np
-from core.process.blockwise import BlockProcessor
-from core.geo.naming import names
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.geo.naming import names
 
 from dataclasses import dataclass
 from typing import Any

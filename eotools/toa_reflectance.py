@@ -2,11 +2,11 @@ from datetime import datetime
 
 import numpy as np
 import xarray as xr
-from core.process.blockwise import BlockProcessor, Var
-from core.geo.naming import names
+from hygeos_core.process.blockwise import BlockProcessor, Var
+from hygeos_core.geo.naming import names
 from eotools.solar_irradiance import solar_irradiance_lisird
 from eotools.srf import integrate_srf
-from core.tools import datetime as datetime_parse
+from hygeos_core.tools import datetime as datetime_parse
 from eotools.units import convert
 
 

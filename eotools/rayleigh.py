@@ -6,13 +6,13 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
-from core.tools import Var
-from core.process.blockwise import BlockProcessor, CompoundProcessor
-from core.interpolate import Interpolator, interp, Linear
-from core.download import download_url
-from core import env
-from core.files.save import to_netcdf
-from core.import_utils import import_module
+from hygeos_core.tools import Var
+from hygeos_core.process.blockwise import BlockProcessor, CompoundProcessor
+from hygeos_core.interpolate import Interpolator, interp, Linear
+from hygeos_core.network.download import download_url
+from hygeos_core import env
+from hygeos_core.files.save import to_netcdf
+from hygeos_core.import_utils import import_module
 from eotools.srf import get_SRF, integrate_srf
 from eotools.bodhaine import rod, raycrs, column_number_density, pixel_pressure
 from eotools.chapman import chapman

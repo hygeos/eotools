@@ -4,13 +4,13 @@ from tempfile import TemporaryDirectory
 import xarray as xr
 import numpy as np
 
-from core.geo.naming import names
-from core.network.download import download_url
-from core.process.blockwise import BlockProcessor
-from core.interpolate import Interpolator, Linear, Nearest
-from core.tools import Var, xrcrop
-from core import env, mdir
-from core.files.fileutils import filegen
+from hygeos_core.geo.naming import names
+from hygeos_core.network.download import download_url
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.interpolate import Interpolator, Linear, Nearest
+from hygeos_core.tools import Var, xrcrop
+from hygeos_core import env, mdir
+from hygeos_core.files.fileutils import filegen
 
 from typing import Any, Literal, Tuple
 from xarray import Dataset

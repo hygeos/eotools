@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import Dict, Optional
 import xarray as xr
-from core.interpolate import interp, Linear, Interpolator
-from core.xrtags import tag_add
+from hygeos_core.interpolate import interp, Linear, Interpolator
+from hygeos_core.xrtags import tag_add
 import pint_xarray     # noqa: F401
 from cf_xarray.units import units
-from core.tools import datetime as datetime_parse, is_numpy_backed
+from hygeos_core.tools import datetime as datetime_parse, is_numpy_backed
 
 units.define('Dobson = 2.1415E-05 kg/m**2')
 
@@ -19,7 +19,7 @@ class ApplyAncillary(Interpolator):
     ----------
     dt : datetime | xr.DataArray
         The datetime or dataset to retrieve ancillary data for. If a dataset is provided,
-        its datetime will be extracted using `core.tools.datetime`.
+        its datetime will be extracted using `hygeos_core.tools.datetime`.
     ancillary_provider : object
         An ancillary data provider object with a `get()` method that accepts a datetime
         and returns an xarray Dataset containing ancillary variables.

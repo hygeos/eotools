@@ -1,6 +1,6 @@
 from eotools.cm.cloud.utils import stdNxN
-from core.process.blockwise import BlockProcessor
-from core.geo.naming import names, Var
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.geo.naming import names, Var
 
 from xarray import DataArray, where
 from dataclasses import dataclass, field

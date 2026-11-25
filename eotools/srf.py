@@ -7,11 +7,11 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 import xarray as xr
-from core.files.fileutils import filegen
-from core.tools import only
-from core import env
-from core.network.download import download_url
-from core.import_utils import import_module
+from hygeos_core.files.fileutils import filegen
+from hygeos_core.tools import only
+from hygeos_core import env
+from hygeos_core.network.download import download_url
+from hygeos_core.import_utils import import_module
 
 from scipy.integrate import simpson
 from eotools.bodhaine import rod

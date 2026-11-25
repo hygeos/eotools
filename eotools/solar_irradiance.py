@@ -1,7 +1,7 @@
 from typing import Literal
 import xarray as xr
-from core.network.download import download_url
-from core.env import getdir
+from hygeos_core.network.download import download_url
+from hygeos_core.env import getdir
 
 
 def solar_irradiance(source: str, **kwargs) -> xr.DataArray:
@@ -24,7 +24,7 @@ def solar_irradiance_lisird(
 
     https://lasp.colorado.edu/lisird/data/tsis1_hsrs_p1nm
 
-    The data file is written in the directory $DIR_STATIC (see core.env.getdir)
+    The data file is written in the directory $DIR_STATIC (see hygeos_core.env.getdir)
 
     Args:
         variant: variant of the model

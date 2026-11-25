@@ -1,1 +1,1 @@
-from core.tests.conftest import *
+from hygeos_core.tests.conftest import *

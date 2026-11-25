@@ -14,9 +14,9 @@ from matplotlib.pyplot import subplots
 from dask import array as da
 
 from eotools.water import GSW, read_tile, list_tiles, _GSW_tile, _url_tile
-from core.geo.naming import names
-from core.tests import conftest
-from core.tools import only
+from hygeos_core.geo.naming import names
+from hygeos_core.tests import conftest
+from hygeos_core.tools import only
 
 
 class TestGSWUtilities:

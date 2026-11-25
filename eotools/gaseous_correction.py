@@ -5,17 +5,17 @@ import xarray as xr
 import numpy as np
 
 from pyhdf.SD import SD
-from core.tools import datetime
-from core.files.fileutils import mdir
-from core.network.download import download_url
+from hygeos_core.tools import datetime
+from hygeos_core.files.fileutils import mdir
+from hygeos_core.network.download import download_url
 from eotools.gaseous_absorption import (
     get_absorption,
     transmission_model,
 )
 from eotools.srf import integrate_srf
 from eotools.units import convert
-from core import env
-from core.process.blockwise import BlockProcessor, CompoundProcessor, Var
+from hygeos_core import env
+from hygeos_core.process.blockwise import BlockProcessor, CompoundProcessor, Var
 
 
 def air_mass_like(block: xr.Dataset, spectral_dim: str = "bands") -> np.ndarray:

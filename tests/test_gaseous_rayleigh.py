@@ -5,9 +5,9 @@
 from pathlib import Path
 
 import pytest
-from core.process.blockwise import CompoundProcessor
-from core.tests.graphics import xrimshow
-from core.tests import conftest, pytest_utils
+from hygeos_core.process.blockwise import CompoundProcessor
+from hygeos_core.tests.graphics import xrimshow
+from hygeos_core.tests import conftest, pytest_utils
 from eoread import msi
 from eoread.ancillary_nasa import Ancillary_NASA
 from matplotlib import pyplot as plt

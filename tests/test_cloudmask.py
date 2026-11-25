@@ -4,8 +4,8 @@
 from pathlib import Path
 
 import pytest
-from core.process.blockwise import CompoundProcessor
-from core.tests.conftest import savefig
+from hygeos_core.process.blockwise import CompoundProcessor
+from hygeos_core.tests.conftest import savefig
 from eoread import msi
 from eoread.common import timeit
 from eoread.flags import FlagsInit

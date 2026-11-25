@@ -11,8 +11,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from eotools.dem import GTOPO30, ZeroAltitude, CopernicusDEM
-from core.geo.naming import names
-from core.tests import conftest
+from hygeos_core.geo.naming import names
+from hygeos_core.tests import conftest
 
 # Shared test locations: (name, lat, lon, elev_min, elev_max)
 # Used as pytest parametrize values — name becomes the test ID

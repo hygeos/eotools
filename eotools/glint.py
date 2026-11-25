@@ -4,7 +4,7 @@
 
 from numpy import pi, sin, exp, sqrt, cos
 import xarray as xr
-from core.process.blockwise import BlockProcessor, Var
+from hygeos_core.process.blockwise import BlockProcessor, Var
 
 
 class CalcSunGlint(BlockProcessor):

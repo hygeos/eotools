@@ -21,14 +21,14 @@ from pathlib import Path
 from dask import array as da
 from typing import Tuple, List
 
-from core import env
-from core.geo.naming import names
-from core.tools import drop_unused_dims, Var, xrcrop, raiseflag
-from core.interpolate import Nearest, Interpolator
-from core.process.blockwise import BlockProcessor
-from core.network.download import download_url
-from core.save import to_netcdf
-from core.files import mdir
+from hygeos_core import env
+from hygeos_core.geo.naming import names
+from hygeos_core.tools import drop_unused_dims, Var, xrcrop, raiseflag
+from hygeos_core.interpolate import Nearest, Interpolator
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.network.download import download_url
+from hygeos_core.files.save import to_netcdf
+from hygeos_core.files import mdir
 
 
 def _url_tile(tile_name):

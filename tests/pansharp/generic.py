@@ -1,9 +1,9 @@
 import numpy as np
 import xarray as xr
 
-from core.geo.naming import names
+from hygeos_core.geo.naming import names
 from matplotlib import pyplot as plt
-from core.tests.conftest import savefig
+from hygeos_core.tests.conftest import savefig
 from eotools.pansharp.basic import valid_ms_vars
 
 

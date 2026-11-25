@@ -13,7 +13,7 @@ from eotools.gaseous_absorption import get_absorption
 from eotools.srf import (filter_bands, get_SRF, get_SRF_eumetsat,
                          get_SRF_landsat8_oli, integrate_srf, plot_srf, rename,
                          select)
-from core.tests.pytest_utils import parametrize_dict
+from hygeos_core.tests.pytest_utils import parametrize_dict
 from tests import samples
 
 from . import conftest

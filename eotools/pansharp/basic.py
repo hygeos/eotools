@@ -1,6 +1,6 @@
-from core.process.blockwise import BlockProcessor
-from core.interpolate import Interpolator, Nearest
-from core.geo.naming import names, Var
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.interpolate import Interpolator, Nearest
+from hygeos_core.geo.naming import names, Var
 
 from dataclasses import dataclass, field
 from xarray import DataArray, zeros_like

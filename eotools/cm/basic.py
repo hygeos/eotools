@@ -2,8 +2,8 @@ from typing import Any
 
 import numpy as np
 import xarray as xr
-from core.process.blockwise import BlockProcessor
-from core.tools import Var
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.tools import Var
 
 from eotools.utils.stats import stdNxN
 

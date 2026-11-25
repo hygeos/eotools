@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from eotools.cm.index import NDVI, NDSI
-from core.process.blockwise import BlockProcessor
-from core.geo.naming import names
+from hygeos_core.process.blockwise import BlockProcessor
+from hygeos_core.geo.naming import names
 
 
 @dataclass

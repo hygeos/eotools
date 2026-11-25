@@ -1,8 +1,8 @@
 import numpy as np
 import xarray as xr
-from core.download import download_url
-from core import env
-from core.tools import MapBlocksOutput, Var
+from hygeos_core.network.download import download_url
+from hygeos_core import env
+from hygeos_core.tools import MapBlocksOutput, Var
 from luts import Idx, read_mlut_hdf
 
 from eotools.bodhaine import rod

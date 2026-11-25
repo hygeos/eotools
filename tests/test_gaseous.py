@@ -4,8 +4,8 @@
 import numpy as np
 import pytest
 import xarray as xr
-from core.tests.conftest import savefig
-from core.tests.pytest_utils import parametrize_dict
+from hygeos_core.tests.conftest import savefig
+from hygeos_core.tests.pytest_utils import parametrize_dict
 from matplotlib import pyplot as plt
 from eotools.gaseous_absorption import (
     gas_list_gatiab,

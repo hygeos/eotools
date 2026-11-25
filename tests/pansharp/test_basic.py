@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from eotools.pansharp.basic import Brovey, IHS, HPF, valid_ms_vars
-from core.geo.naming import names, Var
+from hygeos_core.geo.naming import names, Var
 from generic import _Test
 
 from PIL import Image

@@ -54,7 +54,7 @@ For programmatic use, `process_rayleigh` handles file I/O and applies the full c
 ```python
 from pathlib import Path
 from eotools.rayleigh import process_rayleigh
-from core.files.save import to_netcdf
+from hygeos_core.files.save import to_netcdf
 
 process_rayleigh(
     input_product=Path("/path/to/level1_product"),

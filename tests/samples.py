@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from core import env
+from hygeos_core import env
 
 def level1_msi() -> Path:
     msi_prod = (
