@@ -428,6 +428,10 @@ class RayleighCorrection(BlockProcessor):
         self.__dict__.update(state)
         self._init_lut()
     
+    def global_attrs(self) -> dict:
+        # backend used for the interpolation of the Rayleigh LUT
+        return self.interpolator.global_attrs()
+
     def input_vars(self) -> list[Var]:
         ivars = [
             Var("altitude"),
