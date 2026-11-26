@@ -13,9 +13,17 @@ Install directly from [Hygeos GitHub](https://github.com/hygeos/eotools):
 pip install git+https://github.com/hygeos/eotools.git
 ```
 
+This installs the required dependencies, including [`hygeos-core`](https://pypi.org/project/hygeos-core/) (common utilities, imported as `hygeos_core`) and [`luts`](https://pypi.org/project/luts/).
+
+The level-1 readers and ancillary data providers come from [`eoread`](https://github.com/hygeos/eoread), which is installed with the `git` extra:
+
+```bash
+pip install "eotools[git] @ git+https://github.com/hygeos/eotools.git"
+```
+
 `eotools` relies on auxiliary data (data files, meteo files, etc.) that are fetched automatically.
 
-Set the `DIR_DATA` environment variable to point to your data directory. Other paths (`static`, `ancillary`, `sample_products`) default to subdirectories under it.
+Data directories are managed by `hygeos_core.env`. Set the `DIR_DATA` environment variable to point to your data directory. Other paths (`static`, `ancillary`, `sample_products`) default to subdirectories under it.
 
 ```bash
 export DIR_DATA="$HOME/eo_data"
@@ -54,7 +62,6 @@ For programmatic use, `process_rayleigh` handles file I/O and applies the full c
 ```python
 from pathlib import Path
 from eotools.rayleigh import process_rayleigh
-from hygeos_core.files.save import to_netcdf
 
 process_rayleigh(
     input_product=Path("/path/to/level1_product"),
@@ -71,6 +78,7 @@ To work with an `xarray.Dataset` directly (e.g., for further custom processing),
 ```python
 import eoread.planetscope as planetscope
 from eotools.rayleigh import process_rayleigh_dataset
+from hygeos_core.files.save import to_netcdf
 
 # Load a Level-1 dataset
 ds = planetscope.Level1_Planetscope("/path/to/level1_product")
