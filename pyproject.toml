@@ -15,7 +15,7 @@ dependencies = [
     "pyhdf",     # gaseous_correction
     "openpyxl",  # SRF files (.xlsx)
     "xlrd",      # SRF files (.xls, used only for get_SRF_meris)
-    "hygeos-core>=2,<3",
+    "hygeos-core>=2.0.2,<3",
     "luts>=1,<2",
 ]
 
