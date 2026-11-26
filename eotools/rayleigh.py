@@ -31,14 +31,16 @@ cfg_rayleigh_processor = {  # (platform, sensor) -> config
     },
 }
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", UserWarning)
-    try:
-        from eoread.ancillary.nasa import Ancillary_NASA
-    except ImportError:
-        # eoread < v2
-        from eoread.ancillary_nasa import Ancillary_NASA
-
+def _import_ancillary_nasa():
+    """Import Ancillary_NASA from eoread (optional dependency)"""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        try:
+            from eoread.ancillary.nasa import Ancillary_NASA
+        except ImportError:
+            # eoread < v2
+            from eoread.ancillary_nasa import Ancillary_NASA
+    return Ancillary_NASA
 
 
 def load_rayleigh_lut(lut_rayleigh_pp: Path,
@@ -655,6 +657,8 @@ def process_rayleigh_dataset(
         - `total_column_ozone` : Total column ozone
         - `total_column_water_vapour` : Total column water vapour
     """
+    Ancillary_NASA = _import_ancillary_nasa()
+
     l1 = input_dataset
 
     l1 = l1.chunk(bands=-1)

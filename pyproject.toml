@@ -5,10 +5,16 @@ description = "A collection of tools and modules for building processing chains.
 authors = [{name = "HYGEOS team"}]
 requires-python = ">= 3.11"
 dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "dask",
     "xarray",
     "cf-xarray",
     "pint-xarray",
-    "xlrd",
+    "pyhdf",     # gaseous_correction
+    "openpyxl",  # SRF files (.xlsx)
+    "xlrd",      # SRF files (.xls, used only for get_SRF_meris)
     "hygeos-core>=2,<3",
     "luts>=1,<2",
 ]
@@ -16,7 +22,6 @@ dependencies = [
 [project.optional-dependencies]
 git = [
     "eoread @ git+https://github.com/hygeos/eoread.git",
-    "sand @ git+https://github.com/hygeos/sand.git",
 ]
 gatiab = [
     "gatiab"
