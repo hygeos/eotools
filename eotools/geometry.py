@@ -4,7 +4,7 @@ import numpy as np
 
 from hygeos_core.process.blockwise import BlockProcessor
 from hygeos_core.tools import Var
-from hygeos_core.geo import n
+from hygeos_core.geo.naming import names as n
 
 
 def scattering_angle(mu_s, mu_v, phi):

@@ -28,7 +28,7 @@ from hygeos_core.interpolate import Nearest, Interpolator
 from hygeos_core.process.blockwise import BlockProcessor
 from hygeos_core.network.download import download_url
 from hygeos_core.files.save import to_netcdf
-from hygeos_core.files import mdir
+from hygeos_core.files.fileutils import mdir
 
 
 def _url_tile(tile_name):
