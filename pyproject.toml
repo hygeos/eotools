@@ -1,6 +1,6 @@
 [project]
 name = "eotools"
-version = "0.1.0"
+version = "1.0.0"
 description = "A collection of tools and modules for building processing chains."
 authors = [{name = "HYGEOS team"}]
 license = "Apache-2.0"
@@ -35,7 +35,7 @@ Documentation = "https://hygeos.github.io/eotools/"
 Changelog = "https://github.com/hygeos/eotools/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pixi.workspace]

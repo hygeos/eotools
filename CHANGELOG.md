@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.0.0
+## v1.0.0 (2026-11-27)
 
 ### Breaking changes
 - `core` replaced by [hygeos-core](https://pypi.org/project/hygeos-core/) (`>=2.0.2,<3`, imported as `hygeos_core`).
