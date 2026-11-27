@@ -579,7 +579,7 @@ def process_rayleigh(
         Path to the Level-1 input product.
     reader : str
         Dotted path of the reader class to use
-        (e.g. `eoread.planetscope.Level1_Planetscope`).
+        (e.g. `eoread.readers.planetscope.Level1_PLANETSCOPE`).
         The class must be callable with a path and return an `xr.Dataset`.
     output_product : Path
         Destination path for the output NetCDF file.
@@ -723,13 +723,13 @@ def main():
         help=(
             "Dotted path of the reader class. "
             "Available readers: "
-            "eoread.msi.Level1_MSI, "
-            "eoread.olci.Level1_OLCI, "
-            "eoread.oli.Level1_OLI, "
-            "eoread.planetscope.Level1_Planetscope, "
-            "eoread.pleiades.Level1_Pleiades, "
-            "eoread.pleiades_neo.Level1_PNEO, "
-            "eoread.geosat.Level1_GEOSAT."
+            "eoread.readers.msi.Level1C_MSI, "
+            "eoread.readers.olci.Level1_OLCI, "
+            "eoread.readers.oli.Level1_OLI, "
+            "eoread.readers.planetscope.Level1_PLANETSCOPE, "
+            "eoread.readers.pleiades.Level1_PLEIADES, "
+            "eoread.readers.pleiades_neo.Level1_PNEO, "
+            "eoread.readers.geosat.Level1_GEOSAT."
         ),
     )
     parser.add_argument(
