@@ -1,0 +1,14 @@
+.venv
+*.pyc
+.vscode/
+.env
+__pycache__/
+notebooks/
+docs/*_files/
+docs/_site/
+docs/reference/
+/.quarto/
+**/*.quarto_ipynb
+docs/.jupyter_cache/
+docs/objects.json
+test_report.html
