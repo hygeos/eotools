@@ -3,6 +3,8 @@ name = "eotools"
 version = "0.1.0"
 description = "A collection of tools and modules for building processing chains."
 authors = [{name = "HYGEOS team"}]
+license = "Apache-2.0"
+readme = "README.md"
 requires-python = ">= 3.11"
 dependencies = [
     "numpy",
@@ -26,6 +28,11 @@ eoread = [
 gatiab = [
     "gatiab"
 ]
+
+[project.urls]
+Homepage = "https://github.com/hygeos/eotools"
+Documentation = "https://hygeos.github.io/eotools/"
+Changelog = "https://github.com/hygeos/eotools/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

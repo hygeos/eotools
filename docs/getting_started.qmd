@@ -7,10 +7,16 @@ This page provides a quick introduction to using `eotools` for atmospheric corre
 
 ## Installation
 
-Install directly from [Hygeos GitHub](https://github.com/hygeos/eotools):
+Install from PyPI:
 
 ```bash
-pip install git+https://github.com/hygeos/eotools.git
+pip install eotools
+```
+
+or from conda-forge:
+
+```bash
+conda install -c conda-forge eotools
 ```
 
 This installs the required dependencies, including [`hygeos-core`](https://pypi.org/project/hygeos-core/) (common utilities, imported as `hygeos_core`) and [`luts`](https://pypi.org/project/luts/).
@@ -18,8 +24,10 @@ This installs the required dependencies, including [`hygeos-core`](https://pypi.
 The level-1 readers and ancillary data providers come from [`eoread`](https://pypi.org/project/eoread/) (version 2 or later), an optional dependency installed with the `eoread` extra:
 
 ```bash
-pip install "eotools[eoread] @ git+https://github.com/hygeos/eotools.git"
+pip install "eotools[eoread]"
 ```
+
+(with conda: `conda install -c conda-forge eotools eoread`)
 
 `eotools` relies on auxiliary data (data files, meteo files, etc.) that are fetched automatically.
 
