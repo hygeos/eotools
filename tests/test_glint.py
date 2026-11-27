@@ -5,32 +5,39 @@ from pathlib import Path
 
 import pytest
 from hygeos_core.tests.conftest import savefig
-from eoread import msi
-from eoread.ancillary_nasa import Ancillary_NASA
-from eoread.common import timeit
-from eoread.eo import init_geometry
+from eoread.ancillary.nasa import Ancillary_NASA
+from eoread.readers.msi import Level1C_MSI
+from hygeos_core.monitor import Chrono
 from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import ApplyAncillary
+from eotools.geometry import InitGeometry
 from eotools.glint import CalcSunGlint
 from hygeos_core.process.blockwise import CompoundProcessor
 from hygeos_core.tools import datetime
 
-level1 = pytest.fixture(msi.get_sample)
+
+@pytest.fixture
+def level1() -> Path:
+    return Level1C_MSI.get_sample()
 
 # TODO: check sza and vza for MSI sample
 
 def test_glint(level1: Path, request):
-    ds = msi.Level1_MSI(level1)
-    init_geometry(ds, scat_angle=True)
+    ds = Level1C_MSI(level1, resolution=60)
     ret = CompoundProcessor(
-        [ApplyAncillary(datetime(ds), Ancillary_NASA()), CalcSunGlint()]
+        [
+            InitGeometry(ds, calc_scat_angle=True),
+            ApplyAncillary(datetime(ds), Ancillary_NASA()),
+            CalcSunGlint(),
+        ],
+        outputs="all",
     ).map_blocks(ds)
 
     for var in ret:
         ds[var] = ret[var]
 
-    with timeit('Compute'):
+    with Chrono('Compute', unit='s'):
         ds = ds.sel(bands='B8').compute()
 
     for label, data, vmin, vmax in [

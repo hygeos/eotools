@@ -6,26 +6,29 @@ from pathlib import Path
 import pytest
 from hygeos_core.process.blockwise import CompoundProcessor
 from hygeos_core.tests.conftest import savefig
-from eoread import msi
-from eoread.common import timeit
 from eoread.flags import FlagsInit
+from eoread.readers.msi import Level1C_MSI
+from hygeos_core.monitor import Chrono
 from matplotlib import pyplot as plt
 
 from eotools.cm.basic import Cloud_mask
 
-level1 = pytest.fixture(msi.get_sample)
+
+@pytest.fixture
+def level1() -> Path:
+    return Level1C_MSI.get_sample()
 
 
 def test_cloudmask(level1: Path, request):
-    ds = msi.Level1_MSI(level1)
+    ds = Level1C_MSI(level1, resolution=60)
     ds = ds.chunk(bands=-1)
 
-    with timeit('Init'):
+    with Chrono('Init', unit='s'):
         compound = CompoundProcessor(
             [FlagsInit(
                 flags={},
                 dtype="uint8",
-                flag_reader="eoread.msi.FlagsReader_MSI",
+                flag_reader=ds.attrs["_flag_reader"],
             ),
              Cloud_mask(
                 cm_input_var='Rtoa',
@@ -40,7 +43,7 @@ def test_cloudmask(level1: Path, request):
         for var in ret:
             ds[var] = ret[var]
 
-    with timeit('Compute'):
+    with Chrono('Compute', unit='s'):
         ds = ds.sel(bands='B8')[['Rtoa', 'flags']].compute()
 
     for label, data, vmin, vmax in [

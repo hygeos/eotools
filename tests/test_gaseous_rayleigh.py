@@ -8,8 +8,8 @@ import pytest
 from hygeos_core.process.blockwise import CompoundProcessor
 from hygeos_core.tests.graphics import xrimshow
 from hygeos_core.tests import conftest, pytest_utils
-from eoread import msi
-from eoread.ancillary_nasa import Ancillary_NASA
+from eoread.ancillary.nasa import Ancillary_NASA
+from eoread.readers.msi import Level1C_MSI
 from matplotlib import pyplot as plt
 
 from eotools.apply_ancillary import ApplyAncillary
@@ -33,7 +33,7 @@ level1_msi = pytest.fixture(samples.level1_msi)
     ),
 )
 def test_gaseous_rayleigh_correction(level1_msi: Path, mode: str, gas_correction: str, request):
-    ds = msi.Level1_MSI(level1_msi, resolution=60).isel(x=slice(600, 780), y=slice(680, 860))
+    ds = Level1C_MSI(level1_msi, resolution=60).isel(x=slice(600, 780), y=slice(680, 860))
 
     ds = ds.chunk(bands=-1)
 

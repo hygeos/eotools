@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import pytest
-from eoread.ancillary_nasa import Ancillary_NASA
-from eoread import msi
+from eoread.ancillary.nasa import Ancillary_NASA
+from eoread.readers.msi import Level1C_MSI
 from hygeos_core.tests.pytest_utils import parametrize_dict
 from hygeos_core.xrtags import tag_filter
 from matplotlib import pyplot as plt
@@ -12,7 +12,10 @@ from eotools.apply_ancillary import ApplyAncillary, apply_ancillary
 
 from . import conftest
 
-level1 = pytest.fixture(msi.get_sample)
+
+@pytest.fixture
+def level1() -> Path:
+    return Level1C_MSI.get_sample()
 
 
 @pytest.mark.parametrize(
@@ -23,7 +26,7 @@ level1 = pytest.fixture(msi.get_sample)
     })
 )
 def test_apply_ancillary(level1: Path, ancillary, request):
-    ds = msi.Level1_MSI(level1).thin(x=10, y=10)
+    ds = Level1C_MSI(level1, resolution=60).thin(x=10, y=10)
     apply_ancillary(
         ds,
         ancillary(),
@@ -47,7 +50,7 @@ def test_apply_ancillary(level1: Path, ancillary, request):
     })
 )
 def test_apply_ancillary_processor(level1: Path, ancillary, request):
-    ds = msi.Level1_MSI(level1).thin(x=10, y=10).chunk()
+    ds = Level1C_MSI(level1, resolution=60).thin(x=10, y=10).chunk()
     processor = ApplyAncillary(datetime(ds), ancillary())
     # ds = ds.chunk()
     result = processor.map_blocks(ds)

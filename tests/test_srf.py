@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import xarray as xr
-from eoread import msi
+from eoread.readers.msi import Level1C_MSI
 from scipy.integrate import simpson
 
 from eotools.gaseous_absorption import get_absorption
@@ -153,7 +153,7 @@ def test_srf_multidim(platform, sensor, srf_multidim: bool, x_kind: str, resampl
 
 
 def test_srf_from_l1(level1: Path):
-    l1 = msi.Level1_MSI(level1)
+    l1 = Level1C_MSI(level1, resolution=60)
     srf = get_SRF(l1, thres_check=100)
     assert len(srf) == len(l1.bands)
 
