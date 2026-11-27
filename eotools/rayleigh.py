@@ -35,11 +35,7 @@ def _import_ancillary_nasa():
     """Import Ancillary_NASA from eoread (optional dependency)"""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        try:
-            from eoread.ancillary.nasa import Ancillary_NASA
-        except ImportError:
-            # eoread < v2
-            from eoread.ancillary_nasa import Ancillary_NASA
+        from eoread.ancillary.nasa import Ancillary_NASA
     return Ancillary_NASA
 
 

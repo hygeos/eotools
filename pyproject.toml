@@ -20,8 +20,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-git = [
-    "eoread @ git+https://github.com/hygeos/eoread.git",
+eoread = [
+    "eoread>=2,<3",
 ]
 gatiab = [
     "gatiab"
@@ -36,7 +36,7 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
-eotools = { path = ".", editable = true, extras = ["git"]}
+eotools = { path = ".", editable = true, extras = ["eoread"]}
 
 [tool.pixi.dependencies]
 pytest-html = "*"

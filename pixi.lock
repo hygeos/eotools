@@ -264,34 +264,28 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/xlrd-2.0.1-pyhd8ed1ab_3.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - pypi: ./
-      - pypi: git+https://github.com/hygeos/eoread.git#52aa0043757a744b7e4cd4d68a9cbb0d2bbf57f8
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/05/19/94d6c66184c7d0f9374330c714f62c147dbb53eda9efdcc8fc6e2ac454c5/rasterio-1.4.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/09/de/7a274c2dcbfc7a1c8d65f0d1e5bda2829fdaf509f39e97463348661bab93/pyhdf-0.11.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/0b/f7/85273299ab57117850cc0a936c64151171fac4da49bc6fba0dad984a7c5f/affine-2.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1e/18/98a99ad95133c6a6e2005fe89faedf294a748bd5dc803008059409ac9b1e/python_dotenv-1.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/1f/a6/b43b4d09c2df9e2665f3b311983efc27bea40e8a4ac57a53eb43a2b38619/eoread-2.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/ca/1c86c21462132c29f6390ab8ad8c0dc00cb755cbdad818af402da929463a/luts-1.0.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/2f/63d2cacc0e525f8e3398bcf32bd3620385f22cd1600834ec49d7f3597a7b/rioxarray-0.19.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3d/9a/2abecb28ae875e39c8cad711eb1186d8d14eab564705325e77e4e6ab9ae5/click_plugins-1.1.1.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/4f/46/6a7f4f92e811db5c108e2268aa0bdc5eaad21c1fa46648b146b5b18ba685/fckitlib-0.14.1.8-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/66/bc/ea171de49dc0802cc9eab501eef5b18c06e78166e2cd08ccd031e44eb89d/pyepr-1.2.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/6d/e8/16c58c57c9ce1474dd1e50090ebd78b008c70fc4f06793da65f9a0aba391/cfgrib-0.9.15.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/57/f61b7d22c91ae1d12ee00ac4c0038714e774ebcd851b9133e5f4f930dd40/pyproj-3.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/71/d4/d9440ff5da6547ac2587f93a9af7e779be0aed78e1f0734dede94e440f6b/pysolar-0.13-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/71/e7/40fb618334dcdf7c5a316c0e7343c5cd82d3d866edc100d98e29bc945ecd/partd-1.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/73/86/43fa9f15c5b9fb6e82620428827cd3c284aa933431405d1bcf5231ae3d3e/cligj-0.7.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/87/7c/3e97f50f9d1abeab9b573c5896fd8e58cc1488907323fb4778278362353e/eckitlib-1.32.4.8-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/8e/13/0eb6481c0408c2e321d8c7e87d2bdd542fcb52cf02bf5c968c57eef5fed6/hygeos_core-2.0.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/84/719acdb4f5fd8146e2a5d8b9064be53179119e43e894b588f564a7b2ceaf/eccodeslib-2.44.1.8-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b2/fc/e73747f3dd31906bfbb78c76069f67d91525fefa28492a1f949cbb4a3c7f/h5netcdf-1.6.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b7/de/2c0e2b1dfbcbf745f58652c4b67da9a7b57fe5d1b7ac684703c8a3848d4a/findlibs-0.1.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d4/dd/39c8507c16db6031f8c1ddf70ed95dbb0a6d466a40002a3522c128aba472/lxml-6.0.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/dd/b8/9d15cea1f63fb2e1e14fda4160c355e6187e69b71b848c05faaae08b2e6c/eccodes-2.44.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fd/41/bc2df86b72965775f6d621e0ee269a5f3ac23e8f870abf519de9c7d93b4d/h5py-3.13.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   gatiab:
     channels:
@@ -550,34 +544,28 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/xlrd-2.0.1-pyhd8ed1ab_3.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - pypi: ./
-      - pypi: git+https://github.com/hygeos/eoread.git#52aa0043757a744b7e4cd4d68a9cbb0d2bbf57f8
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/05/19/94d6c66184c7d0f9374330c714f62c147dbb53eda9efdcc8fc6e2ac454c5/rasterio-1.4.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/09/de/7a274c2dcbfc7a1c8d65f0d1e5bda2829fdaf509f39e97463348661bab93/pyhdf-0.11.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/0b/f7/85273299ab57117850cc0a936c64151171fac4da49bc6fba0dad984a7c5f/affine-2.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1e/18/98a99ad95133c6a6e2005fe89faedf294a748bd5dc803008059409ac9b1e/python_dotenv-1.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/1f/a6/b43b4d09c2df9e2665f3b311983efc27bea40e8a4ac57a53eb43a2b38619/eoread-2.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/ca/1c86c21462132c29f6390ab8ad8c0dc00cb755cbdad818af402da929463a/luts-1.0.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/2f/63d2cacc0e525f8e3398bcf32bd3620385f22cd1600834ec49d7f3597a7b/rioxarray-0.19.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3d/9a/2abecb28ae875e39c8cad711eb1186d8d14eab564705325e77e4e6ab9ae5/click_plugins-1.1.1.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/4f/46/6a7f4f92e811db5c108e2268aa0bdc5eaad21c1fa46648b146b5b18ba685/fckitlib-0.14.1.8-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/66/bc/ea171de49dc0802cc9eab501eef5b18c06e78166e2cd08ccd031e44eb89d/pyepr-1.2.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/6d/e8/16c58c57c9ce1474dd1e50090ebd78b008c70fc4f06793da65f9a0aba391/cfgrib-0.9.15.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/57/f61b7d22c91ae1d12ee00ac4c0038714e774ebcd851b9133e5f4f930dd40/pyproj-3.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/71/d4/d9440ff5da6547ac2587f93a9af7e779be0aed78e1f0734dede94e440f6b/pysolar-0.13-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/71/e7/40fb618334dcdf7c5a316c0e7343c5cd82d3d866edc100d98e29bc945ecd/partd-1.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/73/86/43fa9f15c5b9fb6e82620428827cd3c284aa933431405d1bcf5231ae3d3e/cligj-0.7.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/87/7c/3e97f50f9d1abeab9b573c5896fd8e58cc1488907323fb4778278362353e/eckitlib-1.32.4.8-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/8e/13/0eb6481c0408c2e321d8c7e87d2bdd542fcb52cf02bf5c968c57eef5fed6/hygeos_core-2.0.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/84/719acdb4f5fd8146e2a5d8b9064be53179119e43e894b588f564a7b2ceaf/eccodeslib-2.44.1.8-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b2/fc/e73747f3dd31906bfbb78c76069f67d91525fefa28492a1f949cbb4a3c7f/h5netcdf-1.6.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b7/de/2c0e2b1dfbcbf745f58652c4b67da9a7b57fe5d1b7ac684703c8a3848d4a/findlibs-0.1.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d4/dd/39c8507c16db6031f8c1ddf70ed95dbb0a6d466a40002a3522c128aba472/lxml-6.0.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/dd/b8/9d15cea1f63fb2e1e14fda4160c355e6187e69b71b848c05faaae08b2e6c/eccodes-2.44.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fd/41/bc2df86b72965775f6d621e0ee269a5f3ac23e8f870abf519de9c7d93b4d/h5py-3.13.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -4009,26 +3997,9 @@ packages:
   - xlrd
   - hygeos-core>=2.0.2,<3
   - luts>=1,<2
-  - eoread @ git+https://github.com/hygeos/eoread.git ; extra == 'git'
+  - eoread>=2,<3 ; extra == 'eoread'
   - gatiab ; extra == 'gatiab'
   requires_python: '>=3.11'
-- pypi: git+https://github.com/hygeos/eoread.git#52aa0043757a744b7e4cd4d68a9cbb0d2bbf57f8
-  name: eoread
-  version: 0.5.0
-  requires_dist:
-  - lxml
-  - pyproj
-  - pysolar
-  - pyepr
-  - rioxarray
-  - h5netcdf
-  - h5py
-  - netcdf4
-  - cfgrib
-  - eccodes<2.45
-  - eccodeslib<2.45
-  - core @ git+https://github.com/hygeos/core.git ; extra == 'git'
-  requires_python: <3.14
 - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
   name: toolz
   version: 1.0.0
@@ -4102,6 +4073,29 @@ packages:
   requires_dist:
   - click>=5.0 ; extra == 'cli'
   requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/1f/a6/b43b4d09c2df9e2665f3b311983efc27bea40e8a4ac57a53eb43a2b38619/eoread-2.0.0-py3-none-any.whl
+  name: eoread
+  version: 2.0.0
+  sha256: 08db471deefd26259d70730f206d6dc0a3c29f65e9785e65bd6e6e51f0bad83a
+  requires_dist:
+  - cdsapi ; extra == 'era5'
+  - dask
+  - h5netcdf
+  - h5py
+  - hygeos-core>=2.0.2,<3.0
+  - netcdf4
+  - numpy
+  - pandas
+  - pyepr
+  - pyhdf
+  - pyproj
+  - pysolar
+  - python-dateutil
+  - rasterio
+  - rioxarray
+  - scipy
+  - xarray
+  requires_python: '>=3.10,<3.14'
 - pypi: https://files.pythonhosted.org/packages/26/ca/1c86c21462132c29f6390ab8ad8c0dc00cb755cbdad818af402da929463a/luts-1.0.6-py3-none-any.whl
   name: luts
   version: 1.0.6
@@ -4141,12 +4135,6 @@ packages:
   version: 0.10.2
   sha256: 806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b
   requires_python: '>=2.6,!=3.0.*,!=3.1.*,!=3.2.*'
-- pypi: https://files.pythonhosted.org/packages/4f/46/6a7f4f92e811db5c108e2268aa0bdc5eaad21c1fa46648b146b5b18ba685/fckitlib-0.14.1.8-cp313-cp313-manylinux_2_28_x86_64.whl
-  name: fckitlib
-  version: 0.14.1.8
-  sha256: 05e3f1190c4bbef4942d6b4088d6eb9e3248b1d4f18f33bebdf88e28b82786d2
-  requires_dist:
-  - eckitlib==1.32.4.8
 - pypi: https://files.pythonhosted.org/packages/56/53/eb690efa8513166adef3e0669afd31e95ffde69fb3c52ec2ac7223ed6018/fsspec-2025.3.0-py3-none-any.whl
   name: fsspec
   version: 2025.3.0
@@ -4261,23 +4249,6 @@ packages:
   requires_dist:
   - numpy>=1.7
   requires_python: '>=3.9,<4'
-- pypi: https://files.pythonhosted.org/packages/6d/e8/16c58c57c9ce1474dd1e50090ebd78b008c70fc4f06793da65f9a0aba391/cfgrib-0.9.15.1-py3-none-any.whl
-  name: cfgrib
-  version: 0.9.15.1
-  sha256: f1bee90e86917389be9f767051bf32d00f95f6f4e4312b344567511b3cfd62d2
-  requires_dist:
-  - attrs>=19.2
-  - click
-  - eccodes>=0.9.8
-  - numpy
-  - xarray>=0.15 ; extra == 'xarray'
-  - dask[array] ; extra == 'tests'
-  - flake8 ; extra == 'tests'
-  - pytest ; extra == 'tests'
-  - pytest-cov ; extra == 'tests'
-  - scipy ; extra == 'tests'
-  - xarray>=0.15 ; extra == 'tests'
-  requires_python: '>=3.7'
 - pypi: https://files.pythonhosted.org/packages/6f/57/f61b7d22c91ae1d12ee00ac4c0038714e774ebcd851b9133e5f4f930dd40/pyproj-3.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   name: pyproj
   version: 3.7.1
@@ -4316,10 +4287,6 @@ packages:
   version: 3.1.1
   sha256: c8c5a44295039331ee9dad40ba100a9c7297b6f988e50e87ccdf3765a668350e
   requires_python: '>=3.8'
-- pypi: https://files.pythonhosted.org/packages/87/7c/3e97f50f9d1abeab9b573c5896fd8e58cc1488907323fb4778278362353e/eckitlib-1.32.4.8-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
-  name: eckitlib
-  version: 1.32.4.8
-  sha256: 72f6db669b5fe3b42a158073753786951803544d38810f64fd5909237784fa4e
 - pypi: https://files.pythonhosted.org/packages/8e/13/0eb6481c0408c2e321d8c7e87d2bdd542fcb52cf02bf5c968c57eef5fed6/hygeos_core-2.0.2-py3-none-any.whl
   name: hygeos-core
   version: 2.0.2
@@ -4336,13 +4303,6 @@ packages:
   - xarray
   - zarr>=3 ; extra == 'zarr'
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/9a/84/719acdb4f5fd8146e2a5d8b9064be53179119e43e894b588f564a7b2ceaf/eccodeslib-2.44.1.8-cp313-cp313-manylinux_2_28_x86_64.whl
-  name: eccodeslib
-  version: 2.44.1.8
-  sha256: 0f0b899b259d2ca8938407d29df22f016eee10d1e20543b97d7a3e800ef8d551
-  requires_dist:
-  - eckitlib==1.32.4.8
-  - fckitlib==0.14.1.8
 - pypi: https://files.pythonhosted.org/packages/b2/fc/e73747f3dd31906bfbb78c76069f67d91525fefa28492a1f949cbb4a3c7f/h5netcdf-1.6.1-py3-none-any.whl
   name: h5netcdf
   version: 1.6.1
@@ -4353,14 +4313,6 @@ packages:
   - netcdf4 ; extra == 'test'
   - pytest ; extra == 'test'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/b7/de/2c0e2b1dfbcbf745f58652c4b67da9a7b57fe5d1b7ac684703c8a3848d4a/findlibs-0.1.5-py3-none-any.whl
-  name: findlibs
-  version: 0.1.5
-  sha256: 48088b276ea3699422fb3921934db05f9eddfb3cd3fb689c39f5127a97350661
-  requires_dist:
-  - pytest ; extra == 'test'
-  - pyfakefs ; extra == 'test'
-  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/bd/8a/3609033a4bfd7c9b3e8a4e8a5d6e318dfc06ab2e2d3b5cb0e01a60458858/dask-2025.3.0-py3-none-any.whl
   name: dask
   version: 2025.3.0
@@ -4408,16 +4360,6 @@ packages:
   version: 1.0.0
   sha256: b6c819a722f7b6bd955b80781788e4a66a55628b858d347536b7e81325a3a5e3
   requires_python: '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
-- pypi: https://files.pythonhosted.org/packages/dd/b8/9d15cea1f63fb2e1e14fda4160c355e6187e69b71b848c05faaae08b2e6c/eccodes-2.44.0-py3-none-any.whl
-  name: eccodes
-  version: 2.44.0
-  sha256: c3f11041bde7c3f53767c5bbed608c43695f257c09c58bb4de24bcd9cdae4e3a
-  requires_dist:
-  - numpy
-  - attrs
-  - cffi
-  - findlibs
-  - eccodeslib ; sys_platform != 'win32'
 - pypi: https://files.pythonhosted.org/packages/fd/41/bc2df86b72965775f6d621e0ee269a5f3ac23e8f870abf519de9c7d93b4d/h5py-3.13.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   name: h5py
   version: 3.13.0

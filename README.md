@@ -10,10 +10,10 @@ To install or update this module from github in your current python environment,
 pip install git+https://github.com/hygeos/eotools.git
 ```
 
-Required dependencies include [hygeos-core](https://pypi.org/project/hygeos-core/) (imported as `hygeos_core`) and [luts](https://pypi.org/project/luts/). To also install [eoread](https://github.com/hygeos/eoread) (level-1 readers and ancillary data), use the `git` extra:
+Required dependencies include [hygeos-core](https://pypi.org/project/hygeos-core/) (imported as `hygeos_core`) and [luts](https://pypi.org/project/luts/). To also install [eoread](https://pypi.org/project/eoread/) >= 2 (level-1 readers and ancillary data), use the `eoread` extra:
 
 ```
-pip install "eotools[git] @ git+https://github.com/hygeos/eotools.git"
+pip install "eotools[eoread] @ git+https://github.com/hygeos/eotools.git"
 ```
 
 To install it from a cloned folder, in editable mode:
